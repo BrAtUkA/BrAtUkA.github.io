@@ -1,5 +1,1003 @@
 <!DOCTYPE html>
-<html>
-<head><meta http-equiv="refresh" content="0;url=https://github.com/BrAtUkA"></head>
-<body></body>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://bratuka.dev/">
+
+<meta name="description" content="Personal portfolio and project hub for BrAtUkA. Explore my custom open-source tools like the PDF Dark Mode Converter and my GitHub projects.">
+<meta property="og:title" content="bratuka.dev - Turning theory into practice">
+<meta property="og:description" content="Personal portfolio and project hub for BrAtUkA. Explore my tools and GitHub projects.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bratuka.dev/">
+<meta property="og:image" content="https://bratuka.dev/imgs/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@BrAtUkA_dev">
+<meta name="twitter:creator" content="@BrAtUkA_dev">
+<meta name="twitter:title" content="bratuka.dev - Turning theory into practice">
+<meta name="twitter:description" content="Personal portfolio and project hub for BrAtUkA. Explore my tools and GitHub projects.">
+<meta name="twitter:image" content="https://bratuka.dev/imgs/og-image.png">
+
+<title>bratuka.dev - Turning theory into practice</title>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://bratuka.dev/#website",
+      "url": "https://bratuka.dev/",
+      "name": "bratuka.dev",
+      "description": "Personal portfolio and project hub for BrAtUkA.",
+      "publisher": { "@id": "https://bratuka.dev/#person" }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://bratuka.dev/#person",
+      "name": "BrAtUkA",
+      "url": "https://bratuka.dev/",
+      "jobTitle": "Full-Stack Developer",
+      "description": "CS student, full-stack developer, and reverse engineer. Building things that are fast, private, and actually useful.",
+      "knowsAbout": ["Python", "Flutter", "Dart", "Rust", "Tauri", "C#", ".NET", "Reverse Engineering", "AI", "Machine Learning", "Blender", "3D"],
+      "sameAs": [
+        "https://github.com/BrAtUkA",
+        "https://twitter.com/BrAtUkA_dev",
+        "https://instagram.com/_BrAtUkA_"
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://bratuka.dev/#webpage",
+      "url": "https://bratuka.dev/",
+      "name": "bratuka.dev - Turning theory into practice",
+      "isPartOf": { "@id": "https://bratuka.dev/#website" },
+      "about": { "@id": "https://bratuka.dev/#person" },
+      "description": "Personal portfolio and project hub for BrAtUkA. Explore my custom open-source tools like the PDF Dark Mode Converter and my GitHub projects."
+    }
+  ]
+}
+</script>
+<link rel="icon" type="image/png" href="imgs/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #DC143C;
+    --red-dim: #a00e2b;
+    --red-glow: rgba(220,20,60,0.15);
+    --bg: #0b0d10;
+    --bg-card: #111418;
+    --bg-card2: #161a1f;
+    --border: rgba(255,255,255,0.07);
+    --border-red: rgba(220,20,60,0.3);
+    --text: #e8eaed;
+    --text-muted: #7a8290;
+    --text-dim: #4a5160;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2.5rem;
+    background: rgba(11,13,16,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .nav-logo img {
+    height: 26px;
+    opacity: 0.9;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--red);
+    color: #fff !important;
+    border-radius: 4px;
+    font-size: 12px !important;
+    font-weight: 500;
+    transition: background 0.2s !important;
+  }
+
+  .nav-cta:hover { background: var(--red-dim) !important; color: #fff !important; }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    min-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6rem 2.5rem 4rem;
+    max-width: 900px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  .hero-heading {
+    font-family: var(--sans);
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-heading .accent {
+    background: linear-gradient(135deg, var(--red) 0%, #ff4d6d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* SOCIAL ICONS */
+  .hero-socials {
+    display: flex;
+    gap: 16px;
+    margin-top: 2.5rem;
+    align-items: center;
+  }
+  
+  .social-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  .social-icon:hover {
+    color: #fff;
+    background: var(--red);
+    border-color: var(--red);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px var(--red-glow);
+  }
+  
+  .social-icon svg { width: 18px; height: 18px; fill: currentColor; }
+  .social-icon.svg-stroke svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .hero-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 480px;
+    margin-bottom: 2.5rem;
+    line-height: 1.8;
+  }
+
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 2.5rem;
+  }
+
+  .tag {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-muted);
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary {
+    background: var(--red);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: var(--red-dim);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text);
+  }
+
+  /* Decorative grid lines */
+  .hero-grid {
+    position: absolute;
+    right: -60px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 360px;
+    height: 360px;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+
+  /* SECTION COMMON */
+  .section {
+    padding: 5rem 2.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-family: var(--sans);
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.01em;
+    line-height: 1.5;
+    padding-bottom: 0.15em;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .section-desc {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+  }
+
+  /* DIVIDER */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* TOOL SECTION */
+  .tool-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .tool-card:hover {
+    border-color: var(--border-red);
+  }
+
+  .tool-header {
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .tool-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--red-glow);
+    border: 1px solid var(--border-red);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .tool-icon svg { width: 22px; height: 22px; }
+
+  .tool-name {
+    font-family: var(--sans);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.35rem;
+  }
+
+  .tool-tagline {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .tool-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding-top: 4px;
+  }
+
+  .badge {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .badge-red {
+    background: rgba(220,20,60,0.12);
+    color: #f5677d;
+    border: 1px solid rgba(220,20,60,0.25);
+  }
+
+  .badge-neutral {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .tool-body {
+    padding: 1.75rem 2rem;
+  }
+
+  .tool-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .feature-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+    background: rgba(255,255,255,0.02);
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+
+  .feature-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .feature-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .feature-text strong {
+    display: block;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  .tool-footer {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* GITHUB SECTION */
+  .github-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .gh-profile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .gh-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid var(--border-red);
+  }
+
+  .gh-name {
+    font-family: var(--sans);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .gh-bio {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .gh-stats {
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  .gh-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .gh-stat-val {
+    font-family: var(--sans);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .gh-stat-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .repos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .repo-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+    display: block;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .repo-card:hover {
+    border-color: rgba(255,255,255,0.15);
+    background: var(--bg-card2);
+  }
+
+  .repo-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .repo-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .repo-lang {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .repo-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .repo-stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 2.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .footer-logo img { height: 20px; opacity: 0.5; }
+
+  .footer-copy {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 1.25rem;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .footer-links a:hover { color: var(--text-muted); }
+
+  /* SCROLL ANIMATIONS */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* CURSOR LINE */
+  .cursor-blink {
+    display: inline-block;
+    width: 3px;
+    height: 0.85em;
+    background: var(--red);
+    margin-left: 4px;
+    vertical-align: middle;
+    animation: blink 1.1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(220,20,60,0.3); border-radius: 2px; }
+
+  @media (max-width: 640px) {
+    nav { padding: 0.85rem 1.25rem; }
+    .hero { padding: 4rem 1.25rem 3rem; }
+    .section { padding: 3rem 1.25rem; }
+    .github-layout { grid-template-columns: 1fr; }
+    .tool-header { flex-direction: column; }
+    footer { padding: 2rem 1.25rem; flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="https://bratuka.dev" class="nav-logo">
+    <img src="imgs/logo-flat-white.png" alt="BrAtUkA">
+  </a>
+  <ul class="nav-links">
+    <li><a href="https://github.com/BrAtUkA">GitHub</a></li>
+    <li><a href="mailto:bratuka@bratuka.dev">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <!-- Decorative grid -->
+  <svg class="hero-grid" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
+      </pattern>
+    </defs>
+    <rect width="360" height="360" fill="url(#grid)"/>
+    <circle cx="180" cy="180" r="140" fill="none" stroke="#DC143C" stroke-width="0.5" opacity="0.6"/>
+    <circle cx="180" cy="180" r="80" fill="none" stroke="#DC143C" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="180" cy="180" r="20" fill="none" stroke="#DC143C" stroke-width="1" opacity="0.8"/>
+  </svg>
+
+  <div class="hero-eyebrow reveal">bratuka.dev - Islamabad, PK</div>
+
+  <h1 class="hero-heading reveal">
+    Turning<br>
+    theory into<br>
+    <span class="accent">practice.</span><span class="cursor-blink"></span>
+  </h1>
+
+  <p class="hero-sub reveal">
+    CS student, full-stack developer, and reverse engineer. Building things that are fast, private, and actually useful.
+  </p>
+
+  <div class="hero-tags reveal">
+    <span class="tag">Python</span>
+    <span class="tag">Flutter / Dart</span>
+    <span class="tag">Rust / Tauri</span>
+    <span class="tag">C# / .NET</span>
+    <span class="tag">Reverse Engineering</span>
+    <span class="tag">AI / ML</span>
+    <span class="tag">Blender / 3D</span>
+  </div>
+
+  <div class="hero-cta reveal">
+    <a href="https://bratuka.dev/pdf-dark-mode-converter/" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <rect x="3" y="1" width="10" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      PDF Dark Mode Converter
+    </a>
+    <a href="https://github.com/BrAtUkA" class="btn btn-ghost">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+      GitHub Profile
+    </a>
+  </div>
+
+  <div class="hero-socials reveal">
+    <a href="https://github.com/BrAtUkA" title="GitHub" class="social-icon">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+    <a href="https://twitter.com/BrAtUkA_dev" title="X (Twitter)" class="social-icon">
+      <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    <a href="https://instagram.com/_BrAtUkA_" title="Instagram" class="social-icon svg-stroke">
+      <svg viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+      </svg>
+    </a>
+    <a href="mailto:bratuka@bratuka.dev" title="Email" class="social-icon svg-stroke">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+        <polyline points="22,6 12,13 2,6"></polyline>
+      </svg>
+    </a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TOOL SECTION -->
+<section class="section">
+  <p class="section-label reveal">Featured Tool</p>
+  <h2 class="section-title reveal">PDF Dark Mode Converter</h2>
+  <p class="section-desc reveal">The privacy-first, browser-native PDF theming tool. No uploads. No accounts. Just dark PDFs.</p>
+
+  <div class="tool-card reveal">
+    <div class="tool-header">
+      <div>
+        <div class="tool-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#DC143C" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 2v6h6M9 13h6M9 17h4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="tool-name">pdf-dark-mode-converter</div>
+        <div class="tool-tagline">Convert any PDF to dark mode in your browser - free, instant, private.</div>
+      </div>
+      <div class="tool-badges">
+        <span class="badge badge-red">Open Source</span>
+        <span class="badge badge-neutral">No Upload</span>
+        <span class="badge badge-neutral">Offline Ready</span>
+        <span class="badge badge-neutral">16+ Themes</span>
+      </div>
+    </div>
+    <div class="tool-body">
+      <div class="tool-features">
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>16+ Built-in Themes</strong>
+            Dracula, Nord, Solarized, Monokai, Tokyo Night, Rosé Pine, and more.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>GPU-Accelerated</strong>
+            Parallel page processing with GPU color transforms - a 50-page PDF in seconds.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>100% Private</strong>
+            Your files never leave your device. Works completely offline after first load.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>Searchable Output</strong>
+            Invisible text layer preserved - PDFs remain selectable and searchable.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>Custom Colors</strong>
+            Pick any hex color with the built-in picker. Toggle dark or light output.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>Zero Limits</strong>
+            No sign-up, no watermarks, no page caps, no file-size restrictions.
+          </div>
+        </div>
+      </div>
+      <div class="tool-footer">
+        <a href="https://bratuka.dev/pdf-dark-mode-converter/" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M4 8h8M9 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Open Tool
+        </a>
+        <a href="https://github.com/BrAtUkA/pdf-dark-mode-converter" class="btn btn-ghost">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          Source on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GITHUB SECTION -->
+<section class="section">
+  <p class="section-label reveal">Open Source</p>
+  <h2 class="section-title reveal">github.com/BrAtUkA</h2>
+  <p class="section-desc reveal">Building in public. All tools and projects are open source.</p>
+
+  <div class="github-layout">
+    <div class="gh-profile-card reveal">
+      <img
+        src="https://avatars.githubusercontent.com/u/56762784?v=4"
+        alt="BrAtUkA"
+        class="gh-avatar"
+      >
+      <div>
+        <div class="gh-name">BrAtUkA</div>
+        <div class="gh-bio" style="margin-top: 4px;">Always cooking... · CS Student · Full-Stack Dev · 3D Artist · Islamabad 🇵🇰</div>
+      </div>
+      <div class="gh-stats">
+        <div class="gh-stat">
+          <span class="gh-stat-val">13</span>
+          <span class="gh-stat-label">Repos</span>
+        </div>
+        <div class="gh-stat">
+          <span class="gh-stat-val">28</span>
+          <span class="gh-stat-label">Stars</span>
+        </div>
+        <div class="gh-stat">
+          <span class="gh-stat-val">7</span>
+          <span class="gh-stat-label">Followers</span>
+        </div>
+      </div>
+      <a href="https://github.com/BrAtUkA" class="btn btn-ghost" style="margin-top: auto;">
+        View Profile →
+      </a>
+    </div>
+
+    <div class="repos-grid reveal">
+      <a href="https://github.com/BrAtUkA/pdf-dark-mode-converter" class="repo-card">
+        <div class="repo-top">
+          <span class="repo-name">pdf-dark-mode-converter</span>
+          <span class="repo-lang">HTML</span>
+        </div>
+        <p class="repo-desc">GPU-accelerated client-side PDF dark mode converter. 16+ themes, fully private.</p>
+        <div class="repo-stars">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.873 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+          11
+        </div>
+      </a>
+      <a href="https://github.com/BrAtUkA/knoxhybrid-monitor" class="repo-card">
+        <div class="repo-top">
+          <span class="repo-name">knoxhybrid-monitor</span>
+          <span class="repo-lang">Rust / Tauri</span>
+        </div>
+        <p class="repo-desc">Lightweight system-tray app for real-time Knox solar inverter monitoring with outage alerts.</p>
+        <div class="repo-stars">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.873 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+          8
+        </div>
+      </a>
+      <a href="https://github.com/BrAtUkA/Computer-Use-Agent" class="repo-card">
+        <div class="repo-top">
+          <span class="repo-name">Computer-Use-Agent</span>
+          <span class="repo-lang">Python</span>
+        </div>
+        <p class="repo-desc">A local VLM-powered agent that controls your computer through natural language commands.</p>
+        <div class="repo-stars">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.873 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+          3
+        </div>
+      </a>
+      <a href="https://github.com/BrAtUkA/Stegano" class="repo-card">
+        <div class="repo-top">
+          <span class="repo-name">Stegano</span>
+          <span class="repo-lang">Python</span>
+        </div>
+        <p class="repo-desc">Hide text or files in images with AES-256 encryption - LSB steganography GUI.</p>
+        <div class="repo-stars">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.873 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+          3
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <a href="https://bratuka.dev" class="footer-logo">
+    <img src="imgs/logo-flat-white.png" alt="BrAtUkA">
+  </a>
+  <span class="footer-copy">© 2026 BrAtUkA · bratuka.dev</span>
+  <ul class="footer-links">
+    <li><a href="https://github.com/BrAtUkA">GitHub</a></li>
+    <li><a href="mailto:bratuka@bratuka.dev">Contact</a></li>
+  </ul>
+</footer>
+
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, 60 * i);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  reveals.forEach(el => observer.observe(el));
+</script>
+</body>
 </html>
