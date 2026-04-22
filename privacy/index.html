@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy · bratuka.dev</title>
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/imgs/favicon.png" type="image/png" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #DC143C;
+    --bg: #0b0d10;
+    --bg-card: #111418;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8eaed;
+    --text-muted: #7a8290;
+    --text-dim: #4a5160;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2.5rem;
+    background: rgba(11,13,16,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo img { height: 26px; opacity: 0.9; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+  .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 5rem 2.5rem 6rem;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    background: var(--red);
+  }
+  h1 {
+    font-family: var(--sans);
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  .updated {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 3rem;
+  }
+  h2 {
+    font-family: var(--sans);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 2.5rem 0 0.75rem;
+  }
+  p { color: var(--text-muted); margin-bottom: 1rem; }
+  a { color: var(--red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul { color: var(--text-muted); margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.5rem; }
+  strong { color: var(--text); font-weight: 600; }
+  .divider { width: 100%; height: 1px; background: var(--border); margin: 0; }
+  footer {
+    padding: 2.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .footer-logo img { height: 20px; opacity: 0.5; }
+  .footer-copy { font-size: 11px; color: var(--text-dim); letter-spacing: 0.04em; }
+  .footer-links { display: flex; gap: 1.25rem; list-style: none; }
+  .footer-links a { font-size: 11px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--text-muted); }
+  @media (max-width: 640px) {
+    nav { padding: 0.85rem 1.25rem; }
+    .content { padding: 3rem 1.25rem 4rem; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="https://bratuka.dev" class="nav-logo">
+    <img src="/imgs/logo-flat-white.png" alt="BrAtUkA">
+  </a>
+  <ul class="nav-links">
+    <li><a href="https://github.com/BrAtUkA">GitHub</a></li>
+    <li><a href="mailto:bratuka@bratuka.dev">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="content">
+  <div class="eyebrow">Legal</div>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: April 2026</p>
+
+  <h2>Summary</h2>
+  <p>BrAtUkA builds open-source, AI-native developer tools. Our philosophy is local-first computing. We do not collect, sell, or transmit your personal data.</p>
+
+  <h2>Local-First Processing</h2>
+  <p>Our core tools (such as the PDF Dark Mode Converter and Computer-Use Agent) are designed to run locally on your device. When you process a file, everything happens in your browser or on your hardware. Your files and data never leave your device and are never uploaded to any of our servers.</p>
+
+  <h2>Analytics</h2>
+  <p>This site uses Google Analytics and Cloudflare Web Analytics to understand aggregate traffic patterns (like page views and visitor counts). These services collect anonymous, non-personal data. Google Analytics may use a first-party cookie to distinguish unique visitors. You can opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics Opt-out Browser Add-on</a>. Cloudflare Web Analytics operates without cookies.</p>
+
+  <h2>No Personal Data Collection</h2>
+  <p>Beyond aggregate analytics, we do not collect or store any personal information. We have no user accounts, no tracking profiles, and no databases storing your data.</p>
+
+  <h2>Local Caching</h2>
+  <p>To make the site faster and avoid API rate limits, we temporarily cache public data (such as GitHub repository statistics) locally on your device using your browser's built-in storage. This cached data stays on your machine and is never transmitted to us.</p>
+
+  <h2>Third-Party Resources & Hosting</h2>
+  <p>Our website and tools are hosted using GitHub Pages and Google Cloud infrastructure. We also load open-source libraries from standard Content Delivery Networks (CDNs) and fonts from Google Fonts. These providers may log standard web server access information (IP address, timestamp) according to their own privacy policies.</p>
+
+  <h2>Open Source</h2>
+  <p>Building in public means you don't just have to take our word for it. The full source code for our site and tools is available on <a href="https://github.com/BrAtUkA">GitHub</a> so you can verify our privacy claims yourself.</p>
+
+  <h2>Contact</h2>
+  <p>If you have any questions about this policy, contact us at <a href="mailto:bratuka@bratuka.dev">bratuka@bratuka.dev</a>.</p>
+</div>
+
+<div class="divider"></div>
+<footer>
+  <a href="https://bratuka.dev" class="footer-logo">
+    <img src="/imgs/logo-flat-white.png" alt="BrAtUkA">
+  </a>
+  <span class="footer-copy">© 2026 BrAtUkA · bratuka.dev</span>
+  <ul class="footer-links">
+    <li><a href="https://github.com/BrAtUkA">GitHub</a></li>
+    <li><a href="mailto:bratuka@bratuka.dev">Contact</a></li>
+    <li><a href="/privacy">Privacy</a></li>
+  </ul>
+</footer>
+</body>
+</html>

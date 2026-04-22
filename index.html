@@ -10,9 +10,9 @@
 <link rel="icon" href="/imgs/favicon.png" type="image/png" sizes="any">
 <link rel="apple-touch-icon" href="/imgs/apple-touch-icon.png">
 
-<meta name="description" content="Personal portfolio and project hub for BrAtUkA. Explore my custom open-source tools like the PDF Dark Mode Converter and my GitHub projects.">
+<meta name="description" content="BrAtUkA builds open-source, AI-native developer tools focused on privacy and local-first computing. Explore our tools including the PDF Dark Mode Converter and the Computer-Use Agent.">
 <meta property="og:title" content="bratuka.dev - Turning theory into practice">
-<meta property="og:description" content="Personal portfolio and project hub for BrAtUkA. Explore my tools and GitHub projects.">
+<meta property="og:description" content="Open-source, AI-native developer tools built for privacy and speed. PDF Dark Mode Converter, Computer-Use Agent, and more.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bratuka.dev/">
 <meta property="og:image" content="https://bratuka.dev/imgs/og-image.png">
@@ -23,7 +23,7 @@
 <meta name="twitter:site" content="@BrAtUkA_dev">
 <meta name="twitter:creator" content="@BrAtUkA_dev">
 <meta name="twitter:title" content="bratuka.dev - Turning theory into practice">
-<meta name="twitter:description" content="Personal portfolio and project hub for BrAtUkA. Explore my tools and GitHub projects.">
+<meta name="twitter:description" content="Open-source, AI-native developer tools built for privacy and speed. PDF Dark Mode Converter, Computer-Use Agent, and more.">
 <meta name="twitter:image" content="https://bratuka.dev/imgs/og-image.png">
 
 <title>bratuka.dev - Turning theory into practice</title>
@@ -33,26 +33,31 @@
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "Organization",
+      "@id": "https://bratuka.dev/#organization",
+      "name": "BrAtUkA",
+      "url": "https://bratuka.dev/",
+      "logo": "https://bratuka.dev/imgs/logo-flat-white.png",
+      "description": "Open-source, AI-native developer tools focused on privacy and local-first computing.",
+      "email": "bratuka@bratuka.dev",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Wah",
+        "addressRegion": "Punjab",
+        "addressCountry": "PK"
+      },
+      "sameAs": [
+        "https://github.com/BrAtUkA",
+        "https://twitter.com/BrAtUkA_dev"
+      ]
+    },
+    {
       "@type": "WebSite",
       "@id": "https://bratuka.dev/#website",
       "url": "https://bratuka.dev/",
       "name": "bratuka.dev",
-      "description": "Personal portfolio and project hub for BrAtUkA.",
-      "publisher": { "@id": "https://bratuka.dev/#person" }
-    },
-    {
-      "@type": "Person",
-      "@id": "https://bratuka.dev/#person",
-      "name": "BrAtUkA",
-      "url": "https://bratuka.dev/",
-      "jobTitle": "Full-Stack Developer",
-      "description": "CS student, full-stack developer, and reverse engineer. Building things that are fast, private, and actually useful.",
-      "knowsAbout": ["Python", "Flutter", "Dart", "Rust", "Tauri", "C#", ".NET", "Reverse Engineering", "AI", "Machine Learning", "Blender", "3D"],
-      "sameAs": [
-        "https://github.com/BrAtUkA",
-        "https://twitter.com/BrAtUkA_dev",
-        "https://instagram.com/_BrAtUkA_"
-      ]
+      "description": "Open-source AI-native developer tools. Built for privacy, speed, and actual usefulness.",
+      "publisher": { "@id": "https://bratuka.dev/#organization" }
     },
     {
       "@type": "WebPage",
@@ -60,8 +65,8 @@
       "url": "https://bratuka.dev/",
       "name": "bratuka.dev - Turning theory into practice",
       "isPartOf": { "@id": "https://bratuka.dev/#website" },
-      "about": { "@id": "https://bratuka.dev/#person" },
-      "description": "Personal portfolio and project hub for BrAtUkA. Explore my custom open-source tools like the PDF Dark Mode Converter and my GitHub projects."
+      "about": { "@id": "https://bratuka.dev/#organization" },
+      "description": "BrAtUkA builds open-source, AI-native developer tools focused on privacy and local-first computing."
     }
   ]
 }
@@ -463,6 +468,12 @@
     margin-bottom: 1.75rem;
   }
 
+  @media (min-width: 641px) {
+    .tool-features.features-2x2 {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
   .feature-item {
     display: flex;
     gap: 10px;
@@ -740,7 +751,7 @@
     <circle cx="180" cy="180" r="20" fill="none" stroke="#DC143C" stroke-width="1" opacity="0.8"/>
   </svg>
 
-  <div class="hero-eyebrow reveal">bratuka.dev - Islamabad, PK</div>
+  <div class="hero-eyebrow reveal">bratuka.dev · Open-Source · AI-Native Tools</div>
 
   <h1 class="hero-heading reveal">
     Turning<br>
@@ -749,7 +760,7 @@
   </h1>
 
   <p class="hero-sub reveal">
-    CS student, full-stack developer, and reverse engineer. Building things that are fast, private, and actually useful.
+    Open-source, AI-native developer tools and utilities. Built for privacy, speed, and people who actually use what they build.
   </p>
 
   <div class="hero-tags reveal">
@@ -893,7 +904,77 @@
 
 <div class="divider"></div>
 
-<!-- GITHUB SECTION -->
+<!-- AI SECTION -->
+<section class="section">
+  <p class="section-label reveal">AI Core</p>
+  <h2 class="section-title reveal">Building AI-Native, Local-First</h2>
+  <p class="section-desc reveal">AI is the foundation of everything we ship — not a feature bolted on top. Our tools run models locally, keep your data on your device, and don't phone home.</p>
+
+  <div class="tool-card reveal">
+    <div class="tool-header">
+      <div>
+        <div class="tool-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#DC143C" stroke-width="1.5">
+            <rect x="2" y="3" width="20" height="14" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 21h8M12 17v4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="10" r="3" stroke-linecap="round"/>
+            <path d="M9.5 7.5L7 5M14.5 7.5L17 5M9.5 12.5L7 15M14.5 12.5L17 15" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="tool-name">Computer-Use Agent</div>
+        <div class="tool-tagline">A local VLM-powered agent that controls your computer through natural language commands.</div>
+      </div>
+      <div class="tool-badges">
+        <span class="badge badge-red">AI / VLM</span>
+        <span class="badge badge-neutral">Local Inference</span>
+        <span class="badge badge-neutral">Open Source</span>
+        <span class="badge badge-neutral">Python</span>
+      </div>
+    </div>
+    <div class="tool-body">
+      <div class="tool-features features-2x2">
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>Fully Local</strong>
+            Runs Vision-Language Models on your hardware. No cloud API keys, no data leaving your machine.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>Natural Language Control</strong>
+            Describe what you want done — the agent sees your screen and executes it.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>Vision-Grounded</strong>
+            Uses real-time screen capture as context, not brittle UI selectors or accessibility trees.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <strong>Extensible</strong>
+            Built to be modular — swap in any compatible local VLM as the ecosystem evolves.
+          </div>
+        </div>
+      </div>
+      <div class="tool-footer">
+        <a href="https://github.com/BrAtUkA/Computer-Use-Agent" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
 <section class="section">
   <p class="section-label reveal">Open Source</p>
   <h2 class="section-title reveal">github.com/BrAtUkA</h2>
@@ -989,6 +1070,7 @@
   <ul class="footer-links">
     <li><a href="https://github.com/BrAtUkA">GitHub</a></li>
     <li><a href="mailto:bratuka@bratuka.dev">Contact</a></li>
+    <li><a href="/privacy">Privacy</a></li>
   </ul>
 </footer>
 
