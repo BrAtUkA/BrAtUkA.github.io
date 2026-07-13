@@ -1,19 +1,23 @@
 # bratuka.dev
 > Personal portfolio and project hub for BrAtUkA.
 
-CS student, full-stack developer, and reverse engineer from Islamabad, PK. Building things that are fast, private, and actually useful.
-Topics: Python, Flutter / Dart, Rust / Tauri, C# / .NET, Reverse Engineering, AI / ML, Blender / 3D.
+BrAtUkA is a computer-science student and developer in Islamabad, PK, building local-first software, reverse-engineering useful systems, and creating 3D art.
 
-## Tools & Web Apps
-- [PDF Dark Mode Converter](https://bratuka.dev/pdf-dark-mode-converter/) - The privacy-first, browser-native PDF theming tool. Convert any PDF to dark mode safely in your browser using 16+ themes. GPU-accelerated, offline-ready, zero uploads.
+Topics: Rust / Tauri, Python, TypeScript, C# / .NET, Reverse Engineering, AI / ML, Local-First Software, Blender / 3D.
 
-## Open Source Projects (GitHub)
-- [pdf-dark-mode-converter](https://github.com/BrAtUkA/pdf-dark-mode-converter) - GPU-accelerated client-side PDF dark mode converter codebase (HTML/JS).
-- [knoxhybrid-monitor](https://github.com/BrAtUkA/knoxhybrid-monitor) - Lightweight system-tray app (Rust/Tauri) for real-time Knox solar inverter monitoring with outage alerts.
-- [Computer-Use-Agent](https://github.com/BrAtUkA/Computer-Use-Agent) - A local VLM-powered agent (Python) that controls your computer through natural language commands.
-- [Stegano](https://github.com/BrAtUkA/Stegano) - Hide text or files in images with AES-256 encryption - LSB steganography GUI (Python).
+## Tools and Web Apps
+- [PDF Dark Mode Converter](https://bratuka.dev/pdf-dark-mode-converter/) - Privacy-first, browser-native PDF theming with 16+ themes, GPU acceleration, offline processing, and no file uploads.
+
+## Featured Public-Source Projects
+- [PDF Dark Mode Converter](https://github.com/BrAtUkA/pdf-dark-mode-converter) - Browser-native PDF theming tool. Source available under the PolyForm Noncommercial licence.
+- [KnoxHybrid Monitor](https://github.com/BrAtUkA/knoxhybrid-monitor) - Rust and Tauri system-tray app that periodically monitors Knox solar-inverter data. Open source under the MIT licence.
+- [spoti2yt](https://github.com/BrAtUkA/spoti2yt) - Windows tray app for bidirectional Spotify and YouTube track or playlist conversion. Source available under the PolyForm Noncommercial licence.
+- [ComicK Revive](https://github.com/BrAtUkA/ComicK-Revive) - Chromium reading extension with a multi-source catalog, offline caching, library, history, and position resume. Source available under the PolyForm Noncommercial licence.
+- [Computer-Use Agent](https://github.com/BrAtUkA/Computer-Use-Agent) - Experimental local VLM-powered computer-control agent with publicly viewable source.
+- [NetGuard](https://github.com/BrAtUkA/NetGuard) - Semester-project network IDS using XGBoost, anomaly and behavioral detection, MITRE ATT&CK mapping, and a forensics dashboard. Open source under the MIT licence.
 
 ## Connect
 - [GitHub](https://github.com/BrAtUkA)
-- [X (Twitter)](https://twitter.com/BrAtUkA_dev)
+- [Instagram / 3D Art](https://instagram.com/_BrAtUkA_)
+- [X / Twitter](https://twitter.com/BrAtUkA_dev)
 - [Email](mailto:bratuka@bratuka.dev)

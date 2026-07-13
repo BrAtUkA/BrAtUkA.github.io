@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
-   BrAtUkA — interaction engine
+   BrAtUkA / interaction engine
    GPU liquid-glass background (single fragment shader) that the
-   cursor sculpts + ripples. No backdrop-filter. vanilla JS · no deps.
+   cursor sculpts + ripples. Vanilla JS with no runtime dependencies.
    ══════════════════════════════════════════════════════════════ */
 (() => {
   'use strict';
@@ -11,7 +11,11 @@
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const lerp  = (a, b, t) => a + (b - a) * t;
   const pad   = (n, l = 2) => String(n).padStart(l, '0');
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let effectsMode = ['full', 'off'].includes(document.documentElement.dataset.effects)
+    ? document.documentElement.dataset.effects
+    : (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'full');
+  let reduceMotion = effectsMode !== 'full';
+  let effectsOff = effectsMode === 'off';
   const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
   document.documentElement.classList.add('js');   // arms scroll-reveal CSS (degrades gracefully if JS fails)
   let pointerHeld = false;                         // drives the held-press content dent
@@ -40,7 +44,7 @@
       // short white-noise buffer for percussive contact transients (the "tick" of a tap)
       whiteBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.3), ctx.sampleRate);
       const wd = whiteBuf.getChannelData(0); for (let i = 0; i < wd.length; i++) wd[i] = Math.random() * 2 - 1;
-      // cursor "rub" — looping BROWN noise (deep, silky, not hissy) through a low band-pass
+      // cursor "rub" / looping brown noise through a low band-pass
       const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), nd = nb.getChannelData(0);
       let bn = 0;
       for (let i = 0; i < nd.length; i++) { const w = Math.random() * 2 - 1; bn = (bn + 0.02 * w) / 1.02; nd[i] = bn * 3.2; }
@@ -66,7 +70,7 @@
         o.connect(g); o.start(t); o.stop(t + dur + 0.05); };
       osc(0); if (detune) osc(detune);
     };
-    // a short filtered noise burst — the percussive "contact" of a tap
+    // a short filtered noise burst / the percussive "contact" of a tap
     const noiseHit = (freq, { dur = 0.04, vol = 0.05, Q = 1, type = 'bandpass' } = {}) => {
       if (!on || !ctx || !whiteBuf) return;
       const t = ctx.currentTime, s = ctx.createBufferSource(); s.buffer = whiteBuf;
@@ -81,7 +85,7 @@
       get on(){ return on; },
       tap(freq){ freq = freq * 0.5 + 90;                                                             // rounder, lower register (less "ting")
                  noiseHit(800, { dur: .028, vol: .035, Q: .7, type: 'lowpass' });                    // soft contact pock (not a bright tick)
-                 voice(freq,        { type: 'sine', vol: .13,  dur: .2,  attack: .002 });            // clean body — FAST decay (glass is highly damped)
+                 voice(freq,        { type: 'sine', vol: .13,  dur: .2,  attack: .002 });            // clean body / fast decay
                  voice(freq * 2.0,  { type: 'sine', vol: .04,  dur: .12, attack: .001 });            // harmonic octave sparkle, short
                  voice(freq * 3.01, { type: 'sine', vol: .018, dur: .06, attack: .001 });            // faint top shimmer, near-instant (no bell ring)
                  voice(freq * 0.5,  { type: 'sine', vol: .055, dur: .28, attack: .004 }); },         // low weight
@@ -92,7 +96,7 @@
       tick(freq = 680){ voice(freq, { type: 'triangle', vol: .04, dur: .12 }); },                    // ui hover
       tock(freq = 300){ noiseHit(900, { dur: .012, vol: .025, Q: .7, type: 'lowpass' });             // ui click (soft glass tap)
                         voice(freq, { type: 'sine', vol: .07, dur: .16, attack: .002 });
-                        voice(freq * 2.0, { type: 'sine', vol: .022, dur: .09 }); },                 // harmonic, short — no metallic ring
+                        voice(freq * 2.0, { type: 'sine', vol: .022, dur: .09 }); },                 // harmonic, short, no metallic ring
     };
   })();
 
@@ -101,7 +105,7 @@
     const cv = $('#bg');
     let gl = null;
     // phones skip WebGL entirely and use the lightweight CSS aurora backdrop (see .mbg)
-    try { if (!coarse) gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' }) || cv.getContext('experimental-webgl'); } catch (e) { gl = null; }
+    try { if (!coarse) gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' }) || cv.getContext('experimental-webgl'); } catch (e) { gl = null; }
     const ctx2d = (gl || coarse) ? null : cv.getContext('2d');
 
     let W = 1, H = 1;
@@ -214,7 +218,7 @@
       uRectLoc = gl.getUniformLocation(prog, 'uRect[0]'); uRectNLoc = gl.getUniformLocation(prog, 'uRectN');
       uVelLoc = gl.getUniformLocation(prog, 'uVel');
       uDentLoc = gl.getUniformLocation(prog, 'uDent'); uDentPosLoc = gl.getUniformLocation(prog, 'uDentPos');
-      if (coarse) {                                                    // mobile only — desktop uses the float hash, no texture needed
+      if (coarse) {                                                    // mobile only / desktop uses the float hash
         const NS = 256, ND = new Uint8Array(NS * NS * 4);              // 16-bit noise: R = hi byte, G = lo byte
         for (let i = 0; i < NS * NS; i++) { const r = Math.random() * 65535 | 0; ND[i*4] = r >> 8; ND[i*4+1] = r & 255; }
         const ntex = gl.createTexture();
@@ -232,7 +236,7 @@
     const resize = () => {
       const maxDim = coarse ? 900 : 1500;                        // cap render res → consistent FPS
       let scl = Math.min(1, maxDim / Math.max(innerWidth, innerHeight));
-      if (coarse) scl *= 0.62;                                   // extra downscale on phones — fluid is soft, upscaling is invisible
+      if (coarse) scl *= 0.62;                                   // extra downscale on phones; the fluid upscales cleanly
       W = Math.max(1, Math.round(innerWidth * scl));
       H = Math.max(1, Math.round(innerHeight * scl));
       cv.width = W; cv.height = H;
@@ -254,7 +258,7 @@
         dent = lerp(dent, 1.0, 0.018);
         dentX = lerp(dentX, mx, 0.16); dentY = lerp(dentY, my, 0.16);
       } else {
-        dent = lerp(dent, 0.0, 0.006);                                // grow back SLOWLY after release (~several seconds)
+        dent = lerp(dent, 0.0, 0.006);
       }
 
       if (!gl) {                                                    // graceful fallback
@@ -299,20 +303,34 @@
     cdot.style.transform  = `translate(${state.rawx}px, ${state.rawy}px) translate(-50%,-50%) scale(${dScale})`;
     cring.style.transform = `translate(${curX}px, ${curY}px) translate(-50%,-50%) scale(${rScale})`;
   };
-  const hotSel = 'button, a, input, .magnetic, .chip, [tabindex], .work__media';
+  const hotSel = 'button, a, input, .magnetic';
+  const releasePointer = () => {
+    down = false;
+    pointerHeld = false;
+    cursor.classList.remove('is-down');
+    scene.setPress(0);
+    audio.rub(0);
+  };
+  const cancelDragState = () => {
+    releasePointer();
+    $$('[data-tilt] .work__media').forEach((el) => { el.style.transform = ''; });
+  };
   if (!coarse) {
     addEventListener('pointermove', (e) => {
+      if (effectsMode !== 'full') return;
       state.rawx = e.clientX; state.rawy = e.clientY;
       if (!cursorReady) { cursorReady = true; curX = e.clientX; curY = e.clientY;
         cursor.classList.add('is-active'); document.body.dataset.cc = '1'; placeCursor(); }
     }, { passive: true });
     addEventListener('pointerdown', (e) => {
+      if (effectsMode !== 'full') return;
       down = true; cursor.classList.add('is-down');
       cpulse.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
       cpulse.classList.remove('go'); void cpulse.offsetWidth; cpulse.classList.add('go');
     });
-    addEventListener('pointerup', () => { down = false; cursor.classList.remove('is-down'); });
+    addEventListener('pointerup', releasePointer);
     document.addEventListener('pointerover', (e) => {
+      if (effectsMode !== 'full') return;
       if (e.target instanceof Element && e.target.closest(hotSel)) { hot = true; cursor.classList.add('is-hot'); }
     });
     document.addEventListener('pointerout', (e) => {
@@ -332,22 +350,30 @@
     state.rawx = x; state.rawy = y;
     const hc = $('#hud-coords'); if (hc) hc.textContent = `X${pad(Math.round(x), 3)} Y${pad(Math.round(y), 3)}`;
   };
-  addEventListener('pointermove', (e) => { trackPointer(e.clientX, e.clientY); scene.setMouse(e.clientX, e.clientY); }, { passive: true });
+  addEventListener('pointermove', (e) => {
+    trackPointer(e.clientX, e.clientY);
+    if (effectsMode === 'full') scene.setMouse(e.clientX, e.clientY);
+  }, { passive: true });
   addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;                     // only primary click / touch — leave middle-click autoscroll, right-click menu, etc. alone
-    scene.setPress(1); scene.pulse(); pointerHeld = true;
+    if (e.button !== 0) return;                     // only primary click / touch; preserve other native actions
+    if (effectsMode === 'full') { scene.setPress(1); scene.pulse(); pointerHeld = true; }
     const el = e.target;
-    if (el instanceof Element && el.closest('button, a, input, .chip, #intro, .work__media')) return;
-    e.preventDefault();
+    if (el instanceof Element && el.closest('button, a, input, .chip')) return;
     audio.tap(noteFreq(e.clientX, e.clientY));
   });
-  addEventListener('pointerup',     () => { scene.setPress(0); pointerHeld = false; });
-  addEventListener('pointercancel', () => { scene.setPress(0); pointerHeld = false; });
-  addEventListener('dragstart', (e) => e.preventDefault());   // no native drag-ghost square while click-dragging
+  addEventListener('pointerup', releasePointer);
+  addEventListener('pointercancel', cancelDragState);
+  addEventListener('dragstart', (e) => {
+    if (e.target instanceof Element && e.target.closest('.work')) e.preventDefault();
+    cancelDragState();
+  });
+  addEventListener('dragend', cancelDragState);
+  addEventListener('blur', cancelDragState);
 
   /* ════════ MAGNETIC BUTTONS + RIPPLE + BLIPS ══════════════ */
   if (!coarse) $$('.magnetic').forEach((el) => {
     el.addEventListener('pointermove', (e) => {
+      if (effectsMode !== 'full') return;
       const r = el.getBoundingClientRect();
       el.style.transform = `translate(${(e.clientX - (r.left + r.width / 2)) * 0.25}px, ${(e.clientY - (r.top + r.height / 2)) * 0.3}px)`;
     });
@@ -366,41 +392,9 @@
   });
   $$('.chip').forEach((c) => c.addEventListener('pointerenter', () => audio.tick(660)));
 
-  /* ════════ TEXT SCRAMBLE ══════════════════════════════════ */
-  class Scramble {
-    constructor(el){ this.el = el; this.chars = '!<>-_\\/[]{}=+*#0アキ▓▒░ΞΣ'; }
-    to(text){
-      const old = this.el.textContent, len = Math.max(old.length, text.length);
-      this.q = [];
-      for (let i = 0; i < len; i++){
-        const start = Math.floor(Math.random() * 18), end = start + 12 + Math.floor(Math.random() * 22);
-        this.q.push({ from: old[i] || '', to: text[i] || '', start, end, ch: '' });
-      }
-      cancelAnimationFrame(this.raf); this.frame = 0;
-      return new Promise(res => { this.res = res; this.tick(); });
-    }
-    tick(){
-      let out = '', done = 0;
-      for (const q of this.q){
-        if (this.frame >= q.end){ done++; out += q.to; }
-        else if (this.frame >= q.start){
-          if (!q.ch || Math.random() < .28) q.ch = this.chars[Math.floor(Math.random() * this.chars.length)];
-          out += `<span style="color:var(--red);opacity:.85">${q.ch}</span>`;
-        } else out += q.from;
-      }
-      this.el.innerHTML = out;
-      if (done === this.q.length){ this.res?.(); return; }
-      this.frame++; this.raf = requestAnimationFrame(() => this.tick());
-    }
-  }
-  const heroTitle = $('#heroTitle'), heroScr = new Scramble(heroTitle);
-  const reHero = () => heroScr.to('BrAtUkA').then(() => { heroTitle.textContent = 'BrAtUkA'; });
+  const heroTitle = $('#heroTitle');
   const kick = (el) => { el.classList.add('is-glitching'); setTimeout(() => el.classList.remove('is-glitching'), 420); };
-  const reglitch = () => { reHero(); kick(heroTitle); };
-  $('#reglitch')?.addEventListener('click', reglitch);
-  heroTitle.addEventListener('click', reglitch);                 // click the name → replay the scramble
-  heroTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reglitch(); } });
-  if (!reduceMotion) setInterval(() => { if (!document.hidden && Math.random() < .5) kick(heroTitle); }, 7000);
+  setInterval(() => { if (effectsMode === 'full' && !document.hidden && Math.random() < .5) kick(heroTitle); }, 7000);
 
   /* ════════ AUDIO TOGGLE ═══════════════════════════════════ */
   const at = $('#audioToggle');
@@ -408,9 +402,54 @@
     const on = !at.classList.contains('is-on');
     at.classList.toggle('is-on', on);
     at.querySelector('b').textContent = on ? 'ON' : 'OFF';
+    at.setAttribute('aria-pressed', String(on));
+    at.setAttribute('aria-label', on ? 'Disable interface audio' : 'Enable interface audio');
     document.body.dataset.audio = on ? 'on' : 'off';
     audio.set(on);
   });
+
+  /* ════════ EFFECTS MODE ═══════════════════════════════════ */
+  const fxButtons = $$('[data-effects-mode]');
+  const fxLabels = {
+    full: 'Full visual effects with live fluid motion',
+    off: 'Visual effects off with a plain background',
+  };
+  const renderEffectsMode = (mode) => fxButtons.forEach((button) => {
+    const active = button.dataset.effectsMode === mode;
+    button.setAttribute('aria-pressed', String(active));
+    button.setAttribute('aria-label', `${fxLabels[button.dataset.effectsMode] || 'Visual effects'}${active ? ', selected' : ''}`);
+  });
+  renderEffectsMode(effectsMode);
+  fxButtons.forEach((button) => button.addEventListener('click', () => {
+    const mode = button.dataset.effectsMode;
+    if (!['full', 'off'].includes(mode) || mode === effectsMode) return;
+    effectsMode = mode;
+    reduceMotion = mode !== 'full';
+    effectsOff = mode === 'off';
+    document.documentElement.dataset.effects = mode;
+    try { localStorage.setItem('bratuka_effects', mode); } catch (e) {}
+    renderEffectsMode(mode);
+    if (effectsOff) {
+      stopLoop();
+      scene.setPress(0);
+      pointerHeld = false;
+      down = false;
+      hot = false;
+      cursorReady = false;
+      cursor.classList.remove('is-active', 'is-down', 'is-hot');
+      cpulse.classList.remove('go');
+      delete document.body.dataset.cc;
+      $$('.magnetic').forEach((el) => { el.style.transform = ''; });
+      $$('[data-tilt] .work__media').forEach((el) => { el.style.transform = ''; });
+      if (elFps) elFps.textContent = 'FPS OFF';
+    } else {
+      scene.setMouse(state.rawx, state.rawy);
+      markVeilDirty();
+      if (elFps) elFps.textContent = 'FPS --';
+      startLoop();
+    }
+    dispatchEvent(new CustomEvent('effectschange', { detail: { mode } }));
+  }));
 
   /* ════════ HUD CLOCK + FPS ════════════════════════════════ */
   const elClock = $('#hud-clock'), elFps = $('#hud-fps');
@@ -436,18 +475,20 @@
     addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
     onScroll();
 
-    // smooth-scroll for in-page buttons
-    $$('[data-scroll]').forEach(b => b.addEventListener('click', () => {
-      const t = $(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }));
-
     // count-up
     const runCount = (el) => {
       el.dataset.counted = '1';
-      const target = parseFloat(el.dataset.count) || 0, dur = 1500, t0 = performance.now();
+      const target = parseFloat(el.dataset.count) || 0;
+      const start = parseFloat(el.textContent.replace(/[^0-9.-]/g, '')) || 0;
+      const suffix = el.dataset.plus ? '+' : '';
+      if (reduceMotion || start === target) {
+        el.textContent = Math.round(target).toLocaleString() + suffix;
+        return;
+      }
+      const dur = 900, t0 = performance.now();
       const step = (now) => {
         const k = clamp((now - t0) / dur, 0, 1), e = 1 - Math.pow(1 - k, 3);
-        el.textContent = Math.round(target * e).toLocaleString() + (k >= 1 && el.dataset.plus ? '+' : '');
+        el.textContent = Math.round(start + (target - start) * e).toLocaleString() + (k >= 1 ? suffix : '');
         if (k < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
@@ -457,6 +498,7 @@
     if (!coarse) $$('[data-tilt]').forEach(card => {
       const media = $('.work__media', card);
       card.addEventListener('pointermove', (e) => {
+        if (effectsMode !== 'full') return;
         const r = card.getBoundingClientRect();
         const px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
         if (media) media.style.transform = `rotateY(${px * 13}deg) rotateX(${-py * 13}deg)`;
@@ -465,39 +507,31 @@
     });
     // hover ticks across the interactive bits
     $$('.contact__mail, .socials a, .work').forEach(el => el.addEventListener('pointerenter', () => audio.tick(620)));
-    // clicking a card's image opens its primary link (same as the link under it)
-    $$('.work').forEach(w => { const m = $('.work__media', w), a = $('.work__link', w);
-      if (m && a) m.addEventListener('click', () => window.open(a.href, '_blank', 'noopener')); });
 
-    // reveals / parallax — GSAP if present, else IntersectionObserver
-    const reveals = $$('.reveal'), counters = $$('[data-count]'), steps = $$('.step');
-    const g = window.gsap, ST = window.ScrollTrigger;
-    if (g && ST) {
-      g.registerPlugin(ST);
-      reveals.forEach(el => g.fromTo(el, { y: 36, opacity: 0 }, {
-        y: 0, opacity: 1, duration: .9, ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 87%', onEnter: () => el.classList.add('is-in') } }));
-      $$('.work__num').forEach(n => g.to(n, { yPercent: -28, ease: 'none',
-        scrollTrigger: { trigger: n.closest('.work'), start: 'top bottom', end: 'bottom top', scrub: true } }));
-      counters.forEach(c => ST.create({ trigger: c, start: 'top 88%', once: true, onEnter: () => runCount(c) }));
-      steps.forEach(s => ST.create({ trigger: s, start: 'top 85%', once: true, onEnter: () => s.classList.add('is-in') }));
-      addEventListener('load', () => ST.refresh());                       // re-measure after fonts settle
-    } else {
+    // native reveal and counter observer
+    const reveals = $$('.reveal'), counters = $$('[data-count]');
+    if (reduceMotion) {
+      reveals.forEach(el => el.classList.add('is-in'));
+      counters.forEach(runCount);
+    } else if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((ents) => ents.forEach(en => {
         if (!en.isIntersecting) return;
         en.target.classList.add('is-in');
         if (en.target.dataset && en.target.dataset.count) runCount(en.target);
         io.unobserve(en.target);
       }), { threshold: .18 });
-      [...reveals, ...steps, ...counters].forEach(el => io.observe(el));
+      [...reveals, ...counters].forEach(el => io.observe(el));
+    } else {
+      reveals.forEach(el => el.classList.add('is-in'));
+      counters.forEach(runCount);
     }
 
-    /* live GitHub stats + top repos (cached 1h) — same source as bratuka.dev */
+    /* live GitHub stats / cached for one hour */
     const ghMap = { 'gh-repos': 'reposCount', 'gh-stars': 'starsCount', 'gh-followers': 'followersCount' };
     const renderGH = (d) => {
       for (const id in ghMap) {
         const el = $('#' + id), v = d[ghMap[id]];
-        if (el && v != null) { el.dataset.count = v; if (el.dataset.counted) runCount(el); }
+        if (el && v != null) { el.dataset.count = v; runCount(el); }
       }
       if (d.starMap) {                                  // live star counts onto the project cards
         $$('.work[data-repo]').forEach(w => {
@@ -507,7 +541,7 @@
       }
     };
     (async () => {
-      const user = 'BrAtUkA', CK = 'gh_cache_v3', TK = 'gh_cache_t', TTL = 3600e3;
+      const user = 'BrAtUkA', CK = 'gh_cache_v4', TK = 'gh_cache_t', TTL = 3600e3;
       try {
         const ct = +localStorage.getItem(TK), cc = localStorage.getItem(CK);
         if (ct && cc && Date.now() - ct < TTL) { renderGH(JSON.parse(cc)); return; }
@@ -526,10 +560,11 @@
     })();
   })();
 
-  /* ════════ CONTENT-AWARE VEIL — feed live element rects to the shader ══ */
+  /* ════════ CONTENT-AWARE VEIL / live element rects ═════════ */
   const veilEls = $$('.hero__title, .hero__tagline, .hero__lede, .hero__cta, .about__text, .about__facts, .sec__head, .stats, .work__media, .work__body, .contact__big, .contact__sub, .contact__mail, .socials, .foot');
   const veilTmp = new Float32Array(56);   // 14 blocks × 4
   const veilRange = document.createRange();
+  let veilDirty = true;
   const tightRect = (el) => {                 // hug the actual text glyphs, not the (wider) div box
     try { veilRange.selectNodeContents(el); const r = veilRange.getBoundingClientRect();
       if (r.width > 1 && r.height > 1) return r; } catch (e) {}
@@ -552,11 +587,23 @@
       veilTmp[i * 4 + 3] = (r.height * .5 + pad) / ih;
     }
     scene.setRects(veilTmp, n);
+    veilDirty = false;
   };
+  const markVeilDirty = () => { veilDirty = true; };
+  addEventListener('scroll', markVeilDirty, { passive: true });
+  addEventListener('resize', markVeilDirty, { passive: true });
+  addEventListener('load', markVeilDirty, { once: true });
+  document.fonts?.ready?.then(markVeilDirty);
+  if ('ResizeObserver' in window) {
+    const veilObserver = new ResizeObserver(markVeilDirty);
+    veilEls.forEach(el => veilObserver.observe(el));
+  }
 
   /* ════════ MAIN LOOP ══════════════════════════════════════ */
   let prev = performance.now(), fAcc = 0, fCnt = 0, prubX = state.rawx, prubY = state.rawy, rubLevel = 0;
+  let rafId = 0, running = false;
   const frame = (now) => {
+    if (!running) return;
     const dt = Math.min((now - prev) / 1000, .05); prev = now;
     if (cursorReady && !coarse) {
       curX = lerp(curX, state.rawx, .3); curY = lerp(curY, state.rawy, .3);
@@ -568,14 +615,33 @@
     const sp = Math.hypot(state.rawx - prubX, state.rawy - prubY); prubX = state.rawx; prubY = state.rawy;
     rubLevel = lerp(rubLevel, clamp(sp / 16, 0, 1), 0.25);
     audio.rub(rubLevel);
-    if (!coarse) { buildVeil(); scene.draw(dt); }              // phones skip the fluid + per-frame reflow entirely
+    if (!coarse) {
+      if (veilDirty) buildVeil();
+      scene.draw(dt);
+    }
     fAcc += dt; fCnt++;
     if (fAcc >= .5) { elFps.textContent = `FPS ${pad(Math.round(fCnt / fAcc))}`; fCnt = 0; fAcc = 0; }
-    requestAnimationFrame(frame);
+    rafId = requestAnimationFrame(frame);
   };
-  requestAnimationFrame(frame);
+  const startLoop = () => {
+    if (running || effectsMode !== 'full' || document.hidden) return;
+    running = true; prev = performance.now(); fAcc = 0; fCnt = 0;
+    rafId = requestAnimationFrame(frame);
+  };
+  const stopLoop = () => {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+    audio.rub(0);
+  };
+  if (effectsMode === 'full') startLoop();
+  else if (elFps) elFps.textContent = 'FPS OFF';
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelDragState(); stopLoop(); }
+    else if (effectsMode === 'full') { markVeilDirty(); startLoop(); }
+  });
 
-  /* ════════ MOBILE BACKDROP — subtle dark field + interactive red contour ripples (echoes desktop) ═══ */
+  /* ════════ MOBILE BACKDROP / dark field + contour ripples ═══ */
   if (coarse) {
     const cnv = $('#bg'); if (cnv) cnv.style.display = 'none';    // hide the unused WebGL canvas
     let mbg = $('.mbg');
@@ -583,7 +649,7 @@
     Object.assign(mbg.style, { display:'block', position:'fixed', inset:'0', zIndex:'0', overflow:'hidden',
       isolation:'isolate', pointerEvents:'none', background:'radial-gradient(125% 95% at 50% 0%, #130a0f, #050507 66%)' });
 
-    // ambient aurora — DIM + slow, just enough life (no red wash, so text stays readable without boxy calm)
+    // ambient aurora / dim and slow enough to preserve text contrast
     const defs = [
       { s:{ width:'120vw', height:'120vw', left:'-30vw', top:'-26vh', background:'radial-gradient(circle at 50% 50%, rgba(255,58,78,.28), transparent 60%)' },
         k:[{transform:'translate(0,0) scale(1)'},   {transform:'translate(16vw,12vh) scale(1.25)'}], d:19000 },
@@ -592,11 +658,16 @@
       { s:{ width:'130vw', height:'130vw', left:'-28vw', bottom:'-30vh', background:'radial-gradient(circle at 50% 50%, rgba(210,52,72,.20), transparent 64%)' },
         k:[{transform:'translate(0,0) scale(1.1)'}, {transform:'translate(12vw,-11vh) scale(.9)'}],  d:28000 },
     ];
+    const mobileAnimations = [];
     const blobs = defs.map((def) => {
       const b = document.createElement('div');
       Object.assign(b.style, { position:'absolute', mixBlendMode:'screen', willChange:'transform' }, def.s);
       mbg.appendChild(b);
-      try { b.animate(def.k, { duration: def.d, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' }); } catch (e) {}
+      try {
+        const animation = b.animate(def.k, { duration: def.d, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+        mobileAnimations.push(animation);
+        if (effectsMode === 'off') animation.pause();
+      } catch (e) {}
       return b;
     });
 
@@ -638,40 +709,28 @@
       });
     };
 
-    addEventListener('pointerdown', (e) => { held = true; place(e.clientX, e.clientY); showField(); }, { passive: true });
+    addEventListener('pointerdown', (e) => {
+      if (effectsMode !== 'full') return;
+      held = true; place(e.clientX, e.clientY); showField();
+    }, { passive: true });
     addEventListener('pointermove', (e) => { if (held) place(e.clientX, e.clientY); }, { passive: true });
     const release = () => { if (!held) return; held = false; hideField(); };
     addEventListener('pointerup', release, { passive: true });
     addEventListener('pointercancel', () => { held = false; hideField(); }, { passive: true });
 
-    let ticking = false;                                         // gentle parallax — blobs slide over the dark bg, no edge gaps
+    let ticking = false;                                         // gentle parallax over the dark background
     addEventListener('scroll', () => {
-      if (ticking) return; ticking = true;
+      if (effectsMode !== 'full' || ticking) return; ticking = true;
       requestAnimationFrame(() => { const y = window.pageYOffset || 0;
         blobs.forEach((b, i) => { b.style.translate = '0 ' + (-y * (0.03 + i * 0.025)).toFixed(1) + 'px'; });
         ticking = false;
       });
     }, { passive: true });
+    addEventListener('effectschange', (e) => {
+      const on = e.detail?.mode === 'full';
+      mobileAnimations.forEach((animation) => on ? animation.play() : animation.pause());
+      if (!on) { held = false; hideField(); }
+    });
   }
-
-  /* ════════ INTRO ══════════════════════════════════════════ */
-  (() => {
-    const intro = $('#intro'), fill = $('#introFill'), introName = $('#introName');
-    new Scramble(introName).to('BrAtUkA');
-    let p = 0;
-    const grow = () => { p = Math.min(100, p + 2 + Math.random() * 5); fill.style.width = p + '%'; if (p < 100) setTimeout(grow, 40); };
-    setTimeout(grow, 200);
-    let done = false;
-    const finish = () => {
-      if (done) return; done = true;
-      intro.classList.add('is-done');
-      const stage = $('#stage'); stage.style.opacity = ''; stage.classList.add('is-live');
-      setTimeout(() => { reHero(); kick(heroTitle); }, 200);
-      removeEventListener('keydown', finish);
-    };
-    addEventListener('keydown', finish);
-    intro.addEventListener('click', finish);
-    setTimeout(finish, 2200);
-  })();
 
 })();
