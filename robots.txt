@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bratuka.github.io/pdf-dark-mode-converter/sitemap.xml
+Sitemap: https://bratuka.github.io/claude-widgets-viewer/sitemap.xml
