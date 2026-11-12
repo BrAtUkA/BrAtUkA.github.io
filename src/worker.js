@@ -1,0 +1,55 @@
+// bratuka.dev: everything is a static asset; this Worker only
+//   1. answers 410 Gone for pages that were removed for good (Google drops them faster than 404s),
+//   2. sends the tools that moved to bratuka.github.io there with a permanent redirect, keeping the rest of the path,
+//   3. adds security and cache headers to what the assets return.
+
+const GONE = [
+  /^\/pdf-dark-mode-converter\/(de|es|fr|it|ja|ko|pt|ru|zh)(\/|$)/i,   // machine-translated copies, removed
+  /^\/jobbly(\/|$)/i,                                                  // project no longer published
+  /^\/temp(\/|$)/i,                                                    // old build leftovers
+  /^\/privacy\/?$/i,                                                   // the old portfolio's privacy page (no analytics now)
+];
+
+const MOVED = [
+  [/^\/pdf-dark-mode-converter(\/.*)?$/i, 'https://bratuka.github.io/pdf-dark-mode-converter'],
+  [/^\/colorview(\/.*)?$/i, 'https://bratuka.github.io/ColorView'],
+  [/^\/claude-widgets-viewer(\/.*)?$/i, 'https://bratuka.github.io/claude-widgets-viewer'],
+];
+
+const SECURITY = {
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+  'X-Frame-Options': 'SAMEORIGIN',
+};
+
+function gone() {
+  const body = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Gone · BrAtUkA</title>
+<style>html,body{margin:0;height:100%;background:#060405;color:#ece6e3;font:16px/1.5 system-ui,sans-serif}
+main{min-height:100%;display:grid;place-content:center;gap:12px;padding:24px;text-align:center}h1{margin:0;font-weight:500;font-size:2rem}
+p{margin:0;color:#8b8185}a{color:#ff3a4e}</style></head>
+<body><main><h1>This page has been removed</h1><p>It isn't coming back. <a href="/">Go to bratuka.dev</a></p></main></body></html>`;
+  return new Response(body, { status: 410, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=3600', ...SECURITY } });
+}
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    for (const re of GONE) if (re.test(path)) return gone();
+    for (const [re, to] of MOVED) {
+      const m = path.match(re);
+      if (m) return Response.redirect(to + (m[1] || '/') + url.search, 301);
+    }
+
+    const res = await env.ASSETS.fetch(request);
+    const out = new Response(res.body, res);
+    for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
+    const type = out.headers.get('content-type') || '';
+    if (path.startsWith('/a/')) out.headers.set('cache-control', 'public, max-age=604800, stale-while-revalidate=86400');   // renders: a week
+    else if (type.includes('text/html')) out.headers.set('cache-control', 'public, max-age=0, must-revalidate');
+    return out;
+  },
+};

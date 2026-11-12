@@ -1,0 +1,19 @@
+// bratuka.dev on Cloudflare Workers (static assets + a tiny Worker in front).
+// Deployed by Workers Builds on every push to this branch: `npx wrangler deploy`.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bratuka-site",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    // the Worker sees every request first: moved and removed paths, then headers on what the assets return
+    "run_worker_first": true
+  },
+  "observability": { "enabled": true }
+}
