@@ -10,7 +10,7 @@ The portfolio at [bratuka.dev](https://bratuka.dev), served by Cloudflare Worker
     - `/ColorView/` → https://bratuka.github.io/ColorView/
     - `/claude-widgets-viewer/` → https://bratuka.github.io/claude-widgets-viewer/
   - **Headers:** security headers on everything; renders cached for a week; the page always revalidates.
-- `wrangler.jsonc`: Worker `bratuka-site`, assets from `public/`, unknown paths get `public/404.html`.
+- `wrangler.jsonc`: Worker `bratuka-github-io`, assets from `public/`, unknown paths get `public/404.html`.
 
 ## Deploying
 
