@@ -395,10 +395,14 @@
     const f = el.__f, from = nowState(el), r = t.getBoundingClientRect();
     el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
     const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
-    const land = () => {                            // exactly over its tile now: reveal the tile under it, then let go
-      freeze(el); t.classList.remove('away');
+    const soft = !!t.closest('.preview .grid');
+    const land = () => {                            // exactly over its tile now: once the tile is ready, hand over
+      freeze(el);
       release(el).then(() => {
-        if (reduce) { el.remove(); finish(); return; }
+        t.classList.remove('away');
+        // a soft-edged tile is matched exactly (same fade): swap in one frame. Cross-fading two half-transparent copies
+        // would stack them and weaken the fade for a moment. Opaque tiles cross-fade, which hides any tiny difference.
+        if (reduce || soft) { el.remove(); finish(); return; }
         el.animate([{opacity: 1}, {opacity: 0}], {duration: 140, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
       });
     };
