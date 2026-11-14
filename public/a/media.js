@@ -47,7 +47,7 @@
     for (const t of loops) {
       const v = t.querySelector('video'); if (!v) continue;
       if (want.includes(t)) { attach(t); if (v.paused) v.play().catch(() => {}); }
-      else if (!v.paused) v.pause();
+      else if (!v.paused && !v.dataset.keep) v.pause();
     }
   }
   if (loops.length && 'IntersectionObserver' in window) {
@@ -227,7 +227,7 @@
     const tv = t.querySelector('video');
     const ready = tv && tv.readyState >= 2 && tv.currentSrc;
     const t0 = ready ? tv.currentTime : 0;
-    if (ready) { snap(tv, inn, 'still'); tv.pause(); }
+    if (ready) { snap(tv, inn, 'still'); tv.dataset.keep = 1; if (tv.paused) tv.play().catch(() => {}); }   // keeps playing, unseen, in step
     let vv = null;
     if (ready) {                                     // the viewer's own copy of the tile's (cached) file
       vv = document.createElement('video'); vv.className = 'copy'; vv.muted = true; vv.loop = true; vv.playsInline = true; vv.preload = 'auto'; vv.src = tv.currentSrc;
@@ -269,18 +269,13 @@
     return m && !m.paused ? m : c && !c.paused ? c : (m || c);
   }
   function freeze(el) { const v = playing(el); if (v) snap(v, el.__in, 'still'); }
-  function release(el) {                              // stop the viewer's videos; bring the tile's video to the same moment
+  function release(el) {                              // stop the viewer's videos; the tile's own video is already in step
     if (!el) return Promise.resolve();
-    const v = playing(el), at = v ? v.currentTime : null, tv = el.__t && el.__t.querySelector('video');
     el.querySelectorAll('video').forEach(x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); });
+    const tv = el.__t && el.__t.querySelector('video');
     if (!tv || !tv.currentSrc || tv.readyState < 1) return Promise.resolve();
-    return new Promise(res => {
-      const go = () => tv.play().then(() => frameOf(tv, 700)).then(res).catch(res);
-      const to = at != null && tv.duration ? at % tv.duration : null;
-      const have = to != null && [...Array(tv.buffered.length).keys()].some(k => tv.buffered.start(k) <= to && to <= tv.buffered.end(k) - .1);
-      if (have) { tv.currentTime = to; tv.addEventListener('seeked', go, {once: true}); setTimeout(res, 900); }
-      else go();                                     // not buffered there: resume where it paused (instant); the cross-fade covers it
-    });
+    delete tv.dataset.keep;
+    return (tv.paused ? tv.play().catch(() => {}) : Promise.resolve()).then(() => frameOf(tv, 700));
   }
   function label(f) {
     const t = list[i];
