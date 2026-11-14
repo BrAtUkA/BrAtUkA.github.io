@@ -144,10 +144,7 @@
   const gl = lb.querySelector('.lb-g.l'), gr = lb.querySelector('.lb-g.r');
   const st = lb.querySelector('.lb-st'), ring = lb.querySelector('.lb-ring');
   // loading: a small ring at the end of the caption line, only when the full quality takes a moment; it closes into a
-  // full circle once it is in. Preview builds have a "slow loading" switch, to see it (end of this file).
-  const PREV = /workers\.dev$|^localhost$|^127\./.test(location.hostname);
-  let SLOW = false;
-  try { SLOW = PREV && localStorage.getItem('ld-slow') === '1'; } catch (e) {}
+  // full circle once it is in
   let ldT = 0, ldEl = null;
   function state() {                                 // the current slide's loading state, shown on the viewer
     clearTimeout(ldT);
@@ -157,7 +154,6 @@
     ldEl = el;
   }
   function hq(el) { if (!el || el.__hq) return; el.__hq = true; if (el === cur) state(); }   // full quality is on screen
-  const later = fn => SLOW ? setTimeout(fn, 2600) : fn();
   let list = [], i = 0, cur = null, busy = false, opener = null;
   const EASE_OPEN = x => 1 - Math.pow(1 - x, 4);                    // fast out, long soft landing
   let token = 0;                                                   // a newer open makes an older close's clean-up a no-op
@@ -167,11 +163,12 @@
 
   function fit(t) {                                  // the image's box: as large as the screen allows, thin borders
     const W = innerWidth, H = innerHeight, ar = (+t.dataset.w || 16) / (+t.dataset.h || 9);
-    const wide = W > 640, side = wide ? 16 : 0, top = wide ? 16 : 0, bot = wide ? 46 : 0;
-    let w = Math.min(W - side * 2, (H - top - bot) * ar), h = w / ar;
+    // centred both ways, with the same space above and below (room for the caption line underneath)
+    const wide = W > 640, side = wide ? 16 : 0, v = wide ? 46 : 0;
+    let w = Math.min(W - side * 2, (H - v * 2) * ar), h = w / ar;
     if (!wide && h > H - 120) { h = H - 120; w = h * ar; }
     w = Math.round(w); h = Math.round(h);
-    return {w, h, x: Math.round((W - w) / 2), y: Math.round(top + (H - top - bot - h) / 2)};
+    return {w, h, x: Math.round((W - w) / 2), y: Math.round((H - h) / 2)};
   }
   const at = (el, f, dx = 0, dy = 0, k = 1) => { el.__S = null; el.style.transform = `translate3d(${f.x + dx}px, ${f.y + dy}px, 0) scale(${k})`; };
   // morph keyframes between two states of the slide: the visible window (x, y, w, h) and the image's uniform scale sc
@@ -241,7 +238,7 @@
       const u = hiURL(t, f.w), path = x => new URL(x, location.href).pathname;
       if (path(u) !== path(base.src)) {
         const hi = new Image(); hi.className = 'hi'; hi.alt = ''; hi.decoding = 'async'; hi.src = u;
-        (hi.decode ? hi.decode() : Promise.resolve()).then(() => later(() => { hi.classList.add('on'); hq(el); })).catch(() => hq(el));
+        (hi.decode ? hi.decode() : Promise.resolve()).then(() => { hi.classList.add('on'); hq(el); }).catch(() => hq(el));
         inn.appendChild(hi);
       } else el.__hq = true;
     }
@@ -292,8 +289,9 @@
     // sync like a player: one seek slightly ahead, then nudge the playback rate until both show the same moment
     const ref = () => (vv && vv.classList.contains('on') && !vv.paused ? vv : null);
     const drift = () => { const r = ref(), d = mv.duration || 1; if (!r) return 0; let x = mv.currentTime - r.currentTime; x -= d * Math.round(x / d); return x; };
-    // the cut: same frame, so the only change is the sharpness; the copy stops once the master is on top
-    const swap = () => { mv.playbackRate = 1; later(() => requestAnimationFrame(() => { if (!mv.isConnected) return; mv.classList.add('on'); hq(inn.parentNode); setTimeout(() => { if (vv) vv.pause(); }, 250); })); };
+    // same frame on both, so a short fade only eases the step in sharpness (it cannot double the image); the copy
+    // stops once the master is fully on top
+    const swap = () => { mv.playbackRate = 1; requestAnimationFrame(() => { if (!mv.isConnected) return; mv.classList.add('on'); hq(inn.parentNode); setTimeout(() => { if (vv) vv.pause(); }, 400); }); };
     const sync = () => {
       if (!mv.isConnected) return;
       const r = ref();
@@ -305,7 +303,7 @@
             if (!mv.isConnected) return;
             if (!ref() || performance.now() - s0 > 5000) return swap();
             const x = drift();
-            if (Math.abs(x) < IN_STEP) { if (++ok >= 3) return swap(); } else ok = 0;     // held in step for a few frames
+            if (Math.abs(x) < .002) { if (++ok >= 4) return swap(); } else ok = 0;      // held within 2 ms for a few frames
             rate(mv, x);
             requestAnimationFrame(step);
           };
@@ -320,7 +318,7 @@
   // proportion to the gap (no fixed steps), so it settles to within a few milliseconds instead of hunting around.
   const IN_STEP = .006;
   const gap = (v, r) => { const d = v.duration || 1; let x = v.currentTime - r.currentTime; return x - d * Math.round(x / d); };
-  function rate(v, x) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * 6)) * 100) / 100; if (v.playbackRate !== k) v.playbackRate = k; }
+  function rate(v, x) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * 6)) * 1000) / 1000; if (v.playbackRate !== k) v.playbackRate = k; }
   function follow(v, ref) {
     if (v.__fol) return; v.__fol = 1;
     const step = () => {
@@ -580,11 +578,4 @@
   });
   stage.addEventListener('pointercancel', () => { down = false; if (cur) { at(cur, cur.__f); cur.__dx = 0; } bg.style.opacity = ''; });
 
-  // preview builds only: slow loading down, to see the ring
-  if (PREV) {
-    const c = document.createElement('button'); c.type = 'button'; c.className = 'ld-pick';
-    const mark = () => { c.textContent = 'slow loading: ' + (SLOW ? 'on' : 'off'); c.classList.toggle('on', SLOW); };
-    c.addEventListener('click', () => { SLOW = !SLOW; try { localStorage.setItem('ld-slow', SLOW ? '1' : '0'); } catch (err) {} mark(); });
-    mark(); document.body.appendChild(c);
-  }
 })();

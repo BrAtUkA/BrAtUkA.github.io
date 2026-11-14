@@ -108,20 +108,22 @@ html{scrollbar-gutter:stable}
 .lb-in img,.lb-in video,.lb-in canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .lb-in .hi,.lb-in video{opacity:0;transition:opacity .35s ease}
 .lb-in .hi.on,.lb-in video.on{opacity:1}
-.lb-in video.copy,.lb-in video.master{transition:none}
+.lb-in video.copy{transition:none}
+.lb-in video.master{transition:opacity .18s linear}
 .lb-ui{position:absolute;inset:0;pointer-events:none;transition:opacity .35s}
 .lb.idle .lb-ui{opacity:0}
 .lb.closing .lb-ui{opacity:0;transition:opacity .12s}
 .lb-cap{position:absolute;left:0;top:0;margin:0;will-change:transform;display:flex;gap:12px;align-items:baseline;font-size:var(--t-s);color:var(--bone);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:transform .45s cubic-bezier(.25,.8,.25,1)}
 .lb-cap.in{text-shadow:0 1px 10px rgba(0,0,0,.7)}
+.lb-cap .what:empty{display:none}
 .lb-cap .when{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.06em;color:var(--ash)}
 .lb-cap.in .when{color:rgba(236,230,227,.75)}
 .lb-g{position:absolute;left:0;top:0;width:28px;height:28px;color:var(--bone);opacity:.32;transition:opacity .3s, transform .45s cubic-bezier(.25,.8,.25,1)}
 .lb-g svg{width:28px;height:28px;display:block}
 .lb-stage[data-z=l] ~ .lb-ui .lb-g.l,.lb-stage[data-z=r] ~ .lb-ui .lb-g.r{opacity:.95;transform-origin:center}
 .lb.solo .lb-g{display:none}
-.lb-x{position:absolute;pointer-events:auto;top:max(10px, env(safe-area-inset-top, 0px));right:max(10px, env(safe-area-inset-right, 0px));width:44px;height:44px;
+.lb-x{position:absolute;pointer-events:auto;top:max(3px, env(safe-area-inset-top, 0px));right:max(6px, env(safe-area-inset-right, 0px));width:40px;height:40px;
   display:grid;place-items:center;border:0;border-radius:50%;background:rgba(10,8,9,.35);color:var(--bone);cursor:pointer;padding:0;transition:background-color .25s}
 .lb-x svg{width:20px;height:20px}
 .lb-x:hover{background:rgba(40,32,34,.6)}
@@ -144,7 +146,3 @@ html{scrollbar-gutter:stable}
 .lb[data-ld=fin] .lb-ring{opacity:0;transition:opacity .5s ease .4s}
 .lb[data-ld=fin] .lb-ring .arc{stroke-dasharray:100 100}
 @media (prefers-reduced-motion: reduce){.lb-ring .arc{animation:none !important}}
-/* preview builds only */
-.ld-pick{position:fixed;left:12px;top:12px;z-index:200;padding:7px 12px;border-radius:999px;background:rgba(20,15,17,.88);border:1px solid var(--hair);
-  font:11px/1 var(--f-mono);color:var(--ash);letter-spacing:.04em;cursor:pointer}
-.ld-pick.on{color:var(--bone)}
