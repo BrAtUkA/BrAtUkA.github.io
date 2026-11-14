@@ -287,7 +287,8 @@
     mv.innerHTML = `<source src="${t.dataset.v}-m.webm${q(t)}" type='${AV1}'><source src="${t.dataset.v}-m.mp4${q(t)}" type='${HEVC}'>`;
     inn.appendChild(mv);
     // sync like a player: one seek slightly ahead, then nudge the playback rate until both show the same moment
-    const ref = () => (vv && vv.classList.contains('on') && !vv.paused ? vv : null);
+    // the clock to match: the viewer's copy once it plays, before that the tile's own video (playing on, in step, underneath)
+    const ref = () => (vv && vv.classList.contains('on') && !vv.paused ? vv : tv && !tv.paused && tv.readyState >= 2 ? tv : null);
     const drift = () => { const r = ref(), d = mv.duration || 1; if (!r) return 0; let x = mv.currentTime - r.currentTime; x -= d * Math.round(x / d); return x; };
     // same frame on both, so a short fade only eases the step in sharpness (it cannot double the image); the copy
     // stops once the master is fully on top
@@ -298,13 +299,17 @@
       mv.currentTime = ((r ? r.currentTime : t0) + .3) % (mv.duration || 1e9);
       mv.addEventListener('seeked', () => {
         mv.play().then(() => {
-          const s0 = performance.now(); let ok = 0;
+          const s0 = performance.now(); let ok = 0, seek = s0;
           const step = () => {
             if (!mv.isConnected) return;
             if (!ref() || performance.now() - s0 > 5000) return swap();
-            const x = drift();
+            const x = drift(), now = performance.now();
+            if (Math.abs(x) > .4) {                  // too far to steer (it missed its first seek): jump close, then steer
+              if (now - seek > 700) { seek = now; mv.currentTime = (ref().currentTime + .12) % (mv.duration || 1e9); }
+              requestAnimationFrame(step); return;
+            }
             if (Math.abs(x) < .002) { if (++ok >= 4) return swap(); } else ok = 0;      // held within 2 ms for a few frames
-            rate(mv, x);
+            rate(mv, x, 12);                         // steered hard: it settles in about half a second
             requestAnimationFrame(step);
           };
           requestAnimationFrame(step);
@@ -318,7 +323,7 @@
   // proportion to the gap (no fixed steps), so it settles to within a few milliseconds instead of hunting around.
   const IN_STEP = .006;
   const gap = (v, r) => { const d = v.duration || 1; let x = v.currentTime - r.currentTime; return x - d * Math.round(x / d); };
-  function rate(v, x) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * 6)) * 1000) / 1000; if (v.playbackRate !== k) v.playbackRate = k; }
+  function rate(v, x, g = 6) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * g)) * 1000) / 1000; if (v.playbackRate !== k) v.playbackRate = k; }
   function follow(v, ref) {
     if (v.__fol) return; v.__fol = 1;
     const step = () => {
