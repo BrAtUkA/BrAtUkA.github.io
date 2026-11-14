@@ -167,9 +167,10 @@ void main() {
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); gl.viewport(0, 0, cv.width, cv.height);
     w = Math.max(22, Math.min(40, W / 40));
     const wide = W / H > 1.1;
-    Hb = wide ? Math.min(H * .66, W * .4) : Math.min(H * .38, W * .78 / aspect);
+    const o = hero.dataset;                               // per-page placement (the home page uses the defaults)
+    Hb = wide ? Math.min(H * (+o.size || .66), W * .4) : Math.min(H * (+o.sizeN || .38), W * .78 / aspect);
     Hb *= PLATE.k;                                        // the plate box includes room for the B to turn
-    B0 = wide ? { x: W * .68, y: H * .5 } : { x: W * .5, y: H * .32 };
+    B0 = wide ? { x: W * (+o.x || .68), y: H * (+o.y || .5) } : { x: W * .5, y: H * (+o.yN || .32) };
   }
 
   const st = { scroll: 0, sv: 0, mx: .5, my: .5, vx: 0, vy: 0, sx: .5, gate: 1, phase: 0 };
