@@ -28,6 +28,15 @@
   const loops = tiles.filter(t => t.dataset.v);
   const ratio = new Map();
   const MAX = coarse ? 2 : 4;
+  // the format this device decodes in hardware (AV1 or HEVC): software decoding of several loops is what makes a phone lag
+  let PREF = '', picked = false;
+  const SRC = (b, t) => { const a = `<source src="${b}.webm${q(t)}" type='${AV1}'>`, h = `<source src="${b}.mp4${q(t)}" type='${HEVC}'>`; return PREF === 'hevc' ? h + a : a + h; };
+  (() => {
+    const mc = navigator.mediaCapabilities, cfg = ct => ({type: 'file', video: {contentType: ct, width: 1920, height: 1080, bitrate: 6e6, framerate: 30}});
+    const probe = mc && mc.decodingInfo ? Promise.all([mc.decodingInfo(cfg(AV1)).catch(() => ({})), mc.decodingInfo(cfg(HEVC)).catch(() => ({}))])
+      .then(([a, h]) => { PREF = a.supported && a.powerEfficient ? 'av1' : h.supported && h.powerEfficient ? 'hevc' : 'av1'; }) : Promise.resolve();
+    Promise.race([probe, new Promise(r => setTimeout(r, 400))]).then(() => { picked = true; schedule(); });
+  })();
   let viewing = false;                                // the viewer covers the page (not while it closes)
   function attach(t) {
     const v = t.querySelector('video'); if (!v || v.dataset.ok) return v;
@@ -35,12 +44,12 @@
     const r = t.getBoundingClientRect(), need = Math.min(r.width, r.height) * Math.min(devicePixelRatio || 1, 2);
     const tiers = t.dataset.t.split(',').map(Number), tier = tiers.find(x => x >= need * .9) || tiers[tiers.length - 1];
     const b = t.dataset.v + '-g' + tier;
-    v.innerHTML = `<source src="${b}.webm${q(t)}" type='${AV1}'><source src="${b}.mp4${q(t)}" type='${HEVC}'>`;
+    v.innerHTML = SRC(b, t);
     v.addEventListener('playing', () => v.classList.add('on'), {once: true});
     v.load(); return v;
   }
   function schedule() {
-    if (!loops.length) return;
+    if (!loops.length || !picked) return;
     const mid = innerHeight / 2;
     const want = loops.filter(t => !t.hidden && (ratio.get(t) || 0) >= .25 && !reduce && !document.hidden && !viewing)
       .map(t => { const r = t.getBoundingClientRect(); return [Math.abs(r.top + r.height / 2 - mid), t]; })
@@ -124,10 +133,10 @@
   });
 
   // ── viewer ──
-  // Everything that moves is a transform or opacity, so it runs on the compositor. Opening morphs the tile into the
-  // full image: an outer frame (the visible window) and the image inside it are scaled against each other, sampled
-  // into keyframes so the tile's crop opens out exactly. A loop keeps playing through the open: its own video element
-  // moves into the viewer, and the full-quality master takes over only once it plays in step with it.
+  // Everything that moves is a transform or opacity, run as Web Animations, so it plays on the compositor and stays
+  // smooth while the page is busy. Opening morphs the tile into the full image: an outer frame (the visible window) and
+  // the image inside it are scaled against each other, sampled into keyframes so the tile's crop opens out exactly.
+  // A loop's own playing <video> travels with it, into the viewer and back into its tile, and never stops.
   const root = document.documentElement;
   function lbOpen() { return root.classList.contains('lb-on'); }
   const lb = document.createElement('div');
@@ -176,45 +185,53 @@
   // (relative to its open size f). Sampled so the crop stays exact at every step; only transforms, so it composites.
   const openState = f => ({x: f.x, y: f.y, w: f.w, h: f.h, sc: 1});
   const tileState = (r, f) => ({x: r.left, y: r.top, w: r.width, h: r.height, sc: Math.max(r.width / f.w, r.height / f.h)});
-  function nowState(el) {                             // wherever the slide is right now (mid-drag, mid-slide, open)
+  function nowState(el) {                             // wherever the slide is right now (mid-morph, mid-drag, mid-slide, open)
+    const L = livePose(el); if (L) return L;
     if (el.__S) return {...el.__S};                 // mid-morph: the exact pose, crop included (the box alone loses the crop)
     const b = el.getBoundingClientRect();
     return {x: b.left, y: b.top, w: b.width, h: b.height, sc: b.width / el.__f.w};
   }
-  // Drive the slide between two states, frame by frame. The target is read every frame, so a closing image follows its
-  // tile if the page scrolls. Only transforms (and, for soft-edged preview tiles, a mask) change.
-  function pose(el, S) {
-    const f = el.__f, ax = S.w / f.w, ay = S.h / f.h; el.__S = S;
-    el.style.transform = `translate3d(${S.x}px, ${S.y}px, 0) scale(${ax}, ${ay})`;
-    el.__in.style.transform = `translate3d(${(f.w - f.w * S.sc / ax) / 2}px, ${(f.h - f.h * S.sc / ay) / 2}px, 0) scale(${S.sc / ax}, ${S.sc / ay})`;
+  // The morph as a Web Animation: the eased path is sampled into transform keyframes (the frame and, against it, the
+  // image), played linearly. Only transforms, so the compositor runs it; the main thread can be busy without a stutter.
+  function poseCSS(f, S) {
+    const ax = S.w / f.w, ay = S.h / f.h;
+    return [`translate3d(${S.x}px, ${S.y}px, 0) scale(${ax}, ${ay})`,
+            `translate3d(${(f.w - f.w * S.sc / ax) / 2}px, ${(f.h - f.h * S.sc / ay) / 2}px, 0) scale(${S.sc / ax}, ${S.sc / ay})`];
   }
-  function drive(el, from, to, D, ease, opt = {}) {
-    stopDrive(el);
-    const t0 = performance.now(), L = (a, b, p) => a + (b - a) * p;
-    const step = now => {
-      const k = Math.min(1, (now - t0) / D), p = ease(k), B = typeof to === 'function' ? to() : to;
-      const S = {x: L(from.x, B.x, p), y: L(from.y, B.y, p), w: L(from.w, B.w, p), h: L(from.h, B.h, p), sc: L(from.sc, B.sc, p)};
-      pose(el, S);
-      if (opt.opacity) el.style.opacity = opt.opacity(k);
-      if (opt.mask) opt.mask(S, p);
-      if (k < 1) el.__raf = requestAnimationFrame(step); else { el.__raf = 0; opt.done && opt.done(); }
-    };
-    el.__raf = requestAnimationFrame(step);
+  function pose(el, S) { const [o, n] = poseCSS(el.__f, S); el.__S = S; el.style.transform = o; el.__in.style.transform = n; }
+  const mix = (A, B, p) => ({x: A.x + (B.x - A.x) * p, y: A.y + (B.y - A.y) * p, w: A.w + (B.w - A.w) * p, h: A.h + (B.h - A.h) * p, sc: A.sc + (B.sc - A.sc) * p});
+  function morph(el, from, to, D, ease, done) {
+    stopMorph(el);
+    const N = Math.max(12, Math.round(D / 16)), O = [], I = [];
+    for (let k = 0; k <= N; k++) { const [o, n] = poseCSS(el.__f, mix(from, to, ease(k / N))); O.push({transform: o}); I.push({transform: n}); }
+    const opt = {duration: D, easing: 'linear', fill: 'forwards'};
+    const a = el.animate(O, opt), b = el.__in.animate(I, opt);
+    el.__anim = {a, b, from, to, D, ease};
+    a.onfinish = () => { if (!el.__anim || el.__anim.a !== a) return; el.__anim = null; pose(el, to); a.cancel(); b.cancel(); if (done) done(); };
   }
+  function livePose(el) { const m = el && el.__anim; return m ? mix(m.from, m.to, m.ease(Math.min(1, (m.a.currentTime || 0) / m.D))) : null; }
+  function stopMorph(el) { if (!el || !el.__anim) return; const S = livePose(el), m = el.__anim; el.__anim = null; pose(el, S); m.a.cancel(); m.b.cancel(); }
   function unhide(t) { if (!t) return; t.classList.add('back'); t.classList.remove('away'); requestAnimationFrame(() => requestAnimationFrame(() => t.classList.remove('back'))); }
-  function stopDrive(el) { if (el && el.__raf) { cancelAnimationFrame(el.__raf); el.__raf = 0; } }
-  // the home previews fade their last rows out with a mask; a slide over such a tile wears the same fade, in screen
-  // space, at strength s (0 = none, 1 = exactly the tile's), so it can blend in and out with the motion
-  function softMask(el, t) {
+  // The home previews fade their last rows out (a mask on the grid). Over such a tile the stage wears the same fade, in
+  // screen space, at strength s (0 = none, 1 = exactly the tile's), blending in and out with the motion. Only the mask's
+  // gradient changes, never the image, and the motion itself stays on the compositor.
+  let edgeS = 0, edgeRaf = 0;
+  function edge(t) {
     const g = t.closest('.preview .grid'); if (!g) return null;
     const fade = parseFloat(getComputedStyle(g.closest('.preview')).getPropertyValue('--fade')) || 200;
-    return (S, s) => {
-      el.__ms = s; const b = g.getBoundingClientRect(), ay = S.h / el.__f.h, ly = y => (y - S.y) / ay;
-      if (s < .002) { el.style.webkitMaskImage = el.style.maskImage = 'none'; return; }
-      const m = `linear-gradient(180deg, #000 ${ly(b.bottom - fade)}px, rgba(0,0,0,${1 - .82 * s}) ${ly(b.bottom - 46)}px, rgba(0,0,0,${1 - s}) ${ly(b.bottom)}px)`;
-      el.style.webkitMaskImage = el.style.maskImage = m;
+    return s => {
+      edgeS = s;
+      if (s < .002) { stage.style.webkitMaskImage = stage.style.maskImage = ''; return; }
+      const b = g.getBoundingClientRect().bottom;
+      stage.style.webkitMaskImage = stage.style.maskImage = `linear-gradient(180deg, #000 ${b - fade}px, rgba(0,0,0,${1 - .82 * s}) ${b - 46}px, rgba(0,0,0,${1 - s}) ${b}px)`;
     };
   }
+  function edgeRun(fn, sOf, D) {
+    cancelAnimationFrame(edgeRaf); if (!fn) return;
+    const t0 = performance.now(), step = now => { const k = Math.min(1, (now - t0) / D); fn(sOf(k)); if (k < 1) edgeRaf = requestAnimationFrame(step); };
+    fn(sOf(0)); edgeRaf = requestAnimationFrame(step);
+  }
+  function edgeOff() { cancelAnimationFrame(edgeRaf); edgeS = 0; stage.style.webkitMaskImage = stage.style.maskImage = ''; }
   const EASE_OUT = x => 1 - Math.pow(1 - x, 3);
   function hiURL(t, w) {
     const ws = t.dataset.ws.split(',').map(Number), need = w * Math.min(devicePixelRatio || 1, 2.5);
@@ -234,7 +251,7 @@
     const base = new Image(); base.alt = im ? im.alt : ''; base.decoding = 'async';
     base.src = im && im.currentSrc ? im.currentSrc : t.href;           // the tile's own pixels: already decoded
     inn.appendChild(base);
-    if (t.dataset.v && !reduce) adoptLoop(t, inn);
+    if (t.dataset.v && !reduce) el.__loop = t;        // its playing video joins once the slide shows (travel)
     else {
       const u = hiURL(t, f.w), path = x => new URL(x, location.href).pathname;
       if (path(u) !== path(base.src)) {
@@ -245,97 +262,29 @@
     }
     el.__f = f; el.__t = t; el.__in = inn;
     // a new <img> must decode before it can draw, even when the file is cached: wait for it (briefly) before showing
-    const dec = inn.querySelector('canvas.still') ? Promise.resolve() : (base.decode ? base.decode().catch(() => {}) : Promise.resolve());
+    const dec = base.decode ? base.decode().catch(() => {}) : Promise.resolve();
     el.__ready = Promise.race([dec, new Promise(r => setTimeout(r, 150))]);
     return el;
   }
-  // A loop never leaves its tile (moving a video element drops its decoded frames, and it would re-buffer). Opening:
-  // the tile's video pauses where it is; the viewer shows a snapshot of its current frame at once, then plays its own
-  // copy of the same, already cached file from that moment; the full-quality master syncs in after. Closing: the tile's
-  // video seeks to the viewer's moment (inside data it already has) and the hand-over waits for its first new frame.
-  const snap = (src, parent, cls) => {
-    if (!src || src.readyState < 2 || !src.videoWidth) return null;
-    const c = document.createElement('canvas'); c.width = src.videoWidth; c.height = src.videoHeight; c.className = cls;
-    try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); parent.appendChild(c); return c; } catch (e) { return null; }
+  // ── loops in the viewer ──
+  // One element travels: the tile's own <video>, already playing, moves into the viewer (moveBefore keeps its state; a
+  // same-task re-insert keeps it playing too) and back into its tile when the image lands, still playing. It never
+  // pauses, reloads or needs syncing on the way in or out. Full quality is a second video, created only once the morph
+  // has finished (nothing competes with the animation), locked onto the travelling one's clock and faded in over it.
+  // The travelling one plays on underneath, so if full quality runs out of data it shows through on the same frame.
+  // At most two videos decode while viewing; the page's own loops rest (see schedule).
+  const mov = (parent, node, next = null) => {
+    if (parent.moveBefore && node.isConnected && parent.isConnected) { try { parent.moveBefore(node, next); return; } catch (e) {} }
+    parent.insertBefore(node, next);
   };
-  const frameOf = (v, max) => new Promise(res => {          // resolves once v is really playing (its clock has moved with
-    const c0 = v.currentTime, t0 = performance.now();          // frame data ready), or after max ms. (The frame callback
-    const tick = () => {                                      // does not fire while the video is covered, so poll instead.)
-      if ((!v.paused && v.readyState >= 3 && v.currentTime !== c0) || performance.now() - t0 > max) return res();
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
-  function adoptLoop(t, inn) {
-    const tv = t.querySelector('video');
-    const ready = tv && tv.readyState >= 2 && tv.currentSrc;
-    const t0 = ready ? tv.currentTime : 0;
-    if (ready) { snap(tv, inn, 'still'); tv.dataset.keep = 1; if (tv.paused) tv.play().catch(() => {}); follow(tv, () => shown(inn.parentNode)); }   // keeps playing, unseen, in step
-    if (!ready && tv) {                              // never loaded: load it now and keep it in step, unseen, for the hand-back
-      attach(t); tv.dataset.keep = 1; tv.play().catch(() => {});
-      follow(tv, () => shown(inn.parentNode));
-    }
-    let vv = null;
-    if (ready) {                                     // the viewer's own copy of the tile's (cached) file
-      vv = document.createElement('video'); vv.className = 'copy'; vv.muted = true; vv.loop = true; vv.playsInline = true; vv.preload = 'auto'; vv.src = tv.currentSrc;
-      inn.appendChild(vv);
-      vv.addEventListener('loadeddata', () => {
-        vv.currentTime = t0;
-        vv.addEventListener('seeked', () => vv.play().then(() => frameOf(vv, 600)).then(() => { vv.classList.add('on'); const st = inn.querySelector('canvas.still'); if (st) setTimeout(() => st.remove(), 400);}).catch(() => {}), {once: true});
-      }, {once: true});
-    }
-    const mv = document.createElement('video'); mv.className = 'master'; mv.muted = true; mv.loop = true; mv.playsInline = true; mv.preload = 'auto';
-    mv.innerHTML = `<source src="${t.dataset.v}-m.webm${q(t)}" type='${AV1}'><source src="${t.dataset.v}-m.mp4${q(t)}" type='${HEVC}'>`;
-    inn.appendChild(mv);
-    // Sync like a player. The clock to match: the viewer's copy once it plays (before that, the tile's own video, playing
-    // on in step underneath). One seek slightly ahead, then the rate is steered until both show the same frame (within
-    // 2 ms), and the master comes in with a short fade: same frame, so the fade only eases the step in sharpness.
-    // The copy keeps playing underneath, so if the master runs out of data (a slow connection) the copy shows through
-    // at once, on the same frame, and the master cuts back in once it has caught up again.
-    const ref = () => (vv && vv.classList.contains('on') && !vv.paused ? vv : tv && !tv.paused && tv.readyState >= 2 ? tv : null);
-    const drift = () => { const r = ref(), d = mv.duration || 1; if (!r) return 0; let x = mv.currentTime - r.currentTime; x -= d * Math.round(x / d); return x; };
-    const sync = () => {
-      if (!mv.isConnected) return;
-      const r = ref();
-      mv.currentTime = ((r ? r.currentTime : t0) + .3) % (mv.duration || 1e9);
-      mv.addEventListener('seeked', () => {
-        mv.play().catch(() => {});
-        let ok = 0, seek = performance.now(), s0 = seek, stuck = 0, last = -1, vlast = -1;
-        const el = inn.parentNode;
-        const cut = () => { mv.playbackRate = 1; ok = 0; mv.classList.add('on'); hq(el); };
-        const loop = () => {
-          if (!mv.isConnected) return;
-          const r = ref(), now = performance.now(), on = mv.classList.contains('on'), live = !mv.paused && mv.readyState >= 3;
-          stuck = mv.currentTime === last && !mv.paused ? stuck + 1 : 0; last = mv.currentTime;    // frames its clock has not moved
-          const moving = vv && vv.currentTime !== vlast; if (vv) vlast = vv.currentTime;            // ...while the copy's has
-          if (on) {
-            if (stuck >= 5 && mv.readyState < 3 && r && r === vv && moving) {   // out of data (not a passing decode hiccup)            // hide it at once: the copy underneath is on the same frame and keeps moving
-              mv.style.transition = 'none'; mv.classList.remove('on'); requestAnimationFrame(() => { mv.style.transition = ''; });
-              s0 = now; unhq(el);
-            } else if (live && r) rate(mv, drift(), 3);     // stays in step
-          } else if (live) {
-            const x = drift();
-            const ready = ahead(mv) >= Math.min(2, (mv.duration || 2) - .2);     // enough data to play on: no flapping
-            if (!r) { if (ready) cut(); }           // nothing on screen to match
-            else if (Math.abs(x) > .4) {             // too far to steer (a missed seek, or after running dry): jump close
-              if (now - seek > 700) { seek = now; mv.currentTime = (r.currentTime + .12) % (mv.duration || 1e9); }
-            } else {
-              if (Math.abs(x) < .002) { if (++ok >= 4 && ready) cut(); } else ok = 0;      // held within 2 ms for a few frames
-              rate(mv, x, 12);                       // steered hard: it settles in about half a second
-            }
-            if (!mv.classList.contains('on') && ready && now - s0 > 6000) cut();          // never stuck on the lower quality
-          }
-          requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
-      }, {once: true});
-    };
-    mv.addEventListener('canplay', sync, {once: true});
+  function travel(el) {
+    const t = el.__loop; if (!t || el.__tv) return;
+    const tv = t.querySelector('video'); if (!tv) return;
+    if (!tv.dataset.ok) attach(t);                   // never loaded: it starts now (the tile's image shows until its first frame)
+    tv.dataset.keep = 1; if (tv.paused) tv.play().catch(() => {});
+    tv.__home = {parent: tv.parentNode, next: tv.nextSibling};
+    mov(el.__in, tv); el.__tv = tv;
   }
-  // nudge a video's playback rate so it shows the same moment as ref() (both loop over the same window)
-  // Both encodes of a loop share their timestamps, so matching clocks means matching frames. The rate is steered in
-  // proportion to the gap (no fixed steps), so it settles to within a few milliseconds instead of hunting around.
-  const IN_STEP = .006;
   // seconds of data a looping video has ready from where it plays (counting a wrap to the start, all of it if complete)
   function ahead(v) {
     const b = v.buffered, ct = v.currentTime, d = v.duration || 0; let a = 0;
@@ -345,43 +294,57 @@
     }
     return a;
   }
-  const gap = (v, r) => { const d = v.duration || 1; let x = v.currentTime - r.currentTime; return x - d * Math.round(x / d); };
-  function rate(v, x, g = 6) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * g)) * 1000) / 1000; if (v.playbackRate !== k) v.playbackRate = k; }
-  function follow(v, ref) {
-    if (v.__fol) return; v.__fol = 1;
-    const step = () => {
-      if (!v.dataset.keep) { v.playbackRate = 1; v.__fol = 0; return; }
-      const r = ref();
-      if (r && !r.paused && r.readyState >= 2 && v.readyState >= 2 && v.duration) {
-        const x = gap(v, r);
-        if (Math.abs(x) > 2.5) v.currentTime = (r.currentTime + .25) % v.duration; else rate(v, x);
+  // steer a video's rate in proportion to its lead x (both encodes share timestamps: same clock, same frame)
+  function rate(v, x, g) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * g)) * 1000) / 1000; if (v.playbackRate !== k) v.playbackRate = k; }
+  function startMaster(el) {
+    const t = el.__loop, tv = el.__tv; if (!t || !tv || el.__mv || !el.isConnected) return;
+    const mv = document.createElement('video'); mv.className = 'master'; mv.muted = true; mv.loop = true; mv.playsInline = true; mv.preload = 'auto';
+    mv.innerHTML = SRC(t.dataset.v + '-m', t);
+    el.__in.appendChild(mv); el.__mv = mv;
+    const dur = () => mv.duration || 1e9, live = v => !v.paused && v.readyState >= 3;
+    const drift = () => { const d = mv.duration || 1, x = mv.currentTime - tv.currentTime; return x - d * Math.round(x / d); };
+    let on = false, steer = false, ok = 0, seek = 0, s0 = 0, stuck = 0, last = -1, tlast = -1;
+    const cut = () => { mv.playbackRate = 1; ok = 0; on = true; mv.classList.add('on'); hq(el); };
+    const drop = () => { mv.style.transition = 'none'; mv.classList.remove('on'); requestAnimationFrame(() => { mv.style.transition = ''; }); on = false; s0 = performance.now(); unhq(el); };
+    const tick = () => {
+      if (!mv.isConnected) return;
+      const now = performance.now(), ref = live(tv) ? tv : null;
+      stuck = mv.currentTime === last && !mv.paused ? stuck + 1 : 0; last = mv.currentTime;
+      const moving = tv.currentTime !== tlast; tlast = tv.currentTime;
+      if (on) {
+        if (stuck >= 5 && mv.readyState < 3 && ref && moving) drop();               // out of data: fall back, same frame
+        else if (ref && live(mv)) {                                                 // in step; steered only if it drifts
+          const x = drift();
+          if (steer || Math.abs(x) > .008) { steer = Math.abs(x) > .002; if (steer) rate(mv, x, 6); else mv.playbackRate = 1; }
+        }
+      } else if (live(mv)) {
+        const ready = ahead(mv) >= Math.min(2, (mv.duration || 2) - .2);           // enough data to play on: no flapping
+        if (!ref) { if (ready) cut(); }
+        else {
+          const x = drift();
+          if (Math.abs(x) > .4) { if (now - seek > 700) { seek = now; mv.currentTime = (tv.currentTime + .12) % dur(); } }   // too far to steer
+          else { if (Math.abs(x) < .002) { if (++ok >= 4 && ready) cut(); } else ok = 0; rate(mv, x, 12); }      // lock within 2 ms
+        }
+        if (!on && ready && now - s0 > 6000) cut();                                  // never stuck on the lighter one
       }
-      requestAnimationFrame(step);
+      requestAnimationFrame(tick);
     };
-    step();
+    mv.addEventListener('canplay', () => {
+      if (!mv.isConnected) return;
+      mv.currentTime = (tv.currentTime + .3) % dur();
+      mv.addEventListener('seeked', () => { mv.play().catch(() => {}); s0 = seek = performance.now(); requestAnimationFrame(tick); }, {once: true});
+    }, {once: true});
   }
-  function playing(el) {                              // the video the viewer is showing right now, if any
-    if (!el) return null;
-    const m = el.querySelector('video.master.on'), c = el.querySelector('video.copy.on');
-    return m && !m.paused ? m : c && !c.paused ? c : (m || c);
-  }
-  function shown(el) {                                // the video actually on screen in the viewer (null: a still is)
-    if (!el) return null;
-    const m = el.querySelector('video.master.on'), c = el.querySelector('video.copy.on');
-    return m && !m.paused ? m : c && !c.paused ? c : null;
-  }
-  function unload(el) { el.querySelectorAll('video').forEach(x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); }); }
-  function freeze(el) { const v = playing(el); if (v) snap(v, el.__in, 'still'); }
-  function release(el) {                              // stop the viewer's videos; the tile's own video is already in step
-    if (!el) return Promise.resolve();
-    el.querySelectorAll('video').forEach(x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); });
-    const tv = el.__t && el.__t.querySelector('video');
-    if (!tv || !tv.dataset.ok) return Promise.resolve();
-    delete tv.dataset.keep;
-    return (tv.paused ? tv.play().catch(() => {}) : Promise.resolve()).then(() => frameOf(tv, 1200)).then(() => {
-      tv.style.transition = 'none'; tv.classList.add('on');            // shown at once (not its first-load fade)
-      requestAnimationFrame(() => { tv.style.transition = ''; });
-    });
+  const unloadV = x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); };
+  function release(el) {                              // full quality stops; the travelling video goes home, still playing
+    if (!el) return;
+    if (el.__mv) { unloadV(el.__mv); el.__mv = null; }
+    const tv = el.__tv; if (!tv) return; el.__tv = null;
+    const h = tv.__home; tv.__home = null; delete tv.dataset.keep; tv.playbackRate = 1;
+    if (h && h.parent.isConnected) mov(h.parent, tv, h.next && h.next.parentNode === h.parent ? h.next : null);
+    if (!tv.paused && tv.readyState >= 2 && !tv.classList.contains('on')) {
+      tv.style.transition = 'none'; tv.classList.add('on'); requestAnimationFrame(() => { tv.style.transition = ''; });
+    }
   }
   function label(f) {
     const t = list[i];
@@ -404,17 +367,18 @@
     stage.appendChild(el); label(el.__f);
     if (old) {
       unhide(old.__t); list[i].classList.add('away');
-      if (reduce || !dir) { release(old); old.remove(); }
+      if (reduce || !dir) { release(old); old.remove(); travel(el); startMaster(el); }
       else {
         busy = true;
         const W = innerWidth, of = old.__f, nf = el.__f, ox = old.__dx || 0;
         at(el, nf, dir * W + ox);                  // waiting off screen until it can draw
         el.__ready.then(() => {
           if (cur !== el) return;
+          travel(el);
           old.animate([{transform: `translate3d(${of.x + ox}px, ${of.y}px, 0)`}, {transform: `translate3d(${of.x - dir * W}px, ${of.y}px, 0)`}], {...SLIDE, fill: 'forwards'})
             .onfinish = () => { release(old); old.remove(); };
           at(el, nf);
-          el.animate([{transform: `translate3d(${nf.x + dir * W + ox}px, ${nf.y}px, 0)`}, {transform: `translate3d(${nf.x}px, ${nf.y}px, 0)`}], SLIDE).onfinish = () => { busy = false; };
+          el.animate([{transform: `translate3d(${nf.x + dir * W + ox}px, ${nf.y}px, 0)`}, {transform: `translate3d(${nf.x}px, ${nf.y}px, 0)`}], SLIDE).onfinish = () => { busy = false; startMaster(el); };
         });
       }
     }
@@ -429,8 +393,10 @@
     lb.classList.toggle('solo', list.length < 2);
     token++;
     ui.getAnimations().forEach(a => a.cancel());
-    stage.querySelectorAll('.lb-slide').forEach(x => { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); unhide(x.__t); x.remove(); });
+    stage.querySelectorAll('.lb-slide').forEach(x => { stopMorph(x); x.getAnimations().forEach(a => a.cancel()); release(x); unhide(x.__t); x.remove(); });
+    edgeOff(); if (offScroll) offScroll();
     busy = false; bg.style.opacity = ''; lb.classList.remove('closing');   // nothing from a previous view may block this one
+    const tv0 = t.dataset.v && !reduce && t.querySelector('video'); if (tv0) tv0.dataset.keep = 1;   // its video is about to travel: never paused
     opener = t; viewing = true; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
     const r = t.getBoundingClientRect();
     cur = null; show(list.indexOf(t), 0); zone();
@@ -439,14 +405,13 @@
     el.__ready.then(() => {                           // decoded: from here on there is always something on screen
       if (my !== token || cur !== el) return;
       void lb.offsetWidth; lb.classList.add('bg-on');      // the backdrop is a CSS fade on this one class: no state to get stuck
-      if (reduce) { el.style.visibility = ''; t.classList.add('away'); return; }
-      const mask = softMask(el, t), from = tileState(r, f);
-      pose(el, from); if (mask) mask(from, 1);              // first frame: exactly the tile
+      travel(el);                                      // the tile's video joins, playing, in the same frame the tile hides
+      if (reduce) { el.style.visibility = ''; t.classList.add('away'); startMaster(el); return; }
+      const ed = edge(t), from = tileState(r, f);
+      pose(el, from); if (ed) ed(1);                   // first frame: exactly the tile
       el.style.visibility = ''; t.classList.add('away');
-      drive(el, from, openState(f), 560, EASE_OPEN, {
-        mask: mask && ((S, p) => mask(S, 1 - Math.min(1, p / .6))),          // the soft edge melts away as it grows
-        done: () => { if (cur === el) { at(el, f); el.__in.style.transform = ''; if (mask) mask(openState(f), 0); } }
-      });
+      morph(el, from, openState(f), 560, EASE_OPEN, () => { if (cur === el) { at(el, f); el.__in.style.transform = ''; startMaster(el); } });
+      if (ed) edgeRun(ed, k => 1 - Math.min(1, EASE_OPEN(k) / .6), 560);       // the soft edge melts away as it grows
       ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
       st.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
     });
@@ -454,69 +419,54 @@
     lb.querySelector('.lb-x').focus({preventScroll: true});
     schedule(); idle();
   }
+  let offScroll = null;
   function shut() {
     if (!lbOpen() || !cur) return;
     const el = cur, t = el.__t, my = ++token; cur = null; busy = false;
-    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); unhide(x.__t); x.remove(); } });
+    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { stopMorph(x); x.getAnimations().forEach(a => a.cancel()); release(x); unhide(x.__t); x.remove(); } });
     const finish = () => {
-      if (my !== token) { el.remove(); unhide(t); return; }   // opened again meanwhile: leave it alone
+      if (offScroll) offScroll();
+      if (my !== token) { release(el); el.remove(); unhide(t); return; }   // opened again meanwhile: leave it alone
+      edgeOff();
       lb.classList.remove('open', 'closing'); root.classList.remove('lb-on');
       ui.getAnimations().forEach(a => a.cancel());
       document.dispatchEvent(new Event('viewer:close')); schedule();
     };
     if (el.style.visibility === 'hidden') {          // closed before it ever showed: nothing to animate back
-      release(el); el.remove(); unhide(t); lb.classList.remove('bg-on'); finish(); return;
+      release(el); el.remove(); unhide(t); lb.classList.remove('bg-on');
+      const tv = t.querySelector('video'); if (tv) delete tv.dataset.keep;
+      finish(); return;
     }
     ui.getAnimations().forEach(a => a.cancel());
     ui.animate([{opacity: 0}, {opacity: 0}], {duration: 600, fill: 'forwards'});      // the caption leaves at once
     lb.classList.add('closing'); bg.style.opacity = ''; lb.classList.remove('bg-on');
-    viewing = false; schedule();                    // the page's loops carry on while this one glides home
-    stopDrive(el);
+    viewing = false; if (!coarse) schedule();       // desktop: the page's loops carry on during the glide (phones: once it lands)
     const f = el.__f, from = nowState(el), r = t.getBoundingClientRect();
-    el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
+    stopMorph(el); el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
     const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
-    const soft = !!t.closest('.preview .grid');
-    const mask = softMask(el, t), tv = t.querySelector('video');
+    const soft = !!t.closest('.preview .grid'), ed = edge(t);
     const land = () => {                            // exactly over its tile now: hand over
-      if (!tv || !tv.dataset.ok) {                  // a still
-        release(el).then(() => {
-          unhide(t);
-          // a soft-edged tile is matched exactly (same fade): swap in one frame. Cross-fading two half-transparent copies
-          // would stack them and weaken the fade for a moment. Opaque tiles cross-fade, which hides any tiny difference.
-          if (reduce || soft) { el.remove(); finish(); return; }
-          el.animate([{opacity: 1}, {opacity: 0}], {duration: 140, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
-        });
-        return;
-      }
-      // a loop: the tile's own video has played on underneath, steered onto the viewer's clock. The moment it shows the
-      // same frame, the tile takes over in one frame: no freeze, no fade. (Still playing while it waits, never stuck.)
-      const t1 = performance.now(); let froze = false;
-      if (tv.paused) tv.play().catch(() => {});
-      const swap = () => {
-        delete tv.dataset.keep; tv.playbackRate = 1;
-        tv.style.transition = 'none'; tv.classList.add('on'); unhide(t);
-        el.remove(); unload(el); requestAnimationFrame(() => { tv.style.transition = ''; });
-        finish();
-      };
-      const wait = () => {
-        if (my !== token) return;
-        if (!reduce) { const S = tileState(t.getBoundingClientRect(), f); pose(el, S); if (mask) mask(S, 1); }   // stays on it if the page moves
-        const r = shown(el), live = !tv.paused && tv.readyState >= 3, waited = performance.now() - t1;
-        if ((live && (!r || Math.abs(gap(tv, r)) < IN_STEP * 2)) || (live && waited > 400) || waited > 1500) return swap();
-        if (!live && waited > 400 && !froze) { froze = true; freeze(el); }
-        requestAnimationFrame(wait);
-      };
-      wait();
+      if (el.__tv) { release(el); unhide(t); el.remove(); finish(); return; }   // a loop: its own video goes home, playing (same element, same frame)
+      release(el); unhide(t);
+      // a soft-edged tile is matched exactly (same fade): swap in one frame. Cross-fading two half-transparent copies
+      // would stack them and weaken the fade for a moment. Opaque tiles cross-fade, which hides any tiny difference.
+      if (reduce || soft) { el.remove(); finish(); return; }
+      el.animate([{opacity: 1}, {opacity: 0}], {duration: 140, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
     };
+    if (reduce) return land();
     if (onScreen) {
-      const s0 = el.__ms || 0;
-      drive(el, from, () => tileState(t.getBoundingClientRect(), f), 520, EASE_OUT, {
-        mask: mask && ((S, p) => mask(S, s0 + (1 - s0) * Math.max(0, (p - .35) / .65))),     // the soft edge grows in with the glide, from wherever it is
-        done: land
-      });
+      const s0 = edgeS, go = (S, D) => morph(el, S, tileState(t.getBoundingClientRect(), f), D, EASE_OUT, land);
+      go(from, 520);
+      if (ed) edgeRun(ed, k => s0 + (1 - s0) * Math.max(0, (EASE_OUT(k) - .35) / .65), 520);     // the soft edge grows in with the glide
+      // the page scrolled during the glide: carry on from where it is, towards where the tile is now
+      let pend = 0;
+      const onScroll = () => { if (pend || !el.__anim) return; pend = requestAnimationFrame(() => { pend = 0; const m = el.__anim; if (!m || my !== token) return; go(livePose(el), Math.max(60, m.D - (m.a.currentTime || 0))); }); };
+      addEventListener('scroll', onScroll, {passive: true});
+      offScroll = () => { removeEventListener('scroll', onScroll); cancelAnimationFrame(pend); offScroll = null; };
     } else {                                        // its tile is elsewhere: fade away where it is, about its centre
       const to = {x: from.x + from.w * .02, y: from.y + from.h * .02, w: from.w * .96, h: from.h * .96, sc: from.sc * .96};
-      drive(el, from, to, 340, EASE_OUT, {opacity: k => 1 - k, done: () => { unhide(t); release(el); el.remove(); finish(); }});
+      morph(el, from, to, 340, EASE_OUT, () => { unhide(t); release(el); el.remove(); finish(); });
+      el.animate([{opacity: 1}, {opacity: 0}], {duration: 340, easing: 'cubic-bezier(.33,1,.68,1)', fill: 'forwards'});
     }
     (opener && opener === t ? opener : t).focus({preventScroll: true});
   }
@@ -584,13 +534,13 @@
     dx = e.clientX - sx; dy = e.clientY - sy;
     if (!axis && Math.hypot(dx, dy) > 8) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : (dy > 0 ? 'y' : 'n');
     if (!axis || axis === 'n') return;
-    if (!moved && cur.__raf) { stopDrive(cur); at(cur, cur.__f); cur.__in.style.transform = ''; }   // a drag takes over a still-opening image
+    if (!moved && cur.__anim) { stopMorph(cur); at(cur, cur.__f); cur.__in.style.transform = ''; }   // a drag takes over a still-opening image
     moved = true; if (!pend) pend = requestAnimationFrame(paint);
   });
   stage.addEventListener('pointerup', e => {
     if (!down) return; down = false;
     if (!cur) return;
-    if (moved) stopDrive(cur);
+    if (moved) stopMorph(cur);
     if (pend) { cancelAnimationFrame(pend); paint(); }
     if (ptype === 'mouse' || !axis || axis === 'n') {
       if (!moved && cur) {
