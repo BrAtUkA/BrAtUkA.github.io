@@ -272,9 +272,11 @@
     el.querySelectorAll('video').forEach(x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); });
     if (!tv || !tv.currentSrc || tv.readyState < 1) return Promise.resolve();
     return new Promise(res => {
-      const go = () => tv.play().then(() => frameOf(tv, 1500)).then(res).catch(res);
-      if (at != null && tv.duration) { tv.currentTime = at % tv.duration; tv.addEventListener('seeked', go, {once: true}); setTimeout(res, 1500); }
-      else go();
+      const go = () => tv.play().then(() => frameOf(tv, 700)).then(res).catch(res);
+      const to = at != null && tv.duration ? at % tv.duration : null;
+      const have = to != null && [...Array(tv.buffered.length).keys()].some(k => tv.buffered.start(k) <= to && to <= tv.buffered.end(k) - .1);
+      if (have) { tv.currentTime = to; tv.addEventListener('seeked', go, {once: true}); setTimeout(res, 900); }
+      else go();                                     // not buffered there: resume where it paused (instant); the cross-fade covers it
     });
   }
   function label(f) {
