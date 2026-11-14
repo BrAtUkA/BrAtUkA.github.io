@@ -183,9 +183,10 @@ void main() {
   let tx = .5, ty = .5, lastAct = -1e9, t0 = 0, last = 0, ready = false;
   const clamp01 = (x) => Math.min(1, Math.max(0, x));
   const outCubic = (x) => 1 - Math.pow(1 - clamp01(x), 3), outQuart = (x) => 1 - Math.pow(1 - clamp01(x), 4);
-  hero.addEventListener('pointermove', (e) => { const r = hero.getBoundingClientRect();
+  // the glass follows the pointer anywhere on the page while the hero is on screen (positions past its edges clamp)
+  addEventListener('pointermove', (e) => { const r = hero.getBoundingClientRect(); if (r.bottom < 0) return;
     tx = clamp01((e.clientX - r.left) / r.width); ty = clamp01((e.clientY - r.top) / r.height); lastAct = performance.now(); }, { passive: true });
-  hero.addEventListener('pointerleave', () => { tx = .5; ty = .5; });
+  document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) { tx = .5; ty = .5; } });
   addEventListener('scroll', () => { lastAct = performance.now(); }, { passive: true });
 
   // critically damped spring: eases in and out, never overshoots, settles in about 4/omega seconds

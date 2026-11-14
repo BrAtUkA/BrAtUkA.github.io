@@ -2,7 +2,7 @@
    work without this file; it adds:
    - fade-in of each tile's image over its blurred placeholder (the tile already has its final shape)
    - the masonry wall (shortest-column placement, re-laid out only when the column count changes)
-   - the game filter: logo toggles (none on = everything); tiles glide to their new places
+   - the game filter: text tabs with a sliding underline; tiles glide to their new places
    - loops: a few at a time (the ones nearest the middle of the screen), sized to the tile, paused off screen
    - the viewer: opens from the tile, already sharp (the tile's own image first, the large one cross-fades in once
      decoded), swipe or arrow keys to move, swipe down / Esc / back button to close */
@@ -77,16 +77,18 @@
     new ResizeObserver(() => wall.__layout()).observe(wall);
   }
 
-  // ── game filter: independent toggles. None on = everything (the default); any on = only those games. ──
-  const games = document.querySelector('.games');
-  if (games && walls[0]) {
-    const wall = walls[0], items = wall.__items, btns = [...games.querySelectorAll('button')];
-    const apply = (on, animate) => {
-      btns.forEach(b => b.setAttribute('aria-pressed', on.has(b.dataset.f)));
-      games.classList.toggle('picked', on.size > 0);
+  // ── game filter: one tab at a time ("All" by default); the red line slides to the chosen tab ──
+  const tabs = document.querySelector('.tabs');
+  if (tabs && walls[0]) {
+    const wall = walls[0], items = wall.__items, btns = [...tabs.querySelectorAll('button')], line = tabs.querySelector('.tabs-line');
+    const mark = b => { line.style.width = b.offsetWidth + 'px'; line.style.transform = `translateX(${b.offsetLeft}px)`; };
+    const apply = (f, animate) => {
+      const b = btns.find(x => x.dataset.f === f) || btns[0];
+      btns.forEach(x => x.setAttribute('aria-selected', x === b)); mark(b);
+      b.scrollIntoView({block: 'nearest', inline: 'nearest', behavior: animate ? 'smooth' : 'auto'});
       const first = new Map();
       if (animate) for (const t of items) { if (t.hidden) continue; const r = t.getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) first.set(t, r); }
-      for (const t of items) t.hidden = on.size > 0 && !on.has(t.dataset.set);
+      for (const t of items) t.hidden = f !== 'all' && t.dataset.set !== f;
       wall.__layout(true);
       if (!animate) return;
       for (const t of items) {
@@ -97,34 +99,66 @@
         else t.animate([{opacity: 0, transform: 'scale(.97)'}, {opacity: 1, transform: 'none'}], {duration: 460, easing: 'ease-out'});
       }
     };
-    const current = () => new Set(btns.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.f));
-    games.addEventListener('click', e => {
-      const b = e.target.closest('button'); if (!b) return;
-      const on = current(); on.has(b.dataset.f) ? on.delete(b.dataset.f) : on.add(b.dataset.f);
-      apply(on, !reduce);
-      try { history.replaceState(history.state, '', on.size ? '#' + [...on].join('+') : location.pathname); } catch (err) {}
+    tabs.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b || b.getAttribute('aria-selected') === 'true') return;
+      apply(b.dataset.f, !reduce);
+      try { history.replaceState(history.state, '', b.dataset.f === 'all' ? location.pathname : '#' + b.dataset.f); } catch (err) {}
     });
-    const h = new Set(location.hash.slice(1).split('+').filter(f => btns.some(b => b.dataset.f === f)));
-    if (h.size) apply(h, false);
+    tabs.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const k = btns.indexOf(document.activeElement); if (k < 0) return;
+      const n = btns[(k + (e.key === 'ArrowRight' ? 1 : -1) + btns.length) % btns.length]; n.focus(); n.click(); e.preventDefault();
+    });
+    const h = location.hash.slice(1);
+    apply(btns.some(b => b.dataset.f === h) ? h : 'all', false);
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => mark(btns.find(b => b.getAttribute('aria-selected') === 'true')));
+    new ResizeObserver(() => mark(btns.find(b => b.getAttribute('aria-selected') === 'true'))).observe(tabs);
   }
 
+  // ── in-page links glide (eased, length scaled to the distance) and stop short of the top edge ──
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#"]'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+    const id = a.getAttribute('href').slice(1), el = id ? document.getElementById(id) : null; if (!el) return;
+    e.preventDefault();
+    const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    const from = scrollY, to = Math.max(0, Math.min(document.documentElement.scrollHeight - innerHeight, from + el.getBoundingClientRect().top - margin));
+    try { history.pushState(null, '', '#' + id); } catch (err) {}
+    if (reduce) { scrollTo(0, to); return; }
+    const d = to - from, T = Math.min(1300, Math.max(550, Math.abs(d) * .45)), t0 = performance.now();
+    const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    const step = now => { const k = Math.min(1, (now - t0) / T); scrollTo(0, from + d * ease(k)); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+
   // ── viewer ──
+  function lbOpen() { return document.documentElement.classList.contains('lb-lock'); }
+  // The tile's own image morphs into the viewer: one element moves from the tile's box (cropped exactly like the tile:
+  // scaled to cover it, clipped to it) to the full uncropped image, and back again on close. Moving between pieces
+  // slides them sideways; on phones the slide follows the finger, and a downward drag closes.
   const lb = document.createElement('div');
   lb.className = 'lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Viewer');
-  lb.innerHTML = `<div class="lb-bar"><div class="lb-info"><span class="ct" aria-live="polite"></span><span class="cap"></span></div>
-    <button class="lb-btn x" type="button" aria-label="Close">${svg(ICON.x)}</button></div>
-    <div class="lb-stage"><button class="lb-btn lb-nav pv" type="button" aria-label="Previous">${svg(ICON.l)}</button><button class="lb-btn lb-nav nx" type="button" aria-label="Next">${svg(ICON.r)}</button></div>`;
+  lb.innerHTML = `<div class="lb-bg"></div><div class="lb-stage"></div>
+    <div class="lb-ui"><p class="lb-cap"><span class="what"></span><span class="when"></span></p>
+    <button class="lb-x" type="button" aria-label="Close">${svg(ICON.x, 1.25)}</button>
+    <button class="lb-sr pv" type="button" aria-label="Previous">${svg(ICON.l)}</button><button class="lb-sr nx" type="button" aria-label="Next">${svg(ICON.r)}</button></div>`;
   document.body.appendChild(lb);
-  const stage = lb.querySelector('.lb-stage'), ct = lb.querySelector('.ct'), cap = lb.querySelector('.cap');
-  let list = [], i = 0, cur = null, from = null, busy = false;
-  function lbOpen() { return lb.classList.contains('open'); }
-  const pad2 = n => String(n).padStart(2, '0');
+  const stage = lb.querySelector('.lb-stage'), bg = lb.querySelector('.lb-bg'), what = lb.querySelector('.what'), when = lb.querySelector('.when');
+  let list = [], i = 0, cur = null, busy = false, opener = null;
+  const OPEN = {duration: 560, easing: 'cubic-bezier(.22,.8,.18,1)'}, SLIDE = {duration: 480, easing: 'cubic-bezier(.25,.8,.25,1)'};
 
-  function fit(t) {
-    const sw = stage.clientWidth, sh = stage.clientHeight, ar = (+t.dataset.w || 16) / (+t.dataset.h || 9);
-    const wide = fine && sw > 640, px = wide ? 96 : 0, pt = wide ? 8 : 0, pb = wide ? 40 : 0;
-    let w = Math.min(sw - px * 2, (sh - pt - pb) * ar), h = w / ar;
-    return {w, h, x: (sw - w) / 2, y: pt + (sh - pt - pb - h) / 2};
+  function fit(t) {                                  // the image's box: as large as the screen allows, thin borders
+    const W = innerWidth, H = innerHeight, ar = (+t.dataset.w || 16) / (+t.dataset.h || 9);
+    const wide = W > 640, side = wide ? 16 : 0, top = wide ? 16 : 0, bot = wide ? 46 : 0;
+    let w = Math.min(W - side * 2, (H - top - bot) * ar), h = w / ar;
+    if (!wide && h > H - 120) { h = H - 120; w = h * ar; }
+    return {w, h, x: (W - w) / 2, y: top + (H - top - bot - h) / 2};
+  }
+  const place = (el, f, dx = 0, dy = 0, k = 1) => { el.style.transform = `translate(${f.x + dx}px, ${f.y + dy}px) scale(${k})`; };
+  function tileState(t, f) {                          // where the slide must start/end to look exactly like the tile
+    const r = t.getBoundingClientRect(), s = Math.max(r.width / f.w, r.height / f.h);
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const iw = (f.w - r.width / s) / 2, ih = (f.h - r.height / s) / 2, rad = (parseFloat(getComputedStyle(t).borderRadius) || 0) / s;
+    return {transform: `translate(${cx - f.w / 2}px, ${cy - f.h / 2}px) scale(${s})`, clipPath: `inset(${ih}px ${iw}px ${ih}px ${iw}px round ${rad}px)`};
   }
   function hiURL(t, w) {
     const ws = t.dataset.ws.split(',').map(Number), need = w * Math.min(devicePixelRatio || 1, 2.5);
@@ -137,19 +171,19 @@
 
   function slide(t) {
     const f = fit(t), el = document.createElement('div');
-    el.className = 'lb-slide'; Object.assign(el.style, {width: f.w + 'px', height: f.h + 'px', transform: `translate(${f.x}px, ${f.y}px)`});
+    el.className = 'lb-slide'; el.style.width = f.w + 'px'; el.style.height = f.h + 'px'; place(el, f);
     const im = t.querySelector('img');
-    const base = new Image(); base.alt = im ? im.alt : ''; base.decoding = 'async';
-    base.src = im && im.currentSrc ? im.currentSrc : t.href;          // already decoded in the tile: shows at once
+    const base = new Image(); base.alt = im ? im.alt : ''; base.decoding = 'sync';
+    base.src = im && im.currentSrc ? im.currentSrc : t.href;           // the tile's own (already decoded) pixels
     el.appendChild(base);
     if (t.dataset.v && !reduce) {
       const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
       v.innerHTML = `<source src="${t.dataset.v}-m.webm${q(t)}" type='${AV1}'><source src="${t.dataset.v}-m.mp4${q(t)}" type='${HEVC}'>`;
+      const tv = t.querySelector('video'); if (tv && !tv.paused) { try { v.currentTime = tv.currentTime; } catch (e) {} }
       v.addEventListener('playing', () => v.classList.add('on'), {once: true});
       el.appendChild(v);
     } else {
-      const u = hiURL(t, f.w);
-      const path = x => new URL(x, location.href).pathname;
+      const u = hiURL(t, f.w), path = x => new URL(x, location.href).pathname;
       if (path(u) !== path(base.src)) {
         const hi = new Image(); hi.className = 'hi'; hi.alt = ''; hi.decoding = 'async'; hi.src = u;
         (hi.decode ? hi.decode() : Promise.resolve()).then(() => hi.classList.add('on')).catch(() => {});
@@ -160,112 +194,124 @@
     return el;
   }
   function label() {
-    ct.textContent = pad2(i + 1) + ' / ' + pad2(list.length);
-    cap.textContent = list[i].dataset.cap || '';
+    const t = list[i];
+    what.textContent = t.dataset.cap || '';
+    when.textContent = t.dataset.date ? t.dataset.date : '';
   }
-  function show(k, dir) {
-    if (busy && dir) return;
+  function show(k, dir) {                             // dir: -1 / 1 slide sideways; 0 just place
+    if (busy) return;
     i = (k + list.length) % list.length;
     const old = cur, el = slide(list[i]); cur = el;
     stage.appendChild(el); label();
-    if (old && dir && !reduce) {
-      const d = stage.clientWidth * .16 * dir, f = el.__f;
-      busy = true;
-      const ox = old.__dx || 0;
-      old.animate([{transform: `translate(${old.__f.x + ox}px, ${old.__f.y}px)`, opacity: 1}, {transform: `translate(${old.__f.x - d}px, ${old.__f.y}px)`, opacity: 0}], {duration: 380, easing: EASE, fill: 'forwards'}).onfinish = () => old.remove();
-      el.animate([{transform: `translate(${f.x + d}px, ${f.y}px)`, opacity: 0}, {transform: `translate(${f.x}px, ${f.y}px)`, opacity: 1}], {duration: 380, easing: EASE}).onfinish = () => { busy = false; };
+    if (old && dir) {
+      if (reduce) { old.remove(); }
+      else {
+        busy = true;
+        const W = innerWidth, of = old.__f, nf = el.__f, ox = old.__dx || 0;
+        old.animate([{transform: `translate(${of.x + ox}px, ${of.y}px)`}, {transform: `translate(${of.x - dir * W}px, ${of.y}px)`}], {...SLIDE, fill: 'forwards'}).onfinish = () => old.remove();
+        el.animate([{transform: `translate(${nf.x + dir * W + ox}px, ${nf.y}px)`}, {transform: `translate(${nf.x}px, ${nf.y}px)`}], SLIDE).onfinish = () => { busy = false; };
+      }
+      swapHidden(old.__t, list[i]);
     } else if (old) old.remove();
     prefetch(list[(i + 1) % list.length]); prefetch(list[(i - 1 + list.length) % list.length]);
   }
+  function swapHidden(prev, next) { if (prev) prev.classList.remove('away'); if (next) next.classList.add('away'); }
+
   function open(t) {
     const g = t.closest('[data-list]');
     list = ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
-    from = t; document.documentElement.style.overflow = 'hidden';
-    lb.classList.add('open'); lb.classList.remove('idle');
+    opener = t; lb.classList.add('open'); document.documentElement.classList.add('lb-lock');
     show(list.indexOf(t), 0);
-    if (!reduce) {                                       // grow out of the tile
-      const r = t.getBoundingClientRect(), s = stage.getBoundingClientRect(), f = cur.__f;
-      const k = r.width / f.w, dx = r.left + r.width / 2 - (s.left + f.x + f.w / 2), dy = r.top + r.height / 2 - (s.top + f.y + f.h / 2);
-      cur.animate([{transform: `translate(${f.x + dx}px, ${f.y + dy}px) scale(${k})`, opacity: .5}, {transform: `translate(${f.x}px, ${f.y}px) scale(1)`, opacity: 1}], {duration: 460, easing: EASE});
+    t.classList.add('away');                           // the tile's image is now the one in the viewer
+    if (!reduce) {
+      const st = tileState(t, cur.__f), f = cur.__f;
+      cur.animate([st, {transform: `translate(${f.x}px, ${f.y}px) scale(1)`, clipPath: 'inset(0px 0px 0px 0px round 2px)'}], OPEN);
+      bg.animate([{opacity: 0}, {opacity: 1}], {duration: 420, easing: 'ease-out'});
+      lb.querySelector('.lb-ui').animate([{opacity: 0}, {opacity: 0, offset: .5}, {opacity: 1}], {duration: 700});
     }
     try { history.pushState({lb: 1}, ''); } catch (err) {}
-    lb.querySelector('.x').focus({preventScroll: true});
+    lb.querySelector('.lb-x').focus({preventScroll: true});
     schedule(); idle();
   }
   function shut() {
-    if (!lbOpen()) return;
-    const el = cur; cur = null; lb.classList.remove('open');
-    if (el) {
-      const t = el.__t, r = t.getBoundingClientRect(), s = stage.getBoundingClientRect(), f = el.__f;
-      const onScreen = r.bottom > 0 && r.top < innerHeight && !t.hidden;
-      const tx = f.x + r.left + r.width / 2 - (s.left + f.x + f.w / 2), ty = f.y + r.top + r.height / 2 - (s.top + f.y + f.h / 2);
-      const end = onScreen && !reduce ? {transform: `translate(${tx}px, ${ty}px) scale(${r.width / f.w})`, opacity: .3}
-        : {transform: `translate(${f.x}px, ${f.y + (el.__dy || 0)}px) scale(.96)`, opacity: 0};
-      el.querySelectorAll('video').forEach(v => v.pause());
-      if (reduce) el.remove(); else el.animate([{transform: getComputedStyle(el).transform, opacity: getComputedStyle(el).opacity}, end], {duration: 360, easing: EASE, fill: 'forwards'}).onfinish = () => el.remove();
+    if (!lbOpen() || !cur) return;
+    const el = cur, t = el.__t; cur = null;
+    el.querySelectorAll('video').forEach(v => v.pause());
+    const done = () => { el.remove(); t.classList.remove('away'); lb.classList.remove('open', 'closing'); document.documentElement.classList.remove('lb-lock'); schedule(); };
+    if (reduce || t.hidden) { done(); }
+    else {
+      let r = t.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) {        // its tile is off screen: bring it into view behind the viewer first
+        scrollTo({top: scrollY + r.top + r.height / 2 - innerHeight / 2, behavior: 'instant'});
+      }
+      lb.classList.add('closing');
+      el.animate([tileState(t, el.__f)], {...OPEN, duration: 480, fill: 'forwards'}).onfinish = done;
+      bg.animate([{opacity: getComputedStyle(bg).opacity}, {opacity: 0}], {duration: 420, easing: 'ease-in', fill: 'forwards'}).onfinish = () => bg.getAnimations().forEach(a => a.cancel());
     }
-    document.documentElement.style.overflow = '';
-    from && from.focus({preventScroll: true});
-    schedule();
+    opener && opener !== t ? t.focus({preventScroll: true}) : opener && opener.focus({preventScroll: true});
   }
   function close() { if (history.state && history.state.lb) history.back(); else shut(); }
   addEventListener('popstate', () => { if (lbOpen()) shut(); });
 
   document.addEventListener('click', e => {
     const t = e.target.closest('a.m'); if (!t || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    e.preventDefault(); open(t);
+    e.preventDefault(); if (!lbOpen()) open(t);
   });
   if (fine) document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('a.m'); if (t) prefetch(t); }, {passive: true});
   lb.querySelector('.pv').addEventListener('click', () => show(i - 1, -1));
   lb.querySelector('.nx').addEventListener('click', () => show(i + 1, 1));
-  lb.querySelector('.x').addEventListener('click', close);
-  stage.addEventListener('click', e => { if (e.target === stage && !dragged) close(); });
+  lb.querySelector('.lb-x').addEventListener('click', close);
   addEventListener('keydown', e => {
     if (!lbOpen()) return;
     if (e.key === 'Escape') { e.preventDefault(); close(); }
     else if (e.key === 'ArrowLeft') show(i - 1, -1);
     else if (e.key === 'ArrowRight') show(i + 1, 1);
     else if (e.key === 'Tab') {
-      const f = [...lb.querySelectorAll('button')].filter(b => b.offsetParent), a = f.indexOf(document.activeElement);
+      const f = [...lb.querySelectorAll('button')], a = f.indexOf(document.activeElement);
       e.preventDefault(); f[(a + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
     }
     idle();
   });
-  addEventListener('resize', () => { if (!lbOpen() || !cur) return; const f = fit(cur.__t); cur.__f = f; Object.assign(cur.style, {width: f.w + 'px', height: f.h + 'px', transform: `translate(${f.x}px, ${f.y}px)`}); });
+  addEventListener('resize', () => { if (!lbOpen() || !cur) return; const f = fit(cur.__t); cur.__f = f; cur.style.width = f.w + 'px'; cur.style.height = f.h + 'px'; place(cur, f); });
 
-  // controls fade after a few still seconds (pointer devices); tap toggles them on touch
+  // pointer: the outer thirds of the screen move back / forward (the cursor turns into a thin arrow), the middle closes
+  const zone = x => x < innerWidth * .3 ? -1 : x > innerWidth * .7 ? 1 : 0;
+  stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const z = zone(e.clientX); stage.dataset.z = z < 0 ? 'l' : z > 0 ? 'r' : 'c'; idle(); });
   let idleT = 0;
-  function idle() { lb.classList.remove('idle'); clearTimeout(idleT); if (fine) idleT = setTimeout(() => lbOpen() && lb.classList.add('idle'), 2600); }
-  lb.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') idle(); });
+  function idle() { lb.classList.remove('idle'); clearTimeout(idleT); if (fine) idleT = setTimeout(() => lbOpen() && lb.classList.add('idle'), 2400); }
 
-  // drag: sideways to move, down to close (follows the finger)
-  let sx = 0, sy = 0, dx = 0, dy = 0, axis = '', down = false, dragged = false, t0 = 0;
+  // touch: drag sideways to move (the slide follows the finger), drag down to close; tap toggles the caption
+  let sx = 0, sy = 0, dx = 0, dy = 0, axis = '', down = false, moved = false, t0 = 0, ptype = '';
   stage.addEventListener('pointerdown', e => {
-    if (e.button || !cur || busy || e.target.closest('button')) return;
-    down = true; dragged = false; axis = ''; sx = e.clientX; sy = e.clientY; dx = dy = 0; t0 = performance.now();
+    if (e.button || !cur || busy) return;
+    down = true; moved = false; axis = ''; sx = e.clientX; sy = e.clientY; dx = dy = 0; t0 = performance.now(); ptype = e.pointerType;
     stage.setPointerCapture(e.pointerId);
   });
   stage.addEventListener('pointermove', e => {
-    if (!down || !cur) return;
+    if (!down || !cur || ptype === 'mouse') return;
     dx = e.clientX - sx; dy = e.clientY - sy;
     if (!axis && Math.hypot(dx, dy) > 8) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : (dy > 0 ? 'y' : 'n');
     if (!axis || axis === 'n') return;
-    dragged = true;
+    moved = true;
     const f = cur.__f;
-    if (axis === 'x') { cur.__dx = dx; cur.style.transform = `translate(${f.x + dx}px, ${f.y}px)`; cur.style.opacity = 1 - Math.min(.5, Math.abs(dx) / stage.clientWidth); }
-    else { const k = Math.min(1, dy / stage.clientHeight); cur.__dy = dy; cur.style.transform = `translate(${f.x}px, ${f.y + dy}px) scale(${1 - k * .18})`; lb.style.backgroundColor = `rgba(5,3,4,${.97 * (1 - k * .9)})`; }
+    if (axis === 'x') { cur.__dx = dx; place(cur, f, dx); }
+    else { const k = Math.min(1, dy / innerHeight); place(cur, f, 0, dy, 1 - k * .25); bg.style.opacity = String(1 - k * 1.3); }
   });
-  const release = () => {
+  const release = (e) => {
     if (!down) return; down = false;
-    if (!cur || !axis || axis === 'n') return;
-    const v = (axis === 'x' ? dx : dy) / Math.max(1, performance.now() - t0), f = cur.__f;
-    lb.style.backgroundColor = '';
-    if (axis === 'x' && (Math.abs(dx) > 70 || Math.abs(v) > .5)) show(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
-    else if (axis === 'y' && (dy > 110 || v > .6)) close();
-    else { cur.animate([{transform: cur.style.transform, opacity: cur.style.opacity || 1}, {transform: `translate(${f.x}px, ${f.y}px)`, opacity: 1}], {duration: 300, easing: EASE});
-      cur.style.transform = `translate(${f.x}px, ${f.y}px)`; cur.style.opacity = ''; cur.__dx = cur.__dy = 0; }
-    setTimeout(() => { dragged = false; }, 0);
+    const f = cur && cur.__f;
+    if (ptype === 'mouse' || !axis || axis === 'n') {          // a click / tap
+      if (!moved && cur) {
+        if (ptype === 'mouse') { const z = zone(e.clientX); if (z) show(i + z, z); else close(); }
+        else lb.classList.toggle('idle');
+      }
+      return;
+    }
+    const v = (axis === 'x' ? dx : dy) / Math.max(1, performance.now() - t0);
+    if (axis === 'x' && (Math.abs(dx) > 70 || Math.abs(v) > .45)) show(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    else if (axis === 'y' && (dy > 110 || v > .55)) { bg.style.opacity = ''; close(); }
+    else if (cur) { cur.__dx = 0; cur.animate([{transform: cur.style.transform}, {transform: `translate(${f.x}px, ${f.y}px) scale(1)`}], {duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)'}); place(cur, f); bg.style.opacity = ''; }
   };
-  stage.addEventListener('pointerup', release); stage.addEventListener('pointercancel', release);
-  if (!fine) stage.addEventListener('click', e => { if (e.target !== stage && !dragged) lb.classList.toggle('idle'); });
+  stage.addEventListener('pointerup', release);
+  stage.addEventListener('pointercancel', () => { down = false; if (cur) { place(cur, cur.__f); cur.__dx = 0; } bg.style.opacity = ''; });
 })();
