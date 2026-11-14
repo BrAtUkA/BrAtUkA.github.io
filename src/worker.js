@@ -49,6 +49,26 @@ async function ranged(request, res) {
   return new Response(buf.slice(start, end + 1), { status: 206, headers: h });
 }
 
+// /a/m/* comes from R2. URLs carry ?v=<content hash>, so a year of caching is safe. Range requests are answered
+// with 206 (Safari plays video only that way); conditional requests with 304.
+async function media(request, env, key) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response(null, { status: 405, headers: { allow: 'GET, HEAD' } });
+  const obj = await env.MEDIA.get(key, { range: request.headers, onlyIf: request.headers });
+  if (obj === null) return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8', ...SECURITY } });
+  const h = new Headers(SECURITY);
+  obj.writeHttpMetadata(h);
+  h.set('etag', obj.httpEtag); h.set('accept-ranges', 'bytes');
+  h.set('cache-control', 'public, max-age=31536000, immutable');
+  if (!('body' in obj) || obj.body === undefined) return new Response(null, { status: 304, headers: h });
+  if (request.headers.has('range') && obj.range) {
+    const off = obj.range.offset ?? (obj.size - obj.range.suffix), len = obj.range.length ?? (obj.size - off);
+    h.set('content-range', `bytes ${off}-${off + len - 1}/${obj.size}`); h.set('content-length', String(len));
+    return new Response(request.method === 'HEAD' ? null : obj.body, { status: 206, headers: h });
+  }
+  h.set('content-length', String(obj.size));
+  return new Response(request.method === 'HEAD' ? null : obj.body, { status: 200, headers: h });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -60,6 +80,7 @@ export default {
       if (m) return Response.redirect(to + (m[1] || '/') + url.search, 301);
     }
 
+    if (path.startsWith('/a/m/')) return media(request, env, decodeURIComponent(path.slice(5)));
     let res = await env.ASSETS.fetch(request);
     if (res.status === 200 && /\.(mp4|webm)$/.test(path)) res = await ranged(request, res);   // Safari plays video only with 206 replies
     const out = new Response(res.body, res);
