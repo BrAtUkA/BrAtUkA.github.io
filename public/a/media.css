@@ -92,7 +92,7 @@ html:not(.js) .tabs-line{display:none}
    thirds of the screen are back / forward (a thin arrow cursor), the middle closes. */
 html{scrollbar-gutter:stable}
 .lb-on .m img{transform:none !important;transition:none} .lb-on .m::after{opacity:0 !important}   /* no hover zoom or shade while a piece is viewed or landing */                 /* the page width never changes when overlays come and go */
-.m.away img,.m.away video,.m.away .lq{visibility:hidden}
+.m.away img,.m.away video,.m.away .lq{opacity:0 !important;transition:none}   /* opacity, not visibility: a hidden paused video can lose its decoded frames and re-buffer */
 .lb{position:fixed;inset:0;z-index:80;visibility:hidden;overscroll-behavior:contain;contain:strict}
 .lb.open{visibility:visible}
 .lb.closing,.lb.closing *{pointer-events:none}      /* while it glides away, the page underneath already takes clicks */
