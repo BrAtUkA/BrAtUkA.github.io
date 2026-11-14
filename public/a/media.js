@@ -422,7 +422,7 @@
     lb.querySelector('.lb-x').focus({preventScroll: true});
     schedule(); idle();
   }
-  let offScroll = null;
+  let offScroll = null, tapClosed = 0;
   function shut() {
     if (!lbOpen() || !cur) return;
     const el = cur, t = el.__t, my = ++token; cur = null; busy = false;
@@ -480,7 +480,9 @@
 
   document.addEventListener('click', e => {
     const t = e.target.closest('a.m'); if (!t || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    e.preventDefault(); if (!lbOpen() || lb.classList.contains('closing')) open(t);   // a closing viewer hands over at once
+    e.preventDefault();
+    if (performance.now() - tapClosed < 600) return;      // the click a phone sends after a tap that closed the viewer: not meant for the page
+    if (!lbOpen() || lb.classList.contains('closing')) open(t);   // a closing viewer hands over at once
   });
   if (fine) document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('a.m'); if (t) prefetch(t); }, {passive: true});
   lb.querySelector('.pv').addEventListener('click', () => show(i - 1, -1));
@@ -521,6 +523,9 @@
 
   // touch: sideways drag moves (the slide follows the finger), downward drag closes; updates are batched per frame
   let sx = 0, sy = 0, dx = 0, dy = 0, axis = '', down = false, moved = false, t0 = 0, ptype = '', pend = 0;
+  // the stage handles taps itself, so the click a phone would send afterwards is never needed (and once the viewer is
+  // closing it would land on the page underneath and open whatever tile is there)
+  stage.addEventListener('touchend', e => { if (e.cancelable) e.preventDefault(); }, {passive: false});
   const paint = () => {
     pend = 0; if (!cur) return;
     const f = cur.__f;
@@ -548,7 +553,7 @@
     if (ptype === 'mouse' || !axis || axis === 'n') {
       if (!moved && cur) {
         const h = hit(e.clientX, e.clientY);
-        if (h === -1 || h === 1) show(i + h, h); else if (h === 'close') close(); else if (ptype !== 'mouse') lb.classList.toggle('idle');
+        if (h === -1 || h === 1) show(i + h, h); else if (h === 'close') { if (ptype !== 'mouse') tapClosed = performance.now(); close(); } else if (ptype !== 'mouse') lb.classList.toggle('idle');
       }
       return;
     }
