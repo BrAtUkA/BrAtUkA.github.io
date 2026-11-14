@@ -110,6 +110,7 @@ html{scrollbar-gutter:stable}
 .lb-in .hi.on,.lb-in video.on{opacity:1}
 .lb-in video.copy{transition:none}
 .lb-in video.master{transition:opacity .18s linear}
+.lb-in video.master.on{opacity:.998}   /* not quite opaque: the copy under it is then never 'hidden', which Chrome throttles */
 .lb-ui{position:absolute;inset:0;pointer-events:none;transition:opacity .35s}
 .lb.idle .lb-ui{opacity:0}
 .lb.closing .lb-ui{opacity:0;transition:opacity .12s}

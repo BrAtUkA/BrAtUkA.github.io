@@ -154,6 +154,7 @@
     ldEl = el;
   }
   function hq(el) { if (!el || el.__hq) return; el.__hq = true; if (el === cur) state(); }   // full quality is on screen
+  function unhq(el) { if (!el || !el.__hq) return; el.__hq = false; if (el === cur) state(); }     // ...and dropped out again
   let list = [], i = 0, cur = null, busy = false, opener = null;
   const EASE_OPEN = x => 1 - Math.pow(1 - x, 4);                    // fast out, long soft landing
   let token = 0;                                                   // a newer open makes an older close's clean-up a no-op
@@ -280,40 +281,53 @@
       inn.appendChild(vv);
       vv.addEventListener('loadeddata', () => {
         vv.currentTime = t0;
-        vv.addEventListener('seeked', () => vv.play().then(() => frameOf(vv, 600)).then(() => { vv.classList.add('on'); const st = inn.querySelector('canvas.still'); if (st) setTimeout(() => st.remove(), 400); }).catch(() => {}), {once: true});
+        vv.addEventListener('seeked', () => vv.play().then(() => frameOf(vv, 600)).then(() => { vv.classList.add('on'); const st = inn.querySelector('canvas.still'); if (st) setTimeout(() => st.remove(), 400);}).catch(() => {}), {once: true});
       }, {once: true});
     }
     const mv = document.createElement('video'); mv.className = 'master'; mv.muted = true; mv.loop = true; mv.playsInline = true; mv.preload = 'auto';
     mv.innerHTML = `<source src="${t.dataset.v}-m.webm${q(t)}" type='${AV1}'><source src="${t.dataset.v}-m.mp4${q(t)}" type='${HEVC}'>`;
     inn.appendChild(mv);
-    // sync like a player: one seek slightly ahead, then nudge the playback rate until both show the same moment
-    // the clock to match: the viewer's copy once it plays, before that the tile's own video (playing on, in step, underneath)
+    // Sync like a player. The clock to match: the viewer's copy once it plays (before that, the tile's own video, playing
+    // on in step underneath). One seek slightly ahead, then the rate is steered until both show the same frame (within
+    // 2 ms), and the master comes in with a short fade: same frame, so the fade only eases the step in sharpness.
+    // The copy keeps playing underneath, so if the master runs out of data (a slow connection) the copy shows through
+    // at once, on the same frame, and the master cuts back in once it has caught up again.
     const ref = () => (vv && vv.classList.contains('on') && !vv.paused ? vv : tv && !tv.paused && tv.readyState >= 2 ? tv : null);
     const drift = () => { const r = ref(), d = mv.duration || 1; if (!r) return 0; let x = mv.currentTime - r.currentTime; x -= d * Math.round(x / d); return x; };
-    // same frame on both, so a short fade only eases the step in sharpness (it cannot double the image); the copy
-    // stops once the master is fully on top
-    const swap = () => { mv.playbackRate = 1; requestAnimationFrame(() => { if (!mv.isConnected) return; mv.classList.add('on'); hq(inn.parentNode); setTimeout(() => { if (vv) vv.pause(); }, 400); }); };
     const sync = () => {
       if (!mv.isConnected) return;
       const r = ref();
       mv.currentTime = ((r ? r.currentTime : t0) + .3) % (mv.duration || 1e9);
       mv.addEventListener('seeked', () => {
-        mv.play().then(() => {
-          const s0 = performance.now(); let ok = 0, seek = s0;
-          const step = () => {
-            if (!mv.isConnected) return;
-            if (!ref() || performance.now() - s0 > 5000) return swap();
-            const x = drift(), now = performance.now();
-            if (Math.abs(x) > .4) {                  // too far to steer (it missed its first seek): jump close, then steer
-              if (now - seek > 700) { seek = now; mv.currentTime = (ref().currentTime + .12) % (mv.duration || 1e9); }
-              requestAnimationFrame(step); return;
+        mv.play().catch(() => {});
+        let ok = 0, seek = performance.now(), s0 = seek, stuck = 0, last = -1, vlast = -1;
+        const el = inn.parentNode;
+        const cut = () => { mv.playbackRate = 1; ok = 0; mv.classList.add('on'); hq(el); };
+        const loop = () => {
+          if (!mv.isConnected) return;
+          const r = ref(), now = performance.now(), on = mv.classList.contains('on'), live = !mv.paused && mv.readyState >= 3;
+          stuck = mv.currentTime === last && !mv.paused ? stuck + 1 : 0; last = mv.currentTime;    // frames its clock has not moved
+          const moving = vv && vv.currentTime !== vlast; if (vv) vlast = vv.currentTime;            // ...while the copy's has
+          if (on) {
+            if (stuck >= 5 && mv.readyState < 3 && r && r === vv && moving) {   // out of data (not a passing decode hiccup)            // hide it at once: the copy underneath is on the same frame and keeps moving
+              mv.style.transition = 'none'; mv.classList.remove('on'); requestAnimationFrame(() => { mv.style.transition = ''; });
+              s0 = now; unhq(el);
+            } else if (live && r) rate(mv, drift(), 3);     // stays in step
+          } else if (live) {
+            const x = drift();
+            const ready = ahead(mv) >= Math.min(2, (mv.duration || 2) - .2);     // enough data to play on: no flapping
+            if (!r) { if (ready) cut(); }           // nothing on screen to match
+            else if (Math.abs(x) > .4) {             // too far to steer (a missed seek, or after running dry): jump close
+              if (now - seek > 700) { seek = now; mv.currentTime = (r.currentTime + .12) % (mv.duration || 1e9); }
+            } else {
+              if (Math.abs(x) < .002) { if (++ok >= 4 && ready) cut(); } else ok = 0;      // held within 2 ms for a few frames
+              rate(mv, x, 12);                       // steered hard: it settles in about half a second
             }
-            if (Math.abs(x) < .002) { if (++ok >= 4) return swap(); } else ok = 0;      // held within 2 ms for a few frames
-            rate(mv, x, 12);                         // steered hard: it settles in about half a second
-            requestAnimationFrame(step);
-          };
-          requestAnimationFrame(step);
-        }).catch(() => {});
+            if (!mv.classList.contains('on') && ready && now - s0 > 6000) cut();          // never stuck on the lower quality
+          }
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
       }, {once: true});
     };
     mv.addEventListener('canplay', sync, {once: true});
@@ -322,6 +336,15 @@
   // Both encodes of a loop share their timestamps, so matching clocks means matching frames. The rate is steered in
   // proportion to the gap (no fixed steps), so it settles to within a few milliseconds instead of hunting around.
   const IN_STEP = .006;
+  // seconds of data a looping video has ready from where it plays (counting a wrap to the start, all of it if complete)
+  function ahead(v) {
+    const b = v.buffered, ct = v.currentTime, d = v.duration || 0; let a = 0;
+    for (let k = 0; k < b.length; k++) if (b.start(k) <= ct + .05 && b.end(k) >= ct) {
+      a = b.end(k) - ct;
+      if (b.end(k) >= d - .1) for (let j = 0; j < b.length; j++) if (b.start(j) <= .05) a += b.end(j);
+    }
+    return a;
+  }
   const gap = (v, r) => { const d = v.duration || 1; let x = v.currentTime - r.currentTime; return x - d * Math.round(x / d); };
   function rate(v, x, g = 6) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * g)) * 1000) / 1000; if (v.playbackRate !== k) v.playbackRate = k; }
   function follow(v, ref) {
