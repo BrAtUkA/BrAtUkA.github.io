@@ -112,52 +112,60 @@
     new ResizeObserver(() => mark(btns.find(b => b.getAttribute('aria-selected') === 'true'))).observe(tabs);
   }
 
-  // ── in-page links glide (eased, length scaled to the distance) and stop short of the top edge ──
+  // ── in-page links: the browser's own smooth scroll (runs on the compositor, so it stays fluid on phones) ──
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href^="#"]'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
     const id = a.getAttribute('href').slice(1), el = id ? document.getElementById(id) : null; if (!el) return;
     e.preventDefault();
     const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
-    const from = scrollY, to = Math.max(0, Math.min(document.documentElement.scrollHeight - innerHeight, from + el.getBoundingClientRect().top - margin));
+    scrollTo({top: Math.max(0, scrollY + el.getBoundingClientRect().top - margin), behavior: reduce ? 'auto' : 'smooth'});
     try { history.pushState(null, '', '#' + id); } catch (err) {}
-    if (reduce) { scrollTo(0, to); return; }
-    const d = to - from, T = Math.min(1300, Math.max(550, Math.abs(d) * .45)), t0 = performance.now();
-    const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-    const step = now => { const k = Math.min(1, (now - t0) / T); scrollTo(0, from + d * ease(k)); if (k < 1) requestAnimationFrame(step); };
-    requestAnimationFrame(step);
   });
 
   // ── viewer ──
-  function lbOpen() { return document.documentElement.classList.contains('lb-lock'); }
-  // The tile's own image morphs into the viewer: one element moves from the tile's box (cropped exactly like the tile:
-  // scaled to cover it, clipped to it) to the full uncropped image, and back again on close. Moving between pieces
-  // slides them sideways; on phones the slide follows the finger, and a downward drag closes.
+  // Everything that moves is a transform or opacity, so it runs on the compositor. Opening morphs the tile into the
+  // full image: an outer frame (the visible window) and the image inside it are scaled against each other, sampled
+  // into keyframes so the tile's crop opens out exactly. A loop keeps playing through the open: its own video element
+  // moves into the viewer, and the full-quality master takes over only once it plays in step with it.
+  const root = document.documentElement;
+  function lbOpen() { return root.classList.contains('lb-on'); }
   const lb = document.createElement('div');
   lb.className = 'lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Viewer');
   lb.innerHTML = `<div class="lb-bg"></div><div class="lb-stage"></div>
     <div class="lb-ui"><p class="lb-cap"><span class="what"></span><span class="when"></span></p>
-    <button class="lb-x" type="button" aria-label="Close">${svg(ICON.x, 1.25)}</button>
     <span class="lb-g l" aria-hidden="true">${svg(ICON.l, 1.25)}</span><span class="lb-g r" aria-hidden="true">${svg(ICON.r, 1.25)}</span>
+    <button class="lb-x" type="button" aria-label="Close">${svg(ICON.x, 1.25)}</button>
     <button class="lb-sr pv" type="button" aria-label="Previous">${svg(ICON.l)}</button><button class="lb-sr nx" type="button" aria-label="Next">${svg(ICON.r)}</button></div>`;
   document.body.appendChild(lb);
-  const stage = lb.querySelector('.lb-stage'), bg = lb.querySelector('.lb-bg'), what = lb.querySelector('.what'), when = lb.querySelector('.when');
-  const cap = lb.querySelector('.lb-cap'), gl = lb.querySelector('.lb-g.l'), gr = lb.querySelector('.lb-g.r');
+  const stage = lb.querySelector('.lb-stage'), bg = lb.querySelector('.lb-bg'), ui = lb.querySelector('.lb-ui');
+  const what = lb.querySelector('.what'), when = lb.querySelector('.when'), cap = lb.querySelector('.lb-cap');
+  const gl = lb.querySelector('.lb-g.l'), gr = lb.querySelector('.lb-g.r');
   let list = [], i = 0, cur = null, busy = false, opener = null;
-  const OPEN = {duration: 560, easing: 'cubic-bezier(.22,.8,.18,1)'}, SLIDE = {duration: 480, easing: 'cubic-bezier(.25,.8,.25,1)'};
+  const EASE_OPEN = x => 1 - Math.pow(1 - x, 4);                    // fast out, long soft landing
+  const SLIDE = {duration: 460, easing: 'cubic-bezier(.25,.8,.25,1)'};
+  // no scrolling behind the viewer, without touching overflow (that re-lays out the page and flickers)
+  for (const ev of ['wheel', 'touchmove']) lb.addEventListener(ev, e => { if (lbOpen()) e.preventDefault(); }, {passive: false});
 
   function fit(t) {                                  // the image's box: as large as the screen allows, thin borders
     const W = innerWidth, H = innerHeight, ar = (+t.dataset.w || 16) / (+t.dataset.h || 9);
     const wide = W > 640, side = wide ? 16 : 0, top = wide ? 16 : 0, bot = wide ? 46 : 0;
     let w = Math.min(W - side * 2, (H - top - bot) * ar), h = w / ar;
     if (!wide && h > H - 120) { h = H - 120; w = h * ar; }
-    return {w, h, x: (W - w) / 2, y: top + (H - top - bot - h) / 2};
+    return {w, h, x: Math.round((W - w) / 2), y: Math.round(top + (H - top - bot - h) / 2)};
   }
-  const place = (el, f, dx = 0, dy = 0, k = 1) => { el.style.transform = `translate(${f.x + dx}px, ${f.y + dy}px) scale(${k})`; };
-  function tileState(t, f) {                          // where the slide must start/end to look exactly like the tile
-    const r = t.getBoundingClientRect(), s = Math.max(r.width / f.w, r.height / f.h);
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const iw = (f.w - r.width / s) / 2, ih = (f.h - r.height / s) / 2, rad = (parseFloat(getComputedStyle(t).borderRadius) || 0) / s;
-    return {transform: `translate(${cx - f.w / 2}px, ${cy - f.h / 2}px) scale(${s})`, clipPath: `inset(${ih}px ${iw}px ${ih}px ${iw}px round ${rad}px)`};
+  const at = (el, f, dx = 0, dy = 0, k = 1) => { el.style.transform = `translate3d(${f.x + dx}px, ${f.y + dy}px, 0) scale(${k})`; };
+  // keyframes for the morph between the tile's box r and the full image f (both in screen pixels)
+  function morph(r, f, n = 26, reverse = false) {
+    const s0 = Math.max(r.width / f.w, r.height / f.h), outer = [], inner = [];
+    for (let k = 0; k <= n; k++) {
+      const p = EASE_OPEN(k / n);
+      const x = r.left + (f.x - r.left) * p, y = r.top + (f.y - r.top) * p, w = r.width + (f.w - r.width) * p, h = r.height + (f.h - r.height) * p;
+      const ax = w / f.w, ay = h / f.h, sc = s0 + (1 - s0) * p;   // window scale (non-uniform) and image scale (uniform)
+      outer.push({transform: `translate3d(${x}px, ${y}px, 0) scale(${ax}, ${ay})`});
+      inner.push({transform: `translate3d(${(f.w - f.w * sc / ax) / 2}px, ${(f.h - f.h * sc / ay) / 2}px, 0) scale(${sc / ax}, ${sc / ay})`});
+    }
+    if (reverse) { outer.reverse(); inner.reverse(); }
+    return [outer, inner];
   }
   function hiURL(t, w) {
     const ws = t.dataset.ws.split(',').map(Number), need = w * Math.min(devicePixelRatio || 1, 2.5);
@@ -169,78 +177,111 @@
   function prefetch(t) { if (!t || t.dataset.v) return; const u = hiURL(t, fit(t).w); if (warm.has(u)) return; warm.add(u); const im = new Image(); im.decoding = 'async'; im.src = u; }
 
   function slide(t) {
-    const f = fit(t), el = document.createElement('div');
-    el.className = 'lb-slide'; el.style.width = f.w + 'px'; el.style.height = f.h + 'px'; place(el, f);
+    const f = fit(t), el = document.createElement('div'), inn = document.createElement('div');
+    el.className = 'lb-slide'; inn.className = 'lb-in';
+    el.style.width = inn.style.width = f.w + 'px'; el.style.height = inn.style.height = f.h + 'px'; at(el, f);
+    el.appendChild(inn);
     const im = t.querySelector('img');
-    const base = new Image(); base.alt = im ? im.alt : ''; base.decoding = 'sync';
-    base.src = im && im.currentSrc ? im.currentSrc : t.href;           // the tile's own (already decoded) pixels
-    el.appendChild(base);
-    if (t.dataset.v && !reduce) {
-      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
-      v.innerHTML = `<source src="${t.dataset.v}-m.webm${q(t)}" type='${AV1}'><source src="${t.dataset.v}-m.mp4${q(t)}" type='${HEVC}'>`;
-      const tv = t.querySelector('video'); if (tv && !tv.paused) { try { v.currentTime = tv.currentTime; } catch (e) {} }
-      v.addEventListener('playing', () => v.classList.add('on'), {once: true});
-      el.appendChild(v);
-    } else {
+    const base = new Image(); base.alt = im ? im.alt : ''; base.decoding = 'async';
+    base.src = im && im.currentSrc ? im.currentSrc : t.href;           // the tile's own pixels: already decoded
+    inn.appendChild(base);
+    if (t.dataset.v && !reduce) adoptLoop(t, inn);
+    else {
       const u = hiURL(t, f.w), path = x => new URL(x, location.href).pathname;
       if (path(u) !== path(base.src)) {
         const hi = new Image(); hi.className = 'hi'; hi.alt = ''; hi.decoding = 'async'; hi.src = u;
         (hi.decode ? hi.decode() : Promise.resolve()).then(() => hi.classList.add('on')).catch(() => {});
-        el.appendChild(hi);
+        inn.appendChild(hi);
       }
     }
-    el.__f = f; el.__t = t;
+    el.__f = f; el.__t = t; el.__in = inn;
     return el;
   }
-  function label() {
+  // a loop's own playing video moves into the viewer (no restart); the master loads hidden, seeks to the same moment,
+  // and cross-fades in once it is actually playing in step
+  function adoptLoop(t, inn) {
+    const tv = t.querySelector('video');
+    if (tv && tv.dataset.ok) { tv.__home = t; inn.appendChild(tv); tv.classList.add('on'); tv.play().catch(() => {}); }
+    const mv = document.createElement('video'); mv.className = 'master'; mv.muted = true; mv.loop = true; mv.playsInline = true; mv.preload = 'auto';
+    mv.innerHTML = `<source src="${t.dataset.v}-m.webm${q(t)}" type='${AV1}'><source src="${t.dataset.v}-m.mp4${q(t)}" type='${HEVC}'>`;
+    inn.appendChild(mv);
+    // sync like a player: one seek slightly ahead, then nudge the playback rate until both show the same moment
+    const ref = () => (tv && tv.parentNode === inn && !tv.paused ? tv : null);
+    const drift = () => { const r = ref(), d = mv.duration || 1; if (!r) return 0; let x = mv.currentTime - r.currentTime; x -= d * Math.round(x / d); return x; };
+    const swap = () => { mv.playbackRate = 1; mv.classList.add('on'); setTimeout(() => { const r = ref(); if (r) r.pause(); }, 450); };
+    const sync = () => {
+      if (!mv.isConnected) return;
+      const r = ref();
+      if (!r) { mv.play().then(swap).catch(() => {}); return; }
+      mv.currentTime = (r.currentTime + .3) % (mv.duration || 1e9);
+      mv.addEventListener('seeked', () => {
+        mv.play().then(() => {
+          const t0 = performance.now();
+          const step = () => {
+            if (!mv.isConnected) return;
+            const x = drift();
+            if (Math.abs(x) < .045 || performance.now() - t0 > 4000 || !ref()) return swap();
+            mv.playbackRate = x > 0 ? (x > .3 ? .6 : .85) : (x < -.3 ? 1.6 : 1.2);
+            requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }).catch(() => {});
+      }, {once: true});
+    };
+    mv.addEventListener('canplay', sync, {once: true});
+  }
+  function release(el) {                              // hand an adopted tile video back to its tile, still playing
+    if (!el) return;
+    el.querySelectorAll('video.master').forEach(v => { v.pause(); v.removeAttribute('src'); v.innerHTML = ''; v.load(); });
+    el.querySelectorAll('video:not(.master)').forEach(v => { if (v.__home) { v.__home.appendChild(v); v.play().catch(() => {}); } });
+  }
+
+  function label(f) {
     const t = list[i];
     what.textContent = t.dataset.cap || '';
-    when.textContent = t.dataset.date ? t.dataset.date : '';
-    frame(fit(t));
-  }
-  function frame(f) {                                 // caption under the image's bottom-left corner; nav hints beside it
+    when.textContent = t.dataset.date || '';
     const below = f.y + f.h + 12, inside = below + 22 > innerHeight - 6;
     cap.classList.toggle('in', inside);
-    cap.style.left = Math.max(14, f.x + (inside ? 14 : 0)) + 'px';
-    cap.style.top = (inside ? f.y + f.h - 34 : below) + 'px';
+    cap.style.transform = `translate3d(${Math.max(14, f.x + (inside ? 14 : 0))}px, ${inside ? f.y + f.h - 34 : below}px, 0)`;
     cap.style.maxWidth = Math.max(160, f.w - (inside ? 28 : 0)) + 'px';
-    const gut = f.x, show = list.length > 1 && gut >= 48;
-    for (const [el, x] of [[gl, gut / 2], [gr, innerWidth - gut / 2]]) {
-      el.style.display = show ? '' : 'none';
-      el.style.transform = `translate(${x - 14}px, ${f.y + f.h / 2 - 14}px)`;
-    }
+    const show = list.length > 1 && f.x >= 48;
+    gl.style.display = gr.style.display = show ? '' : 'none';
+    gl.style.transform = `translate3d(${f.x / 2 - 14}px, ${f.y + f.h / 2 - 14}px, 0)`;
+    gr.style.transform = `translate3d(${innerWidth - f.x / 2 - 14}px, ${f.y + f.h / 2 - 14}px, 0)`;
   }
-  function show(k, dir) {                             // dir: -1 / 1 slide sideways; 0 just place
+  function show(k, dir) {
     if (busy || (dir && list.length < 2)) return;
     i = (k + list.length) % list.length;
     const old = cur, el = slide(list[i]); cur = el;
-    stage.appendChild(el); label();
-    if (old && dir) {
-      if (reduce) { old.remove(); }
+    stage.appendChild(el); label(el.__f);
+    if (old) {
+      old.__t.classList.remove('away'); list[i].classList.add('away');
+      if (reduce || !dir) { release(old); old.remove(); }
       else {
         busy = true;
         const W = innerWidth, of = old.__f, nf = el.__f, ox = old.__dx || 0;
-        old.animate([{transform: `translate(${of.x + ox}px, ${of.y}px)`}, {transform: `translate(${of.x - dir * W}px, ${of.y}px)`}], {...SLIDE, fill: 'forwards'}).onfinish = () => old.remove();
-        el.animate([{transform: `translate(${nf.x + dir * W + ox}px, ${nf.y}px)`}, {transform: `translate(${nf.x}px, ${nf.y}px)`}], SLIDE).onfinish = () => { busy = false; };
+        old.animate([{transform: `translate3d(${of.x + ox}px, ${of.y}px, 0)`}, {transform: `translate3d(${of.x - dir * W}px, ${of.y}px, 0)`}], {...SLIDE, fill: 'forwards'})
+          .onfinish = () => { release(old); old.remove(); };
+        el.animate([{transform: `translate3d(${nf.x + dir * W + ox}px, ${nf.y}px, 0)`}, {transform: `translate3d(${nf.x}px, ${nf.y}px, 0)`}], SLIDE).onfinish = () => { busy = false; };
       }
-      swapHidden(old.__t, list[i]);
-    } else if (old) old.remove();
+    }
     prefetch(list[(i + 1) % list.length]); prefetch(list[(i - 1 + list.length) % list.length]);
   }
-  function swapHidden(prev, next) { if (prev) prev.classList.remove('away'); if (next) next.classList.add('away'); }
 
   function open(t) {
     const g = t.closest('[data-list]');
     list = g && g.hasAttribute('data-solo') ? [t] : ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
     lb.classList.toggle('solo', list.length < 2);
-    opener = t; lb.classList.add('open'); document.documentElement.classList.add('lb-lock');
+    opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
+    const r = t.getBoundingClientRect();
     show(list.indexOf(t), 0);
-    t.classList.add('away');                           // the tile's image is now the one in the viewer
+    t.classList.add('away');
     if (!reduce) {
-      const st = tileState(t, cur.__f), f = cur.__f;
-      cur.animate([st, {transform: `translate(${f.x}px, ${f.y}px) scale(1)`, clipPath: 'inset(0px 0px 0px 0px round 2px)'}], OPEN);
-      bg.animate([{opacity: 0}, {opacity: 1}], {duration: 420, easing: 'ease-out'});
-      lb.querySelector('.lb-ui').animate([{opacity: 0}, {opacity: 0, offset: .5}, {opacity: 1}], {duration: 700});
+      const [outer, inner] = morph(r, cur.__f);
+      cur.animate(outer, {duration: 560, easing: 'linear'});
+      cur.__in.animate(inner, {duration: 560, easing: 'linear'});
+      bg.animate([{opacity: 0}, {opacity: 1}], {duration: 380, easing: 'ease-out'});
+      ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
     }
     try { history.pushState({lb: 1}, ''); } catch (err) {}
     lb.querySelector('.lb-x').focus({preventScroll: true});
@@ -249,19 +290,24 @@
   function shut() {
     if (!lbOpen() || !cur) return;
     const el = cur, t = el.__t; cur = null;
-    el.querySelectorAll('video').forEach(v => v.pause());
-    const done = () => { el.remove(); t.classList.remove('away'); lb.classList.remove('open', 'closing'); document.documentElement.classList.remove('lb-lock'); schedule(); };
-    if (reduce || t.hidden) { done(); }
-    else {
-      let r = t.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > innerHeight) {        // its tile is off screen: bring it into view behind the viewer first
-        scrollTo({top: scrollY + r.top + r.height / 2 - innerHeight / 2, behavior: 'instant'});
-      }
-      lb.classList.add('closing');
-      el.animate([tileState(t, el.__f)], {...OPEN, duration: 480, fill: 'forwards'}).onfinish = done;
-      bg.animate([{opacity: getComputedStyle(bg).opacity}, {opacity: 0}], {duration: 420, easing: 'ease-in', fill: 'forwards'}).onfinish = () => bg.getAnimations().forEach(a => a.cancel());
+    const finish = () => {
+      release(el); el.remove(); t.classList.remove('away');
+      lb.classList.remove('open', 'closing'); root.classList.remove('lb-on'); bg.getAnimations().forEach(a => a.cancel());
+      document.dispatchEvent(new Event('viewer:close')); schedule();
+    };
+    lb.classList.add('closing');
+    const r = t.getBoundingClientRect();
+    const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+    bg.animate([{opacity: 1}, {opacity: 0}], {duration: 360, easing: 'ease-in', fill: 'forwards'});
+    if (reduce) finish();
+    else if (onScreen && !el.__dragged) {           // fly back into its tile
+      const [outer, inner] = morph(r, el.__f, 22, true);
+      el.animate(outer, {duration: 440, easing: 'linear', fill: 'forwards'}).onfinish = finish;
+      el.__in.animate(inner, {duration: 440, easing: 'linear', fill: 'forwards'});
+    } else {                                        // its tile is elsewhere: fade away where it is
+      el.animate([{opacity: 1}, {opacity: 0, transform: el.style.transform + ' scale(.97)'}], {duration: 300, easing: 'ease-in', fill: 'forwards'}).onfinish = finish;
     }
-    opener && opener !== t ? t.focus({preventScroll: true}) : opener && opener.focus({preventScroll: true});
+    (opener && opener === t ? opener : t).focus({preventScroll: true});
   }
   function close() { if (history.state && history.state.lb) history.back(); else shut(); }
   addEventListener('popstate', () => { if (lbOpen()) shut(); });
@@ -285,9 +331,13 @@
     }
     idle();
   });
-  addEventListener('resize', () => { if (!lbOpen() || !cur) return; const f = fit(cur.__t); cur.__f = f; cur.style.width = f.w + 'px'; cur.style.height = f.h + 'px'; place(cur, f); frame(f); });
+  addEventListener('resize', () => {
+    if (!lbOpen() || !cur) return;
+    const f = fit(cur.__t); cur.__f = f;
+    cur.style.width = cur.__in.style.width = f.w + 'px'; cur.style.height = cur.__in.style.height = f.h + 'px'; at(cur, f); label(f);
+  });
 
-  // pointer: the outer thirds of the screen move back / forward (the cursor turns into a thin arrow), the middle closes
+  // pointer: the outer edge of the image (and the space beside it) moves back / forward; anywhere else closes
   const zone = x => {
     if (!cur || list.length < 2) return 0;
     const f = cur.__f, edge = Math.min(140, f.w * .12);
@@ -297,8 +347,14 @@
   let idleT = 0;
   function idle() { lb.classList.remove('idle'); clearTimeout(idleT); if (fine) idleT = setTimeout(() => lbOpen() && lb.classList.add('idle'), 2400); }
 
-  // touch: drag sideways to move (the slide follows the finger), drag down to close; tap toggles the caption
-  let sx = 0, sy = 0, dx = 0, dy = 0, axis = '', down = false, moved = false, t0 = 0, ptype = '';
+  // touch: sideways drag moves (the slide follows the finger), downward drag closes; updates are batched per frame
+  let sx = 0, sy = 0, dx = 0, dy = 0, axis = '', down = false, moved = false, t0 = 0, ptype = '', pend = 0;
+  const paint = () => {
+    pend = 0; if (!cur) return;
+    const f = cur.__f;
+    if (axis === 'x') { cur.__dx = dx; at(cur, f, dx); }
+    else if (axis === 'y') { const k = Math.min(1, Math.max(0, dy) / innerHeight); at(cur, f, 0, dy, 1 - k * .25); bg.style.opacity = String(1 - k * 1.3); }
+  };
   stage.addEventListener('pointerdown', e => {
     if (e.button || !cur || busy) return;
     down = true; moved = false; axis = ''; sx = e.clientX; sy = e.clientY; dx = dy = 0; t0 = performance.now(); ptype = e.pointerType;
@@ -309,26 +365,23 @@
     dx = e.clientX - sx; dy = e.clientY - sy;
     if (!axis && Math.hypot(dx, dy) > 8) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : (dy > 0 ? 'y' : 'n');
     if (!axis || axis === 'n') return;
-    moved = true;
-    const f = cur.__f;
-    if (axis === 'x') { cur.__dx = dx; place(cur, f, dx); }
-    else { const k = Math.min(1, dy / innerHeight); place(cur, f, 0, dy, 1 - k * .25); bg.style.opacity = String(1 - k * 1.3); }
+    moved = true; if (!pend) pend = requestAnimationFrame(paint);
   });
-  const release = (e) => {
+  stage.addEventListener('pointerup', e => {
     if (!down) return; down = false;
-    const f = cur && cur.__f;
-    if (ptype === 'mouse' || !axis || axis === 'n') {          // a click / tap
+    if (pend) { cancelAnimationFrame(pend); paint(); }
+    if (ptype === 'mouse' || !axis || axis === 'n') {
       if (!moved && cur) {
-        if (ptype === 'mouse') { const z = zone(e.clientX); if (z) show(i + z, z); else close(); }
-        else { const z = zone(e.clientX); if (z && e.clientX < cur.__f.x || z && e.clientX > cur.__f.x + cur.__f.w) show(i + z, z); else lb.classList.toggle('idle'); }
+        const z = zone(e.clientX), f = cur.__f, beside = e.clientX < f.x || e.clientX > f.x + f.w;
+        if (ptype === 'mouse') { if (z) show(i + z, z); else close(); }
+        else if (z && beside) show(i + z, z); else lb.classList.toggle('idle');
       }
       return;
     }
-    const v = (axis === 'x' ? dx : dy) / Math.max(1, performance.now() - t0);
+    const v = (axis === 'x' ? dx : dy) / Math.max(1, performance.now() - t0), f = cur.__f;
     if (axis === 'x' && (Math.abs(dx) > 70 || Math.abs(v) > .45)) show(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
-    else if (axis === 'y' && (dy > 110 || v > .55)) { bg.style.opacity = ''; close(); }
-    else if (cur) { cur.__dx = 0; cur.animate([{transform: cur.style.transform}, {transform: `translate(${f.x}px, ${f.y}px) scale(1)`}], {duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)'}); place(cur, f); bg.style.opacity = ''; }
-  };
-  stage.addEventListener('pointerup', release);
-  stage.addEventListener('pointercancel', () => { down = false; if (cur) { place(cur, cur.__f); cur.__dx = 0; } bg.style.opacity = ''; });
+    else if (axis === 'y' && (dy > 110 || v > .55)) { cur.__dragged = true; bg.style.opacity = ''; close(); }
+    else { cur.__dx = 0; cur.animate([{transform: cur.style.transform}, {transform: `translate3d(${f.x}px, ${f.y}px, 0) scale(1)`}], {duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)'}); at(cur, f); bg.style.opacity = ''; }
+  });
+  stage.addEventListener('pointercancel', () => { down = false; if (cur) { at(cur, cur.__f); cur.__dx = 0; } bg.style.opacity = ''; });
 })();

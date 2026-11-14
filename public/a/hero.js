@@ -255,10 +255,11 @@ void main() {
     }
     raf = requestAnimationFrame(frame);
   }
-  const start = () => { if (POSTER || running || !visible || document.hidden || !ready) return; running = true; last = 0; winStart = performance.now(); raf = requestAnimationFrame(frame); };
+  const start = () => { if (POSTER || running || !visible || document.hidden || !ready || document.documentElement.classList.contains('lb-on')) return; running = true; last = 0; winStart = performance.now(); raf = requestAnimationFrame(frame); };
   const stop = () => { running = false; cancelAnimationFrame(raf); };
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? start() : stop(); }, { threshold: 0 }).observe(hero);
   document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+  document.addEventListener('viewer:open', stop); document.addEventListener('viewer:close', start);   // the full-screen viewer covers the hero: no need to draw it
   addEventListener('resize', () => { layout(); if (!running && ready) draw(state(performance.now(), 0)); }, { passive: true });
   cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); fallback(); });
 
