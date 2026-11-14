@@ -64,6 +64,7 @@ export default {
     if (res.status === 200 && /\.(mp4|webm)$/.test(path)) res = await ranged(request, res);   // Safari plays video only with 206 replies
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
+    if (url.hostname.endsWith('.workers.dev')) out.headers.set('x-robots-tag', 'noindex, nofollow');   // review previews stay out of search
     const type = out.headers.get('content-type') || '';
     if (path.startsWith('/a/')) out.headers.set('cache-control', 'public, max-age=604800, stale-while-revalidate=86400');   // renders: a week
     else if (type.includes('text/html')) out.headers.set('cache-control', 'public, max-age=0, must-revalidate');
