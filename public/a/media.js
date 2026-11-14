@@ -215,10 +215,13 @@
     const c = document.createElement('canvas'); c.width = src.videoWidth; c.height = src.videoHeight; c.className = cls;
     try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); parent.appendChild(c); return c; } catch (e) { return null; }
   };
-  const frameOf = (v, max) => new Promise(res => {          // resolves once v has presented a new frame (or after max ms)
-    let ok = false; const done = () => { if (!ok) { ok = true; res(); } };
-    setTimeout(done, max);
-    if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(() => done()); else v.addEventListener('timeupdate', done, {once: true});
+  const frameOf = (v, max) => new Promise(res => {          // resolves once v is really playing (its clock has moved with
+    const c0 = v.currentTime, t0 = performance.now();          // frame data ready), or after max ms. (The frame callback
+    const tick = () => {                                      // does not fire while the video is covered, so poll instead.)
+      if ((!v.paused && v.readyState >= 3 && v.currentTime !== c0) || performance.now() - t0 > max) return res();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   });
   function adoptLoop(t, inn) {
     const tv = t.querySelector('video');
