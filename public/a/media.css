@@ -61,22 +61,16 @@
 .wall .m[hidden]{display:none}
 @media (max-width:479px){ .wall{--g:3px;padding:0} }
 
-/* game filter: a capsule of three buttons; the active one sits under a pill of reeded glass (a/pill.js, WebGL) that
-   refracts the logos and moves like liquid. Without WebGL a plain pill slides instead. */
-.filter{position:relative;display:inline-flex;justify-self:start;width:max-content;max-width:100%;align-items:stretch;gap:2px;padding:4px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);background:rgba(10,8,9,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  --fill:#2c2427;touch-action:manipulation;isolation:isolate}
-.filter[data-on=rdr2]{--fill:#3d0a0f} .filter[data-on=cyberpunk]{--fill:#0b3a40}
-.filter button{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:0;border-radius:999px;
-  background:none;color:var(--ash);font:500 var(--t-s) var(--f-sans);cursor:pointer;transition:color .3s;-webkit-tap-highlight-color:transparent}
-.filter button img{display:block;height:24px;width:auto;filter:grayscale(1) brightness(1.6);opacity:.5;transition:opacity .35s, filter .35s}
-.filter button:hover{color:var(--bone)} .filter button:hover img{opacity:.85}
-.filter button[aria-pressed=true]{color:var(--bone)} .filter button[aria-pressed=true] img{filter:none;opacity:1}
-.filter button:focus-visible{outline:2px solid var(--signal);outline-offset:-2px}
-.filter .ind{position:absolute;z-index:0;top:4px;bottom:4px;left:0;border-radius:999px;background:var(--fill);transition:transform .5s cubic-bezier(.2,.7,.2,1), width .5s cubic-bezier(.2,.7,.2,1), background-color .4s}
-.filter .pillgl{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;border-radius:inherit}
-.filter.gl button > *{opacity:0 !important}                /* the canvas draws the labels and logos */
-html:not(.js) .filter button[aria-pressed=true]{background:var(--fill)}
+/* game filter: the games' own logos in a row across the hero (two games: far left and far right; more spread evenly).
+   Pick one to show only its shots, pick it again to show everything. Quiet grey until chosen, then full colour. */
+.games{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;width:100%;margin-top:clamp(18px, 3vw, 30px);flex-wrap:wrap}
+.games button{display:grid;place-items:center;min-height:52px;padding:6px 0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.games button img{display:block;height:clamp(30px, 3.4vw, 40px);width:auto;filter:grayscale(1) brightness(1.5);opacity:.42;
+  transition:opacity .45s ease, filter .45s ease, transform .6s cubic-bezier(.2,.7,.2,1)}
+.games button:hover img{opacity:.8;transform:translateY(-1px)}
+.games button[aria-pressed=true] img{filter:none;opacity:1}
+.games.picked button[aria-pressed=false] img{opacity:.22}
+.games button:focus-visible{outline:2px solid var(--signal);outline-offset:6px;border-radius:4px}
 
 /* ── viewer ── */
 .lb{position:fixed;inset:0;z-index:80;display:grid;grid-template-rows:auto minmax(0, 1fr);background:rgba(5,3,4,0);visibility:hidden;

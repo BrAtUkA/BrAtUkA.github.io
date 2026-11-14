@@ -2,7 +2,7 @@
    work without this file; it adds:
    - fade-in of each tile's image over its blurred placeholder (the tile already has its final shape)
    - the masonry wall (shortest-column placement, re-laid out only when the column count changes)
-   - the game filter (tiles glide to their new places)
+   - the game filter: logo toggles (none on = everything); tiles glide to their new places
    - loops: a few at a time (the ones nearest the middle of the screen), sized to the tile, paused off screen
    - the viewer: opens from the tile, already sharp (the tile's own image first, the large one cross-fades in once
      decoded), swipe or arrow keys to move, swipe down / Esc / back button to close */
@@ -77,15 +77,16 @@
     new ResizeObserver(() => wall.__layout()).observe(wall);
   }
 
-  // ── game filter ──
-  const filter = document.querySelector('.filter');
-  if (filter && walls[0]) {
-    const wall = walls[0], items = wall.__items;
-    const apply = (f, animate) => {
-      filter.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === f));
+  // ── game filter: independent toggles. None on = everything (the default); any on = only those games. ──
+  const games = document.querySelector('.games');
+  if (games && walls[0]) {
+    const wall = walls[0], items = wall.__items, btns = [...games.querySelectorAll('button')];
+    const apply = (on, animate) => {
+      btns.forEach(b => b.setAttribute('aria-pressed', on.has(b.dataset.f)));
+      games.classList.toggle('picked', on.size > 0);
       const first = new Map();
       if (animate) for (const t of items) { if (t.hidden) continue; const r = t.getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) first.set(t, r); }
-      for (const t of items) t.hidden = f !== 'all' && t.dataset.set !== f;
+      for (const t of items) t.hidden = on.size > 0 && !on.has(t.dataset.set);
       wall.__layout(true);
       if (!animate) return;
       for (const t of items) {
@@ -96,28 +97,15 @@
         else t.animate([{opacity: 0, transform: 'scale(.97)'}, {opacity: 1, transform: 'none'}], {duration: 460, easing: 'ease-out'});
       }
     };
-    const goo = fluid(filter);
-    filter.addEventListener('click', e => {
-      const b = e.target.closest('button'); if (!b || b.getAttribute('aria-pressed') === 'true') return;
-      apply(b.dataset.f, !reduce); goo.go(b);
-      try { history.replaceState(history.state, '', b.dataset.f === 'all' ? location.pathname : '#' + b.dataset.f); } catch (err) {}
+    const current = () => new Set(btns.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.f));
+    games.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      const on = current(); on.has(b.dataset.f) ? on.delete(b.dataset.f) : on.add(b.dataset.f);
+      apply(on, !reduce);
+      try { history.replaceState(history.state, '', on.size ? '#' + [...on].join('+') : location.pathname); } catch (err) {}
     });
-    const h = location.hash.slice(1);
-    if (filter.querySelector(`[data-f="${h}"]`)) { apply(h, false); goo.go(filter.querySelector(`[data-f="${h}"]`), true); }
-  }
-
-  /* the filter's indicator: the reeded-glass pill (a/pill.js) where WebGL2 is available; otherwise a plain pill that
-     slides under the active button */
-  function fluid(box) {
-    const g = window.GlassPill && window.GlassPill(box);
-    if (g) return g;
-    const ind = Object.assign(document.createElement('i'), {className: 'ind'}); box.prepend(ind);
-    const go = (b) => { box.dataset.on = b.dataset.f; const r = b.getBoundingClientRect(), o = box.getBoundingClientRect();
-      ind.style.transform = `translateX(${r.left - o.left}px)`; ind.style.width = r.width + 'px'; };
-    const first = box.querySelector('[aria-pressed=true]');
-    requestAnimationFrame(() => go(box.querySelector('[aria-pressed=true]') || first));
-    new ResizeObserver(() => go(box.querySelector('[aria-pressed=true]'))).observe(box);
-    return {go};
+    const h = new Set(location.hash.slice(1).split('+').filter(f => btns.some(b => b.dataset.f === f)));
+    if (h.size) apply(h, false);
   }
 
   // ── viewer ──

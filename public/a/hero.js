@@ -176,7 +176,10 @@ void main() {
 
   const st = { scroll: 0, sv: 0, mx: .5, my: .5, vx: 0, vy: 0, sx: .5, gate: 1, phase: 0 };
   const COARSE = matchMedia('(pointer:coarse)').matches || innerWidth < 760 || (navigator.deviceMemory || 8) <= 4;
-  const TURN = { step: COARSE ? 2 : 1, n: COARSE ? 9 : 17, rest: COARSE ? 4 : 8, ready: false, aspect: 1, mix: 0 };   // frames every 2.25 deg, -30..+6 (phones: every other one)
+  // turntable: FN frames FD degrees apart, rest pose at frame FR (home B: 17 x 2.25 deg, rest 8); FA scales the swing.
+  // Phones load every other frame.
+  const FN = +hero.dataset.tn || 17, FR = +hero.dataset.tr || 8, FD = +hero.dataset.td || 2.25, FA = +hero.dataset.ta || 1;
+  const TURN = { step: COARSE ? 2 : 1, n: COARSE ? Math.ceil(FN / 2) : FN, rest: COARSE ? FR / 2 : FR, ready: false, aspect: 1, mix: 0 };
   let tx = .5, ty = .5, lastAct = -1e9, t0 = 0, last = 0, ready = false;
   const clamp01 = (x) => Math.min(1, Math.max(0, x));
   const outCubic = (x) => 1 - Math.pow(1 - clamp01(x), 3), outQuart = (x) => 1 - Math.pow(1 - clamp01(x), 4);
@@ -212,7 +215,7 @@ void main() {
       // one light sweep across the glass on load, then the light pool follows the pointer; at idle the light drifts
       pool: (() => { const k = outCubic((t - .4) / 2.4); const px = .72 + (st.sx - .5) * .36 + .07 * Math.sin(st.phase);
         return [-.25 + (px + .25) * k, .24 + v * .14 + .035 * Math.sin(st.phase * .63)]; })(),
-      frame: Math.max(0, Math.min(TURN.n - 1, TURN.rest + deg / (2.25 * TURN.step))),
+      frame: Math.max(0, Math.min(TURN.n - 1, TURN.rest + deg * FA / (FD * TURN.step))),
       fade: outCubic((t - .1) / 1.2) * (1 - .35 * sc),
     };
   }
