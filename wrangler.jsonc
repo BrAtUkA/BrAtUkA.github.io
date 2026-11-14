@@ -19,5 +19,7 @@
   // media (renders, loops, screenshots) lives in R2, not in git: served by the Worker at /a/m/*
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bratuka-media" }],
   // pushes to any other branch (e.g. `preview`) build a Preview on workers.dev for review before production
-  "previews": {}
+  "previews": {
+    "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bratuka-media" }]   // previews read the same media
+  }
 }
