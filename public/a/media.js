@@ -106,58 +106,17 @@
     if (filter.querySelector(`[data-f="${h}"]`)) { apply(h, false); goo.go(filter.querySelector(`[data-f="${h}"]`), true); }
   }
 
-  /* the filter's liquid: blob A's two edges ride separate critically damped springs (the edge in the direction of
-     travel is stiffer, so the blob stretches and then catches up); droplet B trails on a softer spring and merges
-     back through the goo filter. Hover leans the blob toward the pointer; press squashes it. */
+  /* the filter's indicator: the reeded-glass pill (a/pill.js) where WebGL2 is available; otherwise a plain pill that
+     slides under the active button */
   function fluid(box) {
-    if (!document.getElementById('goo-f')) document.body.insertAdjacentHTML('beforeend',
-      '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="goo-f"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/>' +
-      '<feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" result="g"/><feComposite in="SourceGraphic" in2="g" operator="atop"/></filter></svg>');
-    const layer = Object.assign(document.createElement('div'), {className: 'goo'});
-    layer.style.filter = 'url(#goo-f)';
-    layer.innerHTML = '<i class="blob a"></i><i class="blob b"></i>';
-    box.prepend(layer);
-    const A = layer.children[0], B = layer.children[1];
-    const st = {l: 0, r: 0, vl: 0, vr: 0, c: 0, vc: 0, sq: 1, vs: 0, tl: 0, tr: 0, lean: 0, press: 0};
-    let raf = 0, last = 0, cur = box.querySelector('[aria-pressed=true]');
-    const spring = (x, v, to, w, dt) => { const acc = w * w * (to - x) - 2 * w * v; v += acc * dt; return [x + v * dt, v]; };
-    const target = (b) => { const r = b.getBoundingClientRect(), o = layer.getBoundingClientRect(); return [r.left - o.left, r.right - o.left]; };
-    function frame(now) {
-      const dt = Math.min(.033, (now - last) / 1000 || .016); last = now;
-      for (let k = 0; k < 2; k++) {                       // two sub-steps keep the stiff springs stable
-        const h = dt / 2, dir = Math.sign((st.tl + st.tr) - (st.l + st.r)) || 0;
-        const tl = st.tl + st.lean, tr = st.tr + st.lean;
-        [st.l, st.vl] = spring(st.l, st.vl, tl, dir < 0 ? 26 : 13, h);
-        [st.r, st.vr] = spring(st.r, st.vr, tr, dir > 0 ? 26 : 13, h);
-        [st.c, st.vc] = spring(st.c, st.vc, (st.l + st.r) / 2, 9, h);
-        [st.sq, st.vs] = spring(st.sq, st.vs, 1 - st.press * .1, 30, h);
-      }
-      const lim = layer.clientWidth, L = Math.max(0, st.l), R = Math.min(lim, st.r);   // the liquid stays inside its capsule
-      const w = Math.max(8, R - L), speed = Math.min(1, Math.abs(st.vl + st.vr) / 3000);
-      A.style.width = w + 'px'; A.style.transform = `translateX(${L}px) scaleY(${st.sq * (1 - speed * .12)})`;
-      const d = layer.clientHeight * .78;
-      B.style.width = d + 'px'; B.style.height = d + 'px'; B.style.top = (layer.clientHeight - d) / 2 + 'px';
-      B.style.transform = `translateX(${st.c - d / 2}px) scale(${Math.min(1, Math.abs(st.c - (st.l + st.r) / 2) / 26)})`;   // only exists while the liquid moves
-      const busy = Math.abs(st.vl) + Math.abs(st.vr) + Math.abs(st.vc) + Math.abs(st.vs) > .5 || Math.abs(st.l - st.tl - st.lean) > .3 || Math.abs(st.r - st.tr - st.lean) > .3;
-      raf = busy ? requestAnimationFrame(frame) : 0;
-    }
-    const kick = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
-    function go(b, instant) {
-      cur = b; box.dataset.on = b.dataset.f;
-      [st.tl, st.tr] = target(b);
-      if (instant || reduce) { st.l = st.tl; st.r = st.tr; st.c = (st.l + st.r) / 2; st.vl = st.vr = st.vc = 0; }
-      kick(); if (reduce) frame(performance.now());
-    }
-    box.addEventListener('pointermove', e => {
-      if (reduce || e.pointerType !== 'mouse') return;
-      const o = layer.getBoundingClientRect(), mid = (st.tl + st.tr) / 2 + o.left;
-      st.lean = Math.max(-10, Math.min(10, (e.clientX - mid) * .06)); kick();
-    });
-    box.addEventListener('pointerleave', () => { st.lean = 0; kick(); });
-    box.addEventListener('pointerdown', () => { st.press = 1; kick(); });
-    addEventListener('pointerup', () => { if (st.press) { st.press = 0; kick(); } });
-    new ResizeObserver(() => go(cur, true)).observe(box);
-    go(cur, true);
+    const g = window.GlassPill && window.GlassPill(box);
+    if (g) return g;
+    const ind = Object.assign(document.createElement('i'), {className: 'ind'}); box.prepend(ind);
+    const go = (b) => { box.dataset.on = b.dataset.f; const r = b.getBoundingClientRect(), o = box.getBoundingClientRect();
+      ind.style.transform = `translateX(${r.left - o.left}px)`; ind.style.width = r.width + 'px'; };
+    const first = box.querySelector('[aria-pressed=true]');
+    requestAnimationFrame(() => go(box.querySelector('[aria-pressed=true]') || first));
+    new ResizeObserver(() => go(box.querySelector('[aria-pressed=true]'))).observe(box);
     return {go};
   }
 

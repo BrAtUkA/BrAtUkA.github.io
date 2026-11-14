@@ -10,6 +10,7 @@
   const hero = document.querySelector('.hero'), cv = document.getElementById('glass'), poster = document.getElementById('poster');
   if (!hero || !cv) return;
   const BASE = hero.dataset.base || '', PLATE_SRC = BASE + (hero.dataset.plate || 'a/b-plate.webp'), HAS_TURN = hero.dataset.turn !== 'off';
+  const TURN_SRC = BASE + (hero.dataset.turn && hero.dataset.turn !== 'off' ? hero.dataset.turn : 'a/turn/b');   // frame i is TURN_SRC + i + '.webp'
   const flags = new URLSearchParams(location.search), hash = location.hash;
   const POSTER = flags.has('poster'), DEBUG = flags.has('debug') || hash === '#debug';
   if (POSTER) document.documentElement.classList.add('poster-capture');
@@ -159,7 +160,7 @@ void main() {
   const FORCED = flags.has('tier') ? Math.max(0, Math.min(3, +flags.get('tier') | 0)) : -1;
   let tier = FORCED >= 0 ? FORCED : (POSTER ? 0 : 1), ceiling = 0;
 
-  const PLATE = { k: 1.0105, dx: .0011, dy: .0004 };                  // plate box vs the B inside it (from turn2/encode.py)
+  const PLATE = { k: +hero.dataset.k || 1.0105, dx: +(hero.dataset.dx || .0011), dy: +(hero.dataset.dy || .0004) };                  // plate box vs the B inside it (from turn2/encode.py)
   let W = 1, H = 1, dpr = 1, w = 30, Hb = 400, aspect = 1, B0 = { x: 0, y: 0 };
   function layout() {
     const r = hero.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
@@ -267,7 +268,7 @@ void main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   };
   function loadTurn() {                                   // turntable frames load after the hero is up, into one texture array
-    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${BASE}a/turn/b${i * TURN.step}.webp`))).then((ims) => {
+    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${i * TURN.step}.webp`))).then((ims) => {
       const w0 = ims[0].naturalWidth, h0 = ims[0].naturalHeight, lv = 1 + Math.floor(Math.log2(Math.max(w0, h0)));
       const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
