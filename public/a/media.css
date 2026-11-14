@@ -104,8 +104,9 @@ html{scrollbar-gutter:stable}
 .lb-slide{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;overflow:hidden;background:#0b0809;backface-visibility:hidden}
 .lb-in{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
 .lb-in img,.lb-in video,.lb-in canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.lb-in .hi,.lb-in video.master{opacity:0;transition:opacity .35s ease}
-.lb-in .hi.on,.lb-in video.master.on{opacity:1}
+.lb-in .hi,.lb-in video{opacity:0;transition:opacity .35s ease}
+.lb-in .hi.on,.lb-in video.on{opacity:1}
+.lb-in video.copy{transition:none}
 .lb-ui{position:absolute;inset:0;pointer-events:none;transition:opacity .35s}
 .lb.idle .lb-ui{opacity:0}
 .lb.closing .lb-ui{opacity:0;transition:opacity .12s}

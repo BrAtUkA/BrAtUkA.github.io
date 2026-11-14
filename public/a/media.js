@@ -206,30 +206,52 @@
     el.__f = f; el.__t = t; el.__in = inn;
     return el;
   }
-  // a loop's own playing video moves into the viewer (no restart); the master loads hidden, seeks to the same moment,
-  // and cross-fades in once it is actually playing in step
+  // A loop never leaves its tile (moving a video element drops its decoded frames, and it would re-buffer). Opening:
+  // the tile's video pauses where it is; the viewer shows a snapshot of its current frame at once, then plays its own
+  // copy of the same, already cached file from that moment; the full-quality master syncs in after. Closing: the tile's
+  // video seeks to the viewer's moment (inside data it already has) and the hand-over waits for its first new frame.
+  const snap = (src, parent, cls) => {
+    if (!src || src.readyState < 2 || !src.videoWidth) return null;
+    const c = document.createElement('canvas'); c.width = src.videoWidth; c.height = src.videoHeight; c.className = cls;
+    try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); parent.appendChild(c); return c; } catch (e) { return null; }
+  };
+  const frameOf = (v, max) => new Promise(res => {          // resolves once v has presented a new frame (or after max ms)
+    let ok = false; const done = () => { if (!ok) { ok = true; res(); } };
+    setTimeout(done, max);
+    if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(() => done()); else v.addEventListener('timeupdate', done, {once: true});
+  });
   function adoptLoop(t, inn) {
     const tv = t.querySelector('video');
-    if (tv && tv.dataset.ok) { tv.__home = t; inn.appendChild(tv); tv.classList.add('on'); tv.play().catch(() => {}); }
+    const ready = tv && tv.readyState >= 2 && tv.currentSrc;
+    const t0 = ready ? tv.currentTime : 0;
+    if (ready) { snap(tv, inn, 'still'); tv.pause(); }
+    let vv = null;
+    if (ready) {                                     // the viewer's own copy of the tile's (cached) file
+      vv = document.createElement('video'); vv.className = 'copy'; vv.muted = true; vv.loop = true; vv.playsInline = true; vv.preload = 'auto'; vv.src = tv.currentSrc;
+      inn.appendChild(vv);
+      vv.addEventListener('loadeddata', () => {
+        vv.currentTime = t0;
+        vv.addEventListener('seeked', () => vv.play().then(() => frameOf(vv, 600)).then(() => { vv.classList.add('on'); const st = inn.querySelector('canvas.still'); if (st) setTimeout(() => st.remove(), 400); }).catch(() => {}), {once: true});
+      }, {once: true});
+    }
     const mv = document.createElement('video'); mv.className = 'master'; mv.muted = true; mv.loop = true; mv.playsInline = true; mv.preload = 'auto';
     mv.innerHTML = `<source src="${t.dataset.v}-m.webm${q(t)}" type='${AV1}'><source src="${t.dataset.v}-m.mp4${q(t)}" type='${HEVC}'>`;
     inn.appendChild(mv);
     // sync like a player: one seek slightly ahead, then nudge the playback rate until both show the same moment
-    const ref = () => (tv && tv.parentNode === inn && !tv.paused ? tv : null);
+    const ref = () => (vv && vv.classList.contains('on') && !vv.paused ? vv : null);
     const drift = () => { const r = ref(), d = mv.duration || 1; if (!r) return 0; let x = mv.currentTime - r.currentTime; x -= d * Math.round(x / d); return x; };
-    const swap = () => { mv.playbackRate = 1; mv.classList.add('on'); setTimeout(() => { const r = ref(); if (r) r.pause(); }, 450); };
+    const swap = () => { mv.playbackRate = 1; mv.classList.add('on'); setTimeout(() => { if (vv) vv.pause(); }, 450); };
     const sync = () => {
       if (!mv.isConnected) return;
       const r = ref();
-      if (!r) { mv.play().then(swap).catch(() => {}); return; }
-      mv.currentTime = (r.currentTime + .3) % (mv.duration || 1e9);
+      mv.currentTime = ((r ? r.currentTime : t0) + .3) % (mv.duration || 1e9);
       mv.addEventListener('seeked', () => {
         mv.play().then(() => {
-          const t0 = performance.now();
+          const s0 = performance.now();
           const step = () => {
             if (!mv.isConnected) return;
             const x = drift();
-            if (Math.abs(x) < .045 || performance.now() - t0 > 4000 || !ref()) return swap();
+            if (!ref() || Math.abs(x) < .045 || performance.now() - s0 > 4000) return swap();
             mv.playbackRate = x > 0 ? (x > .3 ? .6 : .85) : (x < -.3 ? 1.6 : 1.2);
             requestAnimationFrame(step);
           };
@@ -239,25 +261,21 @@
     };
     mv.addEventListener('canplay', sync, {once: true});
   }
-  function freeze(el) {                               // the adopted loop's current frame, as a still in the slide
-    const v = el.querySelector('.lb-in video:not(.master)'), m = el.querySelector('video.master.on'), src = m || v;
-    if (!src || src.readyState < 2) return;
-    const c = document.createElement('canvas'); c.width = src.videoWidth; c.height = src.videoHeight; c.className = 'still';
-    try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); el.__in.appendChild(c); } catch (e) {}
+  function playing(el) {                              // the video the viewer is showing right now, if any
+    const m = el.querySelector('video.master.on'), c = el.querySelector('video.copy.on');
+    return m && !m.paused ? m : c && !c.paused ? c : (m || c);
   }
-  function release(el) {                              // hand an adopted tile video back to its tile, still playing
+  function freeze(el) { const v = playing(el); if (v) snap(v, el.__in, 'still'); }
+  function release(el) {                              // stop the viewer's videos; bring the tile's video to the same moment
     if (!el) return Promise.resolve();
-    el.querySelectorAll('video.master').forEach(v => { v.pause(); v.removeAttribute('src'); v.innerHTML = ''; v.load(); });
-    const waits = [];
-    el.querySelectorAll('video:not(.master)').forEach(v => {
-      if (!v.__home) return;
-      v.__home.appendChild(v); v.classList.add('on');
-      waits.push(new Promise(res => {
-        const done = () => res(); setTimeout(done, 260);                     // never wait long
-        v.play().then(() => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(done) : requestAnimationFrame(() => requestAnimationFrame(done))).catch(done);
-      }));
+    const v = playing(el), at = v ? v.currentTime : null, tv = el.__t && el.__t.querySelector('video');
+    el.querySelectorAll('video').forEach(x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); });
+    if (!tv || !tv.currentSrc || tv.readyState < 1) return Promise.resolve();
+    return new Promise(res => {
+      const go = () => tv.play().then(() => frameOf(tv, 1500)).then(res).catch(res);
+      if (at != null && tv.duration) { tv.currentTime = at % tv.duration; tv.addEventListener('seeked', go, {once: true}); setTimeout(res, 1500); }
+      else go();
     });
-    return Promise.all(waits);
   }
   function label(f) {
     const t = list[i];
