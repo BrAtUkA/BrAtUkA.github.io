@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Hero shapes · lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
+   owner's own renders and screenshots carry the visuals. No cards: rows, hairlines and full-bleed strips. */
+:root{
+  color-scheme: dark;
+  --void:#060405;     /* page ground: black with a trace of red */
+  --hair:#231c1e;     /* hairlines */
+  --bone:#ece6e3;     /* primary text */
+  --ash:#8b8185;      /* secondary text */
+  --signal:#ff3a4e;   /* the only UI accent: links, focus */
+  --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
+  --max:1280px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void);color:var(--bone)}
+body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:var(--max);margin:0 auto}
+.mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
+.link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
+.link:hover{color:var(--signal)}
+::selection{background:var(--signal);color:var(--void)}
+
+/* ── hero ── */
+.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+#glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.poster{position:absolute;inset:0;z-index:0;display:none}
+.poster.show{display:block}
+.poster img{width:100%;height:100%;object-fit:cover;object-position:69% 48%;display:block}
+@media (max-width:760px){ .poster img{object-position:50% 29%} }
+.poster-capture .top,.poster-capture .intro,.poster-capture .poster-capture .hero::after{display:none}
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;z-index:1;pointer-events:none;
+  background:linear-gradient(0deg, var(--void) 0%, color-mix(in srgb, var(--void) 60%, transparent) 40%, transparent 100%)}
+.top{position:absolute;z-index:3;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top, 0px) + 22px)}
+.top .wrap{display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:500;letter-spacing:.01em}
+.brand img{width:22px;height:auto;display:block}
+.nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
+.nav a:hover{color:var(--bone)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro .wrap{display:grid;gap:22px}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
+.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro p strong{color:var(--bone);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+@media (max-width:760px){ .nav a.opt{display:none} }
+
+/* ── sections ── */
+main{display:grid;grid-template-columns:minmax(0, 1fr);gap:clamp(88px, 12vw, 160px);padding-block:clamp(48px, 8vw, 96px) 0}
+main > section{min-width:0}
+.head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--hair)}
+.head h2{margin:0;font-weight:500;font-size:var(--t-sec);line-height:.95;letter-spacing:-.04em}
+.head{align-items:end}
+.head .side{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;gap:6px 20px;padding-bottom:.45em;font-size:var(--t-s);text-align:right}
+@media (max-width:520px){ .head .side .mono{display:none} }
+
+/* ── glass objects: Cycles sprites on three depth planes (back / mid / front), screen-blended over the dark page ── */
+main{overflow-x:clip}
+main > section{position:relative}
+main > section.wrap{width:100%}   /* grid items with auto margins shrink to their content: keep one column edge */
+main > section > :not(.obj){position:relative;z-index:1}
+.obj{position:absolute;right:var(--rx, auto);left:var(--lx, auto);top:var(--y);width:var(--w);z-index:0;pointer-events:none;mix-blend-mode:screen;
+  opacity:0;transition:opacity 1.4s cubic-bezier(.2,.7,.2,1)}
+.obj.in,html:not(.js) .obj{opacity:var(--o, 1)}
+.obj[data-depth=front]{z-index:2}
+.obj > i{display:block;will-change:transform;rotate:var(--r, 0deg)}
+.obj img,.obj canvas{display:block;width:100%;height:auto}
+@media (max-width:760px){ .obj{top:var(--ym, var(--y));width:var(--wm, var(--w))} .obj.dm{display:none} }
+
+/* work index */
+.index{list-style:none;margin:10px 0 0;padding:0}
+.index li{border-bottom:1px solid var(--hair)}
+.row{position:relative;display:grid;grid-template-columns:minmax(0, 1fr) auto;grid-template-areas:"t m" "d m";gap:8px 48px;align-items:start;padding-block:26px 28px}
+.row::before{content:"";position:absolute;inset:0 -20px;border-radius:6px;background:rgba(255,255,255,.014);opacity:0;transition:opacity .4s;pointer-events:none}
+.row h3{grid-area:t;margin:0;font-weight:500;font-size:clamp(1.3rem, 1.05rem + .9vw, 1.75rem);line-height:1.15;letter-spacing:-.02em;color:#ddd5d2;transition:color .3s}
+.row p{grid-area:d;margin:0;color:var(--ash);font-size:var(--t-s);line-height:1.55;max-width:58ch;min-width:0;transition:color .25s}
+.row .mono{grid-area:m;white-space:nowrap;text-align:right;padding-top:.55em;transition:color .25s}
+.row .mono::after{content:"↗";display:inline-block;margin-left:14px;color:var(--signal);opacity:0;transform:translate(-6px, 4px);transition:opacity .3s, transform .45s cubic-bezier(.2,.7,.2,1)}
+.row .shot{display:none}
+@media (hover:hover) and (pointer:fine){
+  .row:hover::before{opacity:1} .row:hover h3{color:#fff} .row:hover .mono{color:var(--bone)}
+  .row:hover .mono::after{opacity:1;transform:none}
+}
+.row:focus-visible h3{color:#fff}
+@media (max-width:860px){
+  .row{grid-template-columns:1fr;grid-template-areas:"t" "d" "m" "s";gap:10px}
+  .row .mono{text-align:left;padding-top:0}
+  .row .shot{grid-area:s;display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;margin-top:8px;background:#111;border-radius:4px}
+}
+.peek{position:fixed;left:0;top:0;z-index:30;width:min(32vw, 420px);height:0;pointer-events:none;opacity:0;will-change:transform,opacity;
+  border-radius:6px;overflow:hidden;background:#0d0a0b;box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 56px -18px rgba(0,0,0,.8), 0 10px 22px -10px rgba(0,0,0,.6);
+  transition:opacity .45s cubic-bezier(.2,.7,.2,1), height .5s cubic-bezier(.2,.7,.2,1)}
+.peek img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.035);transition:opacity .45s ease, transform .9s cubic-bezier(.2,.7,.2,1)}
+.peek img.cur{opacity:1;transform:none}
+.peek.on{opacity:1}
+
+
+/* about */
+.about{display:grid;gap:clamp(40px, 6vw, 72px);padding-top:clamp(28px, 4vw, 44px)}
+.about p{margin:0;max-width:30ch;color:var(--ash);font-size:var(--t-l);line-height:1.45;letter-spacing:-.01em}
+.about p:first-child{margin-bottom:.8em;max-width:22ch;color:var(--bone);font-size:clamp(1.6rem, 1.05rem + 1.9vw, 2.6rem);line-height:1.18;letter-spacing:-.025em;text-wrap:balance}
+.facts{margin:0;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:0 clamp(24px, 4vw, 56px)}
+.facts div{display:grid;gap:6px;align-content:start;padding-block:18px 20px;border-top:1px solid var(--hair)}
+.facts dt{color:var(--ash);font-size:var(--t-s)} .facts dd{margin:0;font-size:var(--t-m)}
+@media (max-width:860px){ .facts{grid-template-columns:repeat(2, minmax(0, 1fr))} }
+@media (max-width:520px){ .facts{grid-template-columns:1fr} .facts div{padding-block:14px} }
+
+/* contact: the address is the headline of the section; the turning cone balances it on the right */
+.cta{display:grid;grid-template-columns:minmax(0, 1fr) minmax(0, 26rem);align-items:center;gap:24px 48px}
+main > section > .cta{z-index:auto}   /* no stacking context here, so the cone screen-blends with the page itself */
+.cta-text{display:grid;gap:clamp(18px, 2.4vw, 28px);justify-items:start}
+.kicker{margin:0;font-weight:500;font-size:var(--t-l);letter-spacing:-.01em;color:var(--ash)}
+.spin{justify-self:end;width:100%;mix-blend-mode:screen;margin-block:-6%}
+.spin canvas{display:block;width:100%;height:auto}
+@media (max-width:860px){ .cta{grid-template-columns:1fr} .spin{max-width:70vw;justify-self:center;margin-block:0} }
+.mail{display:inline-flex;align-items:baseline;gap:.3em;font-weight:500;font-size:clamp(1.5rem, min(7.2vw, .9rem + 4.6vw), 4.6rem);letter-spacing:-.04em;line-height:1;white-space:nowrap;
+  color:var(--signal);padding-bottom:.12em;background:linear-gradient(currentColor,currentColor) 0 100%/100% 2px no-repeat;transition:background-size .45s cubic-bezier(.2,.7,.2,1)}
+.mail .arr{display:inline-block;font-size:.8em;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.mail:hover .arr,.mail:focus-visible .arr{transform:translateX(.25em)}
+.mail:hover{background-size:0 2px;background-position:100% 100%}
+.copy{font:inherit;color:inherit;background-color:transparent;border:0;padding:0 0 2px;cursor:pointer}
+.socials{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s);color:var(--ash)}
+.socials .link:hover{color:var(--bone)}
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding-block:28px calc(28px + env(safe-area-inset-bottom, 0px));margin-top:clamp(72px, 10vw, 128px);border-top:1px solid var(--hair)}
+
+.hero.sub{height:clamp(380px, 58vh, 620px)}
+.picker{position:fixed;z-index:20;left:50%;translate:-50% 0;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);padding:8px;border-radius:14px;background:rgba(10,8,9,.82);backdrop-filter:blur(10px);border:1px solid var(--hair)}
+.picker a{font:500 12px var(--f-sans);color:var(--ash);border:1px solid var(--hair);border-radius:999px;padding:6px 11px}
+.picker a[aria-current=true]{color:var(--bone);border-color:var(--signal)}
+.below{padding:48px 0 160px} .below p{color:var(--ash);max-width:60ch}
+</style></head><body>
+<script>document.documentElement.classList.add('js');
+const SH={'torus-red':['Renders','Blender work, mostly rendered in Cycles.'],'rcube-red':['Renders','Blender work, mostly rendered in Cycles.'],'capsule-red':['Renders','Blender work, mostly rendered in Cycles.'],'hexring-red':['Renders','Blender work, mostly rendered in Cycles.'],'lens-red':['Renders','Blender work, mostly rendered in Cycles.'],'ring-red':['Gallery','Virtual photography, mostly Red Dead Redemption 2.'],
+'disc-amber':['Gallery','Virtual photography, mostly Red Dead Redemption 2.'],'lens-amber':['Gallery','Virtual photography, mostly Red Dead Redemption 2.'],'ring-amber':['Gallery','Virtual photography, mostly Red Dead Redemption 2.'],'sun-amber':['Gallery','Virtual photography, mostly Red Dead Redemption 2.']};
+const cur=new URLSearchParams(location.search).get('s')||'torus-red';
+</script>
+<section class="hero sub" data-base="../../" data-turn="off" id="top" aria-label="Introduction">
+  <picture class="poster" id="poster" aria-hidden="true"><source media="(max-width: 760px)" srcset="../../a/hero-poster-m.webp"><img src="../../a/hero-poster.webp" alt="" width="2880" height="1656" decoding="async" loading="lazy"></picture>
+  <noscript><style>.poster{display:block}</style></noscript>
+  <canvas id="glass" aria-hidden="true"></canvas>
+  <header class="top gut">
+    <div class="wrap">
+      <a class="brand" href="#top">BrAtUkA</a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#work">Projects</a><a href="#art" class="opt">Renders</a><a href="#gallery" class="opt">Gallery</a><a href="#about" class="opt">About</a><a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+  <div class="intro gut"><div class="wrap"><h1 id="t">Renders</h1><p id="d">Blender work, mostly rendered in Cycles.</p></div></div>
+  </div>
+</section>
+<main class="gut"><div class="wrap below"><p>Hero shape lab. Pick a shape below; the page reloads with that shape behind the reeded glass. Move the pointer over the hero and scroll to see the glass respond. Red candidates are for Renders, amber for Gallery (ring and lens also come in the other colour).</p><div style="height:120vh"></div></div></main>
+<nav class="picker" id="pk"></nav>
+<script>
+document.querySelector('.hero').dataset.plate='lab/heroes/'+cur+'.webp';
+document.getElementById('t').textContent=SH[cur][0]; document.getElementById('d').textContent=SH[cur][1];
+document.getElementById('pk').innerHTML=Object.keys(SH).map(k=>`<a href="?s=${k}" aria-current="${k===cur}">${k.replace('-',' · ')}</a>`).join('');
+</script>
+<script src="../../a/hero.js"></script>
+</body></html>
