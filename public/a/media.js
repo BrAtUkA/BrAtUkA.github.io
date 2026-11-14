@@ -163,13 +163,13 @@
     const b = el.getBoundingClientRect();
     return {x: b.left, y: b.top, w: b.width, h: b.height, sc: b.width / el.__f.w};
   }
-  function morph(A, B, f, ease, n = 28, fade = null) {
+  function morph(A, B, f, ease, n = 28, fade = null) {           // fade: null, [from, to] or k => opacity
     const outer = [], inner = [];
     for (let k = 0; k <= n; k++) {
       const p = ease(k / n), L = (a, b) => a + (b - a) * p;
       const x = L(A.x, B.x), y = L(A.y, B.y), w = L(A.w, B.w), h = L(A.h, B.h), sc = L(A.sc, B.sc), ax = w / f.w, ay = h / f.h;
       const o = {transform: `translate3d(${x}px, ${y}px, 0) scale(${ax}, ${ay})`};
-      if (fade) o.opacity = L(fade[0], fade[1]);
+      if (fade) o.opacity = typeof fade === 'function' ? fade(k / n) : L(fade[0], fade[1]);
       outer.push(o);
       inner.push({transform: `translate3d(${(f.w - f.w * sc / ax) / 2}px, ${(f.h - f.h * sc / ay) / 2}px, 0) scale(${sc / ax}, ${sc / ay})`});
     }
@@ -264,7 +264,6 @@
     const old = cur, el = slide(list[i]); cur = el;
     stage.appendChild(el); label(el.__f);
     if (old) {
-      old.__t.classList.remove('away'); list[i].classList.add('away');
       if (reduce || !dir) { release(old); old.remove(); }
       else {
         busy = true;
@@ -282,18 +281,18 @@
     list = g && g.hasAttribute('data-solo') ? [t] : ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
     lb.classList.toggle('solo', list.length < 2);
     token++;
-    for (const n of [bg, ui]) n.getAnimations().forEach(a => a.cancel());
-    stage.querySelectorAll('.lb-slide').forEach(x => { release(x); x.remove(); });
-    bg.style.opacity = ''; lb.classList.remove('closing');
+    ui.getAnimations().forEach(a => a.cancel());
+    stage.querySelectorAll('.lb-slide').forEach(x => { x.getAnimations().forEach(a => a.cancel()); release(x); x.remove(); });
+    busy = false; bg.style.opacity = ''; lb.classList.remove('closing');   // nothing from a previous view may block this one
     opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
+    void lb.offsetWidth; lb.classList.add('bg-on');      // the backdrop is a CSS fade on this one class: no state to get stuck
     const r = t.getBoundingClientRect();
     cur = null; show(list.indexOf(t), 0);
-    t.classList.add('away');
     if (!reduce) {
-      const f = cur.__f, [outer, inner] = morph(tileState(r, f), openState(f), f, EASE_OPEN);
+      // fade in over the first fifth: tiles under the home previews' soft edge are partly transparent
+      const f = cur.__f, [outer, inner] = morph(tileState(r, f), openState(f), f, EASE_OPEN, 28, k => Math.min(1, k / .2));
       cur.animate(outer, {duration: 560, easing: 'linear'});
       cur.__in.animate(inner, {duration: 560, easing: 'linear'});
-      bg.animate([{opacity: 0}, {opacity: 1}], {duration: 420, easing: 'cubic-bezier(.2,.7,.2,1)'});
       ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
     }
     try { history.pushState({lb: 1}, ''); } catch (err) {}
@@ -302,36 +301,41 @@
   }
   function shut() {
     if (!lbOpen() || !cur) return;
-    const el = cur, t = el.__t, my = ++token; cur = null;
+    const el = cur, t = el.__t, my = ++token; cur = null; busy = false;
+    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { x.getAnimations().forEach(a => a.cancel()); release(x); x.remove(); } });   // a slide still leaving
     const finish = () => {
-      release(el); el.remove(); t.classList.remove('away');
+      release(el); el.remove();
       if (my !== token) return;                     // the viewer was opened again meanwhile: leave it alone
       lb.classList.remove('open', 'closing'); root.classList.remove('lb-on');
-      for (const n of [bg, ui]) n.getAnimations().forEach(a => a.cancel());
-      bg.style.opacity = '';
+      ui.getAnimations().forEach(a => a.cancel());
       document.dispatchEvent(new Event('viewer:close')); schedule();
     };
-    lb.classList.add('closing');
+    ui.getAnimations().forEach(a => a.cancel());    // the caption leaves at once, even straight after opening
+    ui.animate([{opacity: 0}, {opacity: 0}], {duration: 600, fill: 'forwards'});
+    lb.classList.add('closing'); bg.style.opacity = ''; lb.classList.remove('bg-on');
     const f = el.__f, from = nowState(el), r = t.getBoundingClientRect();
     el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
     const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
-    const bg0 = parseFloat(getComputedStyle(bg).opacity); bg.style.opacity = '';
-    const D = onScreen ? 520 : 340;
-    bg.animate([{opacity: bg0}, {opacity: 0}], {duration: D, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards'});
     if (reduce) return finish();
+    const D = onScreen ? 520 : 340;
     const to = onScreen ? tileState(r, f)
       : {x: from.x + from.w * .02, y: from.y + from.h * .02, w: from.w * .96, h: from.h * .96, sc: from.sc * .96};   // shrink about its own centre
-    const [outer, inner] = morph(from, to, f, EASE_OUT, 24, onScreen ? null : [1, 0]);
+    // into its tile: the tile is underneath all along, so fading the image over the last third hands over to it
+    // without a pop (even under the previews' soft edge). Elsewhere: a plain fade where it is.
+    const fade = onScreen ? (k => k < .66 ? 1 : 1 - (k - .66) / .34) : [1, 0];
+    const [outer, inner] = morph(from, to, f, EASE_OUT, 24, fade);
     el.animate(outer, {duration: D, easing: 'linear', fill: 'forwards'}).onfinish = finish;
     el.__in.animate(inner, {duration: D, easing: 'linear', fill: 'forwards'});
     (opener && opener === t ? opener : t).focus({preventScroll: true});
   }
-  function close() { if (history.state && history.state.lb) history.back(); else shut(); }
-  addEventListener('popstate', () => { if (lbOpen()) shut(); });
+  // close at once; the history entry the viewer added is popped alongside (its popstate is then ignored)
+  let ownPop = false;
+  function close() { shut(); if (history.state && history.state.lb) { ownPop = true; history.back(); } }
+  addEventListener('popstate', () => { if (ownPop) { ownPop = false; return; } if (lbOpen()) shut(); });
 
   document.addEventListener('click', e => {
     const t = e.target.closest('a.m'); if (!t || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    e.preventDefault(); if (!lbOpen()) open(t);
+    e.preventDefault(); if (!lbOpen() || lb.classList.contains('closing')) open(t);   // a closing viewer hands over at once
   });
   if (fine) document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('a.m'); if (t) prefetch(t); }, {passive: true});
   lb.querySelector('.pv').addEventListener('click', () => show(i - 1, -1));
@@ -389,6 +393,7 @@
   });
   stage.addEventListener('pointerup', e => {
     if (!down) return; down = false;
+    if (!cur) return;
     if (pend) { cancelAnimationFrame(pend); paint(); }
     if (ptype === 'mouse' || !axis || axis === 'n') {
       if (!moved && cur) {
