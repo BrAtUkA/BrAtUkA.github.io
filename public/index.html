@@ -28,6 +28,7 @@
 <link rel="preload" href="a/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="a/fonts/geist-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(a/fonts/geist-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(a/fonts/geist-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(a/fonts/geist-mono-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(a/fonts/geist-mono-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
+<link rel="stylesheet" href="a/media.css">
 <style>
 /* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
    owner's own renders and screenshots carry the visuals. No cards: rows, hairlines and full-bleed strips. */
@@ -83,11 +84,11 @@ a{color:inherit;text-decoration:none}
 /* ── sections ── */
 main{display:grid;grid-template-columns:minmax(0, 1fr);gap:clamp(88px, 12vw, 160px);padding-block:clamp(48px, 8vw, 96px) 0}
 main > section{min-width:0}
-#art{margin-left:calc(-1 * max(16px, env(safe-area-inset-left, 0px)));margin-right:calc(-1 * max(16px, env(safe-area-inset-right, 0px)))}
-#art > .wrap{box-sizing:content-box;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}   /* same column edge as the other sections */
 .head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--hair)}
 .head h2{margin:0;font-weight:500;font-size:var(--t-sec);line-height:.95;letter-spacing:-.04em}
 .head{align-items:end}
+.head .side{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;gap:6px 20px;padding-bottom:.45em;font-size:var(--t-s);text-align:right}
+@media (max-width:520px){ .head .side .mono{display:none} }
 
 /* ── glass objects: Cycles sprites on three depth planes (back / mid / front), screen-blended over the dark page ── */
 main{overflow-x:clip}
@@ -129,14 +130,6 @@ main > section > :not(.obj){position:relative;z-index:1}
 .peek img.cur{opacity:1;transform:none}
 .peek.on{opacity:1}
 
-/* 3D strip */
-.strip{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:14px;margin-top:28px;
-  scroll-padding-left:max(16px, env(safe-area-inset-left, 0px), calc((100vw - var(--max)) / 2));
-  padding-left:max(16px, env(safe-area-inset-left, 0px), calc((100vw - var(--max)) / 2));
-  padding-right:max(16px, env(safe-area-inset-right, 0px));scrollbar-width:thin;scrollbar-color:var(--hair) transparent}
-.strip figure{margin:0;flex:0 0 auto;scroll-snap-align:start}
-.strip img{display:block;height:clamp(170px, 28vw, 400px);width:auto;max-width:none;aspect-ratio:1280/479}
-.artlinks{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:22px;font-size:var(--t-s)}
 
 /* about */
 .about{display:grid;gap:clamp(40px, 6vw, 72px);padding-top:clamp(28px, 4vw, 44px)}
@@ -176,7 +169,7 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
     <div class="wrap">
       <a class="brand" href="#top">BrAtUkA</a>
       <nav class="nav" aria-label="Sections">
-        <a href="#work">Work</a><a href="#art" class="opt">3D</a><a href="#about" class="opt">About</a><a href="#contact">Contact</a>
+        <a href="#work">Projects</a><a href="#art" class="opt">Renders</a><a href="#gallery" class="opt">Gallery</a><a href="#about" class="opt">About</a><a href="#contact">Contact</a>
       </nav>
     </div>
   </header>
@@ -184,7 +177,7 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
     <div class="wrap">
       <h1>Turning theory into practice.</h1>
       <p><strong>BrAtUkA</strong> builds local-first tools, takes apart the systems he relies on, and renders things in Blender. CS student in Islamabad, open to internships and freelance work.</p>
-      <div class="acts"><a class="link" href="#work">Selected work ↓</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a></div>
+      <div class="acts"><a class="link" href="#work">Projects ↓</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a></div>
     </div>
   </div>
 </section>
@@ -192,7 +185,7 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
 <main class="gut">
   <section id="work" class="wrap" aria-labelledby="work-h">
     <div class="obj" data-depth="back" style="--rx:-7%;--y:-270px;--w:min(38vw,520px);--o:.5;--wm:72vw;--ym:-150px" aria-hidden="true"><i><picture><source type="image/avif" srcset="a/o/torus-blur.avif"><img src="a/o/torus-blur.webp" alt="" width="394" height="369" loading="lazy" decoding="async"></picture></i></div>
-        <div class="head"><h2 id="work-h">Selected work</h2></div>
+        <div class="head"><h2 id="work-h">Projects</h2></div>
     <ul class="index">
       <li><a class="row" href="https://bratuka.github.io/pdf-dark-mode-converter/" target="_blank" rel="noopener" data-peek="a/p-pdf.webp">
         <h3>PDF Dark Mode Converter</h3><p>Re-themes any PDF in the browser with 16+ themes. Files never leave the device.</p><span class="mono">Browser · GPU · ★ 31</span>
@@ -215,11 +208,15 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
     </ul>
   </section>
 
-  <section id="art" aria-labelledby="art-h">
+  <section id="art" class="wrap" aria-labelledby="art-h">
     <div class="obj" data-depth="flat" style="--lx:calc(max(16px, (100% - var(--max)) / 2) + var(--t-sec) * 4.3);--y:calc(var(--t-sec) * .5 - min(3.6vw, 50px));--w:min(7.2vw,100px);--o:.9;--wm:20vw" aria-hidden="true"><i><picture><source type="image/avif" srcset="a/o/disc.avif 315w, a/o/disc@2x.avif 630w" sizes="(max-width:760px) 32vw, 14vw"><img src="a/o/disc.webp" srcset="a/o/disc.webp 315w, a/o/disc@2x.webp 630w" sizes="(max-width:760px) 32vw, 14vw" alt="" width="315" height="314" loading="lazy" decoding="async"></picture></i></div>
-        <div class="wrap"><div class="head"><h2 id="art-h">3D work</h2></div></div>
-    <div class="strip" tabindex="0" aria-label="3D renders, scrollable" id="strip"></div>
-    <div class="wrap artlinks"><a class="link" href="https://instagram.com/_BrAtUkA_" target="_blank" rel="noopener">Instagram ↗</a></div>
+    <div class="head"><h2 id="art-h">Renders</h2><div class="side"><span class="mono">Blender · Cycles</span><a class="link" href="renders/">View all 40 →</a></div></div>
+    <!-- gen:renders --><div class="rb" data-list><a class="m" href="a/r/render-a2-1280.webp" style="--ar:1.0000" data-full="a/r/render-a2" data-ws="640,1280" data-cap="Blender · animation" data-v="a/r/render-a2"><picture><source type="image/avif" srcset="a/r/render-a2-640.avif 640w, a/r/render-a2-1280.avif 1280w" sizes="(max-width:760px) 100vw, 50vw"><img src="a/r/render-a2-640.webp" srcset="a/r/render-a2-640.webp 640w, a/r/render-a2-1280.webp 1280w" sizes="(max-width:760px) 100vw, 50vw" alt="Blender animation" width="1920" height="1920" loading="lazy" decoding="async"></picture><video muted loop playsinline preload="none" aria-hidden="true" data-v="a/r/render-a2"></video></a><a class="m" href="a/r/render-a3-1280.webp" style="--ar:1.7778" data-full="a/r/render-a3" data-ws="640,1280" data-cap="Blender · animation" data-v="a/r/render-a3"><picture><source type="image/avif" srcset="a/r/render-a3-640.avif 640w, a/r/render-a3-1280.avif 1280w" sizes="(max-width:760px) 50vw, 50vw"><img src="a/r/render-a3-640.webp" srcset="a/r/render-a3-640.webp 640w, a/r/render-a3-1280.webp 1280w" sizes="(max-width:760px) 50vw, 50vw" alt="Blender animation" width="1920" height="1080" loading="lazy" decoding="async"></picture><video muted loop playsinline preload="none" aria-hidden="true" data-v="a/r/render-a3"></video></a><a class="m" href="a/r/render-a18-1280.webp" style="--ar:2.3762" data-full="a/r/render-a18" data-ws="640,1280" data-cap="Blender · animation" data-v="a/r/render-a18"><picture><source type="image/avif" srcset="a/r/render-a18-640.avif 640w, a/r/render-a18-1280.avif 1280w" sizes="(max-width:760px) 100vw, 50vw"><img src="a/r/render-a18-640.webp" srcset="a/r/render-a18-640.webp 640w, a/r/render-a18-1280.webp 1280w" sizes="(max-width:760px) 100vw, 50vw" alt="Blender animation" width="1920" height="808" loading="lazy" decoding="async"></picture><video muted loop playsinline preload="none" aria-hidden="true" data-v="a/r/render-a18"></video></a><a class="m" href="a/r/render-a4-1280.webp" style="--ar:1.7778" data-full="a/r/render-a4" data-ws="640,1280" data-cap="Blender · animation" data-v="a/r/render-a4"><picture><source type="image/avif" srcset="a/r/render-a4-640.avif 640w, a/r/render-a4-1280.avif 1280w" sizes="(max-width:760px) 50vw, 50vw"><img src="a/r/render-a4-640.webp" srcset="a/r/render-a4-640.webp 640w, a/r/render-a4-1280.webp 1280w" sizes="(max-width:760px) 50vw, 50vw" alt="Blender animation" width="1920" height="1080" loading="lazy" decoding="async"></picture><video muted loop playsinline preload="none" aria-hidden="true" data-v="a/r/render-a4"></video></a><a class="m" href="a/r/render-a15-1280.webp" style="--ar:1.7778" data-full="a/r/render-a15" data-ws="640,1280" data-cap="Blender · animation" data-v="a/r/render-a15"><picture><source type="image/avif" srcset="a/r/render-a15-640.avif 640w, a/r/render-a15-1280.avif 1280w" sizes="(max-width:760px) 50vw, 50vw"><img src="a/r/render-a15-640.webp" srcset="a/r/render-a15-640.webp 640w, a/r/render-a15-1280.webp 1280w" sizes="(max-width:760px) 50vw, 50vw" alt="Blender animation" width="1920" height="1080" loading="lazy" decoding="async"></picture><video muted loop playsinline preload="none" aria-hidden="true" data-v="a/r/render-a15"></video></a></div><!-- /gen:renders -->
+  </section>
+
+  <section id="gallery" class="wrap" aria-labelledby="gal-h">
+    <div class="head"><h2 id="gal-h">Gallery</h2><div class="side"><span class="mono">Virtual photography</span><a class="link" href="gallery/">View all 108 →</a></div></div>
+    <!-- gen:gallery --><div class="gb" data-list><a class="m" href="a/g/rdr2-r1-1920.webp" style="--ar:1.7778" data-full="a/g/rdr2-r1" data-ws="640,1280,1920" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r1-640.avif 640w, a/g/rdr2-r1-1280.avif 1280w, a/g/rdr2-r1-1920.avif 1920w" sizes="(max-width:760px) 100vw, 66vw"><img src="a/g/rdr2-r1-640.webp" srcset="a/g/rdr2-r1-640.webp 640w, a/g/rdr2-r1-1280.webp 1280w, a/g/rdr2-r1-1920.webp 1920w" sizes="(max-width:760px) 100vw, 66vw" alt="Red Dead Redemption 2 screenshot" width="1920" height="1080" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r3-1920.webp" style="--ar:1.7778" data-full="a/g/rdr2-r3" data-ws="640,1280,1920" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r3-640.avif 640w, a/g/rdr2-r3-1280.avif 1280w, a/g/rdr2-r3-1920.avif 1920w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r3-640.webp" srcset="a/g/rdr2-r3-640.webp 640w, a/g/rdr2-r3-1280.webp 1280w, a/g/rdr2-r3-1920.webp 1920w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1920" height="1080" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r4-1920.webp" style="--ar:1.7778" data-full="a/g/rdr2-r4" data-ws="640,1280,1920" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r4-640.avif 640w, a/g/rdr2-r4-1280.avif 1280w, a/g/rdr2-r4-1920.avif 1920w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r4-640.webp" srcset="a/g/rdr2-r4-640.webp 640w, a/g/rdr2-r4-1280.webp 1280w, a/g/rdr2-r4-1920.webp 1920w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="2560" height="1440" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r8-1280.webp" style="--ar:1.7785" data-full="a/g/rdr2-r8" data-ws="640,1280" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r8-640.avif 640w, a/g/rdr2-r8-1280.avif 1280w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r8-640.webp" srcset="a/g/rdr2-r8-640.webp 640w, a/g/rdr2-r8-1280.webp 1280w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r9-1280.webp" style="--ar:1.7785" data-full="a/g/rdr2-r9" data-ws="640,1280" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r9-640.avif 640w, a/g/rdr2-r9-1280.avif 1280w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r9-640.webp" srcset="a/g/rdr2-r9-640.webp 640w, a/g/rdr2-r9-1280.webp 1280w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r10-1280.webp" style="--ar:1.7785" data-full="a/g/rdr2-r10" data-ws="640,1280" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r10-640.avif 640w, a/g/rdr2-r10-1280.avif 1280w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r10-640.webp" srcset="a/g/rdr2-r10-640.webp 640w, a/g/rdr2-r10-1280.webp 1280w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r28-1280.webp" style="--ar:1.7785" data-full="a/g/rdr2-r28" data-ws="640,1280" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r28-640.avif 640w, a/g/rdr2-r28-1280.avif 1280w" sizes="(max-width:760px) 50vw, 50vw"><img src="a/g/rdr2-r28-640.webp" srcset="a/g/rdr2-r28-640.webp 640w, a/g/rdr2-r28-1280.webp 1280w" sizes="(max-width:760px) 50vw, 50vw" alt="Red Dead Redemption 2 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r30-1280.webp" style="--ar:1.7785" data-full="a/g/rdr2-r30" data-ws="640,1280" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r30-640.avif 640w, a/g/rdr2-r30-1280.avif 1280w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r30-640.webp" srcset="a/g/rdr2-r30-640.webp 640w, a/g/rdr2-r30-1280.webp 1280w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r38-1280.webp" style="--ar:1.7785" data-full="a/g/rdr2-r38" data-ws="640,1280" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r38-640.avif 640w, a/g/rdr2-r38-1280.avif 1280w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r38-640.webp" srcset="a/g/rdr2-r38-640.webp 640w, a/g/rdr2-r38-1280.webp 1280w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r39-1280.webp" style="--ar:1.7785" data-full="a/g/rdr2-r39" data-ws="640,1280" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r39-640.avif 640w, a/g/rdr2-r39-1280.avif 1280w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r39-640.webp" srcset="a/g/rdr2-r39-640.webp 640w, a/g/rdr2-r39-1280.webp 1280w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/rdr2-r43-1920.webp" style="--ar:1.7778" data-full="a/g/rdr2-r43" data-ws="640,1280,1920" data-cap="Red Dead Redemption 2"><picture><source type="image/avif" srcset="a/g/rdr2-r43-640.avif 640w, a/g/rdr2-r43-1280.avif 1280w, a/g/rdr2-r43-1920.avif 1920w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/rdr2-r43-640.webp" srcset="a/g/rdr2-r43-640.webp 640w, a/g/rdr2-r43-1280.webp 1280w, a/g/rdr2-r43-1920.webp 1920w" sizes="(max-width:760px) 50vw, 33vw" alt="Red Dead Redemption 2 screenshot" width="1920" height="1080" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/cyberpunk-c14-1280.webp" style="--ar:1.7785" data-full="a/g/cyberpunk-c14" data-ws="640,1280" data-cap="Cyberpunk 2077"><picture><source type="image/avif" srcset="a/g/cyberpunk-c14-640.avif 640w, a/g/cyberpunk-c14-1280.avif 1280w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/cyberpunk-c14-640.webp" srcset="a/g/cyberpunk-c14-640.webp 640w, a/g/cyberpunk-c14-1280.webp 1280w" sizes="(max-width:760px) 50vw, 33vw" alt="Cyberpunk 2077 screenshot" width="1919" height="1079" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/cyberpunk-c33-1920.webp" style="--ar:1.7778" data-full="a/g/cyberpunk-c33" data-ws="640,1280,1920" data-cap="Cyberpunk 2077"><picture><source type="image/avif" srcset="a/g/cyberpunk-c33-640.avif 640w, a/g/cyberpunk-c33-1280.avif 1280w, a/g/cyberpunk-c33-1920.avif 1920w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/cyberpunk-c33-640.webp" srcset="a/g/cyberpunk-c33-640.webp 640w, a/g/cyberpunk-c33-1280.webp 1280w, a/g/cyberpunk-c33-1920.webp 1920w" sizes="(max-width:760px) 50vw, 33vw" alt="Cyberpunk 2077 screenshot" width="1920" height="1080" loading="lazy" decoding="async"></picture></a><a class="m" href="a/g/cyberpunk-c49-1920.webp" style="--ar:1.7778" data-full="a/g/cyberpunk-c49" data-ws="640,1280,1920" data-cap="Cyberpunk 2077"><picture><source type="image/avif" srcset="a/g/cyberpunk-c49-640.avif 640w, a/g/cyberpunk-c49-1280.avif 1280w, a/g/cyberpunk-c49-1920.avif 1920w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/cyberpunk-c49-640.webp" srcset="a/g/cyberpunk-c49-640.webp 640w, a/g/cyberpunk-c49-1280.webp 1280w, a/g/cyberpunk-c49-1920.webp 1920w" sizes="(max-width:760px) 50vw, 33vw" alt="Cyberpunk 2077 screenshot" width="1920" height="1080" loading="lazy" decoding="async"></picture></a><a class="m tall" href="a/g/cyberpunk-c52-600.webp" style="--ar:0.5556" data-full="a/g/cyberpunk-c52" data-ws="600" data-cap="Cyberpunk 2077"><picture><source type="image/avif" srcset="a/g/cyberpunk-c52-600.avif 600w" sizes="(max-width:760px) 50vw, 33vw"><img src="a/g/cyberpunk-c52-600.webp" srcset="a/g/cyberpunk-c52-600.webp 600w" sizes="(max-width:760px) 50vw, 33vw" alt="Cyberpunk 2077 screenshot" width="600" height="1080" loading="lazy" decoding="async"></picture></a></div><!-- /gen:gallery -->
   </section>
 
   <section id="about" class="wrap" aria-labelledby="about-h">
@@ -253,19 +250,10 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
     <footer><span class="mono">© 2026 BrAtUkA</span></footer>
   </section>
 </main>
+<script src="a/media.js" defer></script>
 <div class="peek" id="peek" aria-hidden="true"><img alt="" decoding="async"><img alt="" decoding="async"></div>
 
 <script>
-/* ── 3D strip ── */
-(() => {
-  const art = [['logo_glass-spinner_banner','Glass spinner'],['ribbed-banner','Ribbed'],['glass-banner','Glass cells'],['mac-banner','Fan'],
-    ['logo-banner-neon','Neon'],['mainframe-banner','Mainframe'],['stacked-cubes-banner','Stacked cubes'],['album-banner','Album'],
-    ['cube-particles-banner','Cube particles'],['logo_khaki-circles_banner','Circles'],['wormhole-banner','Wormhole'],
-    ['twister-banner','Twister'],['spinnies-banner','Spinnies'],['scatter-circles-banner','Scatter']];
-  const strip = document.getElementById('strip');
-  strip.innerHTML = art.map(([f, t], i) => `<figure><img src="a/art-${f}.webp" alt="${t}, a Blender render" loading="${i < 3 ? 'eager' : 'lazy'}" width="1100" height="412"></figure>`).join('');
-})();
-
 /* ── glass objects: one rAF loop, transforms only, runs only while scrolling or easing the pointer ── */
 (() => {
   const objs = [...document.querySelectorAll('.obj')]; if (!objs.length) return;
