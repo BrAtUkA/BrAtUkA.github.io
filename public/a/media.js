@@ -155,19 +155,20 @@
     w = Math.round(w); h = Math.round(h);
     return {w, h, x: Math.round((W - w) / 2), y: Math.round(top + (H - top - bot - h) / 2)};
   }
-  const at = (el, f, dx = 0, dy = 0, k = 1) => { el.style.transform = `translate3d(${f.x + dx}px, ${f.y + dy}px, 0) scale(${k})`; };
+  const at = (el, f, dx = 0, dy = 0, k = 1) => { el.__S = null; el.style.transform = `translate3d(${f.x + dx}px, ${f.y + dy}px, 0) scale(${k})`; };
   // morph keyframes between two states of the slide: the visible window (x, y, w, h) and the image's uniform scale sc
   // (relative to its open size f). Sampled so the crop stays exact at every step; only transforms, so it composites.
   const openState = f => ({x: f.x, y: f.y, w: f.w, h: f.h, sc: 1});
   const tileState = (r, f) => ({x: r.left, y: r.top, w: r.width, h: r.height, sc: Math.max(r.width / f.w, r.height / f.h)});
   function nowState(el) {                             // wherever the slide is right now (mid-drag, mid-slide, open)
+    if (el.__S) return {...el.__S};                 // mid-morph: the exact pose, crop included (the box alone loses the crop)
     const b = el.getBoundingClientRect();
     return {x: b.left, y: b.top, w: b.width, h: b.height, sc: b.width / el.__f.w};
   }
   // Drive the slide between two states, frame by frame. The target is read every frame, so a closing image follows its
   // tile if the page scrolls. Only transforms (and, for soft-edged preview tiles, a mask) change.
   function pose(el, S) {
-    const f = el.__f, ax = S.w / f.w, ay = S.h / f.h;
+    const f = el.__f, ax = S.w / f.w, ay = S.h / f.h; el.__S = S;
     el.style.transform = `translate3d(${S.x}px, ${S.y}px, 0) scale(${ax}, ${ay})`;
     el.__in.style.transform = `translate3d(${(f.w - f.w * S.sc / ax) / 2}px, ${(f.h - f.h * S.sc / ay) / 2}px, 0) scale(${S.sc / ax}, ${S.sc / ay})`;
   }
@@ -192,7 +193,7 @@
     const g = t.closest('.preview .grid'); if (!g) return null;
     const fade = parseFloat(getComputedStyle(g.closest('.preview')).getPropertyValue('--fade')) || 200;
     return (S, s) => {
-      const b = g.getBoundingClientRect(), ay = S.h / el.__f.h, ly = y => (y - S.y) / ay;
+      el.__ms = s; const b = g.getBoundingClientRect(), ay = S.h / el.__f.h, ly = y => (y - S.y) / ay;
       if (s < .002) { el.style.webkitMaskImage = el.style.maskImage = 'none'; return; }
       const m = `linear-gradient(180deg, #000 ${ly(b.bottom - fade)}px, rgba(0,0,0,${1 - .82 * s}) ${ly(b.bottom - 46)}px, rgba(0,0,0,${1 - s}) ${ly(b.bottom)}px)`;
       el.style.webkitMaskImage = el.style.maskImage = m;
@@ -360,6 +361,7 @@
       }
     }
     prefetch(list[(i + 1) % list.length]); prefetch(list[(i - 1 + list.length) % list.length]);
+    zone();
   }
 
   function open(t) {
@@ -372,7 +374,7 @@
     busy = false; bg.style.opacity = ''; lb.classList.remove('closing');   // nothing from a previous view may block this one
     opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
     const r = t.getBoundingClientRect();
-    cur = null; show(list.indexOf(t), 0);
+    cur = null; show(list.indexOf(t), 0); zone();
     const el = cur, f = el.__f, my = token;
     el.style.visibility = 'hidden';
     el.__ready.then(() => {                           // decoded: from here on there is always something on screen
@@ -425,9 +427,9 @@
     };
     if (reduce) return land();
     if (onScreen) {
-      const mask = softMask(el, t);
+      const mask = softMask(el, t), s0 = el.__ms || 0;
       drive(el, from, () => tileState(t.getBoundingClientRect(), f), 520, EASE_OUT, {
-        mask: mask && ((S, p) => mask(S, Math.max(0, (p - .35) / .65))),     // the soft edge grows in with the glide
+        mask: mask && ((S, p) => mask(S, s0 + (1 - s0) * Math.max(0, (p - .35) / .65))),     // the soft edge grows in with the glide, from wherever it is
         done: land
       });
     } else {                                        // its tile is elsewhere: fade away where it is, about its centre
@@ -475,7 +477,10 @@
     if (multi && inside && f.x < 48) { const edge = Math.min(140, f.w * .12); if (x < f.x + edge) return -1; if (x > f.x + f.w - edge) return 1; }
     return inside ? 'none' : 'close';
   }
-  stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const h = hit(e.clientX, e.clientY); stage.dataset.z = h === -1 ? 'l' : h === 1 ? 'r' : h === 'none' ? 'n' : 'c'; idle(); });
+  let mx = -1, my0 = -1;                            // the mouse's last spot, so the cursor is right the moment the viewer opens
+  addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { mx = e.clientX; my0 = e.clientY; } }, {passive: true});
+  function zone() { if (mx < 0) { delete stage.dataset.z; return; } const h = hit(mx, my0); stage.dataset.z = h === -1 ? 'l' : h === 1 ? 'r' : h === 'none' ? 'n' : 'c'; }
+  stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; mx = e.clientX; my0 = e.clientY; zone(); idle(); });
   let idleT = 0;
   function idle() { lb.classList.remove('idle'); clearTimeout(idleT); if (fine) idleT = setTimeout(() => lbOpen() && lb.classList.add('idle'), 2400); }
 
@@ -489,7 +494,6 @@
   };
   stage.addEventListener('pointerdown', e => {
     if (e.button || !cur || busy) return;
-    if (cur.__raf) { stopDrive(cur); at(cur, cur.__f); cur.__in.style.transform = ''; }
     down = true; moved = false; axis = ''; sx = e.clientX; sy = e.clientY; dx = dy = 0; t0 = performance.now(); ptype = e.pointerType;
     stage.setPointerCapture(e.pointerId);
   });
@@ -498,12 +502,13 @@
     dx = e.clientX - sx; dy = e.clientY - sy;
     if (!axis && Math.hypot(dx, dy) > 8) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : (dy > 0 ? 'y' : 'n');
     if (!axis || axis === 'n') return;
+    if (!moved && cur.__raf) { stopDrive(cur); at(cur, cur.__f); cur.__in.style.transform = ''; }   // a drag takes over a still-opening image
     moved = true; if (!pend) pend = requestAnimationFrame(paint);
   });
   stage.addEventListener('pointerup', e => {
     if (!down) return; down = false;
     if (!cur) return;
-    stopDrive(cur);
+    if (moved) stopDrive(cur);
     if (pend) { cancelAnimationFrame(pend); paint(); }
     if (ptype === 'mouse' || !axis || axis === 'n') {
       if (!moved && cur) {

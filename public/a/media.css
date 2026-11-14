@@ -3,7 +3,7 @@
    in over a blurred 32 px placeholder, so nothing ever snaps from low to high resolution. */
 
 /* ── tile ── */
-.m{position:relative;display:block;overflow:hidden;background:#0b0809;aspect-ratio:var(--ar, 16/9);cursor:zoom-in;isolation:isolate;
+.m{position:relative;display:block;overflow:hidden;background:#0b0809;aspect-ratio:var(--ar, 16/9);cursor:pointer;isolation:isolate;
   -webkit-tap-highlight-color:transparent;outline-offset:-2px}
 .m .lq{position:absolute;inset:-6%;background:center / cover no-repeat;filter:blur(16px) saturate(1.1);transform:scale(1.04)}
 .m picture,.m img,.m video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
@@ -99,8 +99,8 @@ html{scrollbar-gutter:stable}
 .lb.closing,.lb.closing *{pointer-events:none}      /* while it glides away, the page underneath already takes clicks */
 .lb-bg{position:absolute;inset:0;background:#050304;opacity:0;transition:opacity .42s cubic-bezier(.2,.7,.2,1);will-change:opacity}
 .lb.bg-on .lb-bg{opacity:1}
-.lb-stage{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;cursor:zoom-out}
-.lb-stage[data-z=n]{cursor:default}
+.lb-stage{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;cursor:default}
+.lb-stage[data-z=c]{cursor:zoom-out}
 .lb-stage[data-z=l],.lb-stage[data-z=r]{cursor:pointer}
 .lb-slide{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;overflow:hidden;background:#0b0809;backface-visibility:hidden}
 .lb-in{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
@@ -121,7 +121,6 @@ html{scrollbar-gutter:stable}
 .lb-g svg{width:28px;height:28px;display:block}
 .lb-stage[data-z=l] ~ .lb-ui .lb-g.l,.lb-stage[data-z=r] ~ .lb-ui .lb-g.r{opacity:.95;transform-origin:center}
 .lb.solo .lb-g{display:none}
-.lb.solo .lb-stage{cursor:zoom-out}
 .lb-x{position:absolute;pointer-events:auto;top:max(10px, env(safe-area-inset-top, 0px));right:max(10px, env(safe-area-inset-right, 0px));width:44px;height:44px;
   display:grid;place-items:center;border:0;border-radius:50%;background:rgba(10,8,9,.35);color:var(--bone);cursor:pointer;padding:0;transition:background-color .25s}
 .lb-x svg{width:20px;height:20px}
