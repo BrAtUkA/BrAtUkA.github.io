@@ -142,6 +142,7 @@
   const gl = lb.querySelector('.lb-g.l'), gr = lb.querySelector('.lb-g.r');
   let list = [], i = 0, cur = null, busy = false, opener = null;
   const EASE_OPEN = x => 1 - Math.pow(1 - x, 4);                    // fast out, long soft landing
+  let token = 0;                                                   // a newer open makes an older close's clean-up a no-op
   const SLIDE = {duration: 460, easing: 'cubic-bezier(.25,.8,.25,1)'};
   // no scrolling behind the viewer, without touching overflow (that re-lays out the page and flickers)
   for (const ev of ['wheel', 'touchmove']) lb.addEventListener(ev, e => { if (lbOpen()) e.preventDefault(); }, {passive: false});
@@ -154,19 +155,27 @@
     return {w, h, x: Math.round((W - w) / 2), y: Math.round(top + (H - top - bot - h) / 2)};
   }
   const at = (el, f, dx = 0, dy = 0, k = 1) => { el.style.transform = `translate3d(${f.x + dx}px, ${f.y + dy}px, 0) scale(${k})`; };
-  // keyframes for the morph between the tile's box r and the full image f (both in screen pixels)
-  function morph(r, f, n = 26, reverse = false) {
-    const s0 = Math.max(r.width / f.w, r.height / f.h), outer = [], inner = [];
+  // morph keyframes between two states of the slide: the visible window (x, y, w, h) and the image's uniform scale sc
+  // (relative to its open size f). Sampled so the crop stays exact at every step; only transforms, so it composites.
+  const openState = f => ({x: f.x, y: f.y, w: f.w, h: f.h, sc: 1});
+  const tileState = (r, f) => ({x: r.left, y: r.top, w: r.width, h: r.height, sc: Math.max(r.width / f.w, r.height / f.h)});
+  function nowState(el) {                             // wherever the slide is right now (mid-drag, mid-slide, open)
+    const b = el.getBoundingClientRect();
+    return {x: b.left, y: b.top, w: b.width, h: b.height, sc: b.width / el.__f.w};
+  }
+  function morph(A, B, f, ease, n = 28, fade = null) {
+    const outer = [], inner = [];
     for (let k = 0; k <= n; k++) {
-      const p = EASE_OPEN(k / n);
-      const x = r.left + (f.x - r.left) * p, y = r.top + (f.y - r.top) * p, w = r.width + (f.w - r.width) * p, h = r.height + (f.h - r.height) * p;
-      const ax = w / f.w, ay = h / f.h, sc = s0 + (1 - s0) * p;   // window scale (non-uniform) and image scale (uniform)
-      outer.push({transform: `translate3d(${x}px, ${y}px, 0) scale(${ax}, ${ay})`});
+      const p = ease(k / n), L = (a, b) => a + (b - a) * p;
+      const x = L(A.x, B.x), y = L(A.y, B.y), w = L(A.w, B.w), h = L(A.h, B.h), sc = L(A.sc, B.sc), ax = w / f.w, ay = h / f.h;
+      const o = {transform: `translate3d(${x}px, ${y}px, 0) scale(${ax}, ${ay})`};
+      if (fade) o.opacity = L(fade[0], fade[1]);
+      outer.push(o);
       inner.push({transform: `translate3d(${(f.w - f.w * sc / ax) / 2}px, ${(f.h - f.h * sc / ay) / 2}px, 0) scale(${sc / ax}, ${sc / ay})`});
     }
-    if (reverse) { outer.reverse(); inner.reverse(); }
     return [outer, inner];
   }
+  const EASE_OUT = x => 1 - Math.pow(1 - x, 3);
   function hiURL(t, w) {
     const ws = t.dataset.ws.split(',').map(Number), need = w * Math.min(devicePixelRatio || 1, 2.5);
     const pick = ws.find(x => x >= need) || ws[ws.length - 1];
@@ -272,15 +281,19 @@
     const g = t.closest('[data-list]');
     list = g && g.hasAttribute('data-solo') ? [t] : ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
     lb.classList.toggle('solo', list.length < 2);
+    token++;
+    for (const n of [bg, ui]) n.getAnimations().forEach(a => a.cancel());
+    stage.querySelectorAll('.lb-slide').forEach(x => { release(x); x.remove(); });
+    bg.style.opacity = ''; lb.classList.remove('closing');
     opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
     const r = t.getBoundingClientRect();
-    show(list.indexOf(t), 0);
+    cur = null; show(list.indexOf(t), 0);
     t.classList.add('away');
     if (!reduce) {
-      const [outer, inner] = morph(r, cur.__f);
+      const f = cur.__f, [outer, inner] = morph(tileState(r, f), openState(f), f, EASE_OPEN);
       cur.animate(outer, {duration: 560, easing: 'linear'});
       cur.__in.animate(inner, {duration: 560, easing: 'linear'});
-      bg.animate([{opacity: 0}, {opacity: 1}], {duration: 380, easing: 'ease-out'});
+      bg.animate([{opacity: 0}, {opacity: 1}], {duration: 420, easing: 'cubic-bezier(.2,.7,.2,1)'});
       ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
     }
     try { history.pushState({lb: 1}, ''); } catch (err) {}
@@ -289,24 +302,28 @@
   }
   function shut() {
     if (!lbOpen() || !cur) return;
-    const el = cur, t = el.__t; cur = null;
+    const el = cur, t = el.__t, my = ++token; cur = null;
     const finish = () => {
       release(el); el.remove(); t.classList.remove('away');
-      lb.classList.remove('open', 'closing'); root.classList.remove('lb-on'); bg.getAnimations().forEach(a => a.cancel());
+      if (my !== token) return;                     // the viewer was opened again meanwhile: leave it alone
+      lb.classList.remove('open', 'closing'); root.classList.remove('lb-on');
+      for (const n of [bg, ui]) n.getAnimations().forEach(a => a.cancel());
+      bg.style.opacity = '';
       document.dispatchEvent(new Event('viewer:close')); schedule();
     };
     lb.classList.add('closing');
-    const r = t.getBoundingClientRect();
+    const f = el.__f, from = nowState(el), r = t.getBoundingClientRect();
+    el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
     const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
-    bg.animate([{opacity: 1}, {opacity: 0}], {duration: 360, easing: 'ease-in', fill: 'forwards'});
-    if (reduce) finish();
-    else if (onScreen && !el.__dragged) {           // fly back into its tile
-      const [outer, inner] = morph(r, el.__f, 22, true);
-      el.animate(outer, {duration: 440, easing: 'linear', fill: 'forwards'}).onfinish = finish;
-      el.__in.animate(inner, {duration: 440, easing: 'linear', fill: 'forwards'});
-    } else {                                        // its tile is elsewhere: fade away where it is
-      el.animate([{opacity: 1}, {opacity: 0, transform: el.style.transform + ' scale(.97)'}], {duration: 300, easing: 'ease-in', fill: 'forwards'}).onfinish = finish;
-    }
+    const bg0 = parseFloat(getComputedStyle(bg).opacity); bg.style.opacity = '';
+    const D = onScreen ? 520 : 340;
+    bg.animate([{opacity: bg0}, {opacity: 0}], {duration: D, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards'});
+    if (reduce) return finish();
+    const to = onScreen ? tileState(r, f)
+      : {x: from.x + from.w * .02, y: from.y + from.h * .02, w: from.w * .96, h: from.h * .96, sc: from.sc * .96};   // shrink about its own centre
+    const [outer, inner] = morph(from, to, f, EASE_OUT, 24, onScreen ? null : [1, 0]);
+    el.animate(outer, {duration: D, easing: 'linear', fill: 'forwards'}).onfinish = finish;
+    el.__in.animate(inner, {duration: D, easing: 'linear', fill: 'forwards'});
     (opener && opener === t ? opener : t).focus({preventScroll: true});
   }
   function close() { if (history.state && history.state.lb) history.back(); else shut(); }
@@ -337,13 +354,16 @@
     cur.style.width = cur.__in.style.width = f.w + 'px'; cur.style.height = cur.__in.style.height = f.h + 'px'; at(cur, f); label(f);
   });
 
-  // pointer: the outer edge of the image (and the space beside it) moves back / forward; anywhere else closes
-  const zone = x => {
-    if (!cur || list.length < 2) return 0;
-    const f = cur.__f, edge = Math.min(140, f.w * .12);
-    return x < f.x + edge ? -1 : x > f.x + f.w - edge ? 1 : 0;
-  };
-  stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const z = zone(e.clientX); stage.dataset.z = z < 0 ? 'l' : z > 0 ? 'r' : 'c'; idle(); });
+  // pointer: anywhere off the image closes, except the generous areas around the side arrows, which move. With no
+  // room beside the image (wide images), its outer edge moves instead. Clicking the image itself does nothing.
+  function hit(x, y) {
+    if (!cur) return 'close';
+    const f = cur.__f, inside = x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h, multi = list.length > 1;
+    if (multi && f.x >= 48 && !inside && Math.abs(y - (f.y + f.h / 2)) < 110) { if (x < f.x) return -1; if (x > f.x + f.w) return 1; }
+    if (multi && inside && f.x < 48) { const edge = Math.min(140, f.w * .12); if (x < f.x + edge) return -1; if (x > f.x + f.w - edge) return 1; }
+    return inside ? 'none' : 'close';
+  }
+  stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const h = hit(e.clientX, e.clientY); stage.dataset.z = h === -1 ? 'l' : h === 1 ? 'r' : h === 'none' ? 'n' : 'c'; idle(); });
   let idleT = 0;
   function idle() { lb.classList.remove('idle'); clearTimeout(idleT); if (fine) idleT = setTimeout(() => lbOpen() && lb.classList.add('idle'), 2400); }
 
@@ -353,7 +373,7 @@
     pend = 0; if (!cur) return;
     const f = cur.__f;
     if (axis === 'x') { cur.__dx = dx; at(cur, f, dx); }
-    else if (axis === 'y') { const k = Math.min(1, Math.max(0, dy) / innerHeight); at(cur, f, 0, dy, 1 - k * .25); bg.style.opacity = String(1 - k * 1.3); }
+    else if (axis === 'y') { const k = 1 - Math.min(1, Math.max(0, dy) / innerHeight) * .25; at(cur, f, f.w * (1 - k) / 2, dy + f.h * (1 - k) / 2, k); bg.style.opacity = String(Math.max(0, 1 - Math.max(0, dy) / innerHeight * 1.3)); }   // shrinks about its centre
   };
   stage.addEventListener('pointerdown', e => {
     if (e.button || !cur || busy) return;
@@ -372,15 +392,14 @@
     if (pend) { cancelAnimationFrame(pend); paint(); }
     if (ptype === 'mouse' || !axis || axis === 'n') {
       if (!moved && cur) {
-        const z = zone(e.clientX), f = cur.__f, beside = e.clientX < f.x || e.clientX > f.x + f.w;
-        if (ptype === 'mouse') { if (z) show(i + z, z); else close(); }
-        else if (z && beside) show(i + z, z); else lb.classList.toggle('idle');
+        const h = hit(e.clientX, e.clientY);
+        if (h === -1 || h === 1) show(i + h, h); else if (h === 'close') close(); else if (ptype !== 'mouse') lb.classList.toggle('idle');
       }
       return;
     }
     const v = (axis === 'x' ? dx : dy) / Math.max(1, performance.now() - t0), f = cur.__f;
     if (axis === 'x' && (Math.abs(dx) > 70 || Math.abs(v) > .45)) show(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
-    else if (axis === 'y' && (dy > 110 || v > .55)) { cur.__dragged = true; bg.style.opacity = ''; close(); }
+    else if (axis === 'y' && (dy > 110 || v > .55)) close();
     else { cur.__dx = 0; cur.animate([{transform: cur.style.transform}, {transform: `translate3d(${f.x}px, ${f.y}px, 0) scale(1)`}], {duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)'}); at(cur, f); bg.style.opacity = ''; }
   });
   stage.addEventListener('pointercancel', () => { down = false; if (cur) { at(cur, cur.__f); cur.__dx = 0; } bg.style.opacity = ''; });
