@@ -57,24 +57,21 @@
     document.addEventListener('visibilitychange', schedule);
   }
 
-  // ── masonry wall ──
+  // ── wall: the organic bento from the home page, repeating down the page. Each visible tile gets its place in the
+  // 15-tile pattern (data-p; data-q for the 5-tile phone pattern), so filtering re-flows it without holes ──
   const walls = [...document.querySelectorAll('.wall')];
   for (const wall of walls) {
-    const items = [...wall.querySelectorAll(':scope > a.m')]; let n = 0;
+    const items = [...wall.querySelectorAll(':scope > a.m')];
     wall.__items = items;
-    const count = () => { const w = wall.clientWidth; return w < 480 ? 1 : w < 1000 ? 2 : w < 1600 ? 3 : 4; };
-    wall.__layout = (force) => {
-      const k = count(); if (k === n && !force) return; n = k;
-      const cols = Array.from({length: k}, () => Object.assign(document.createElement('div'), {className: 'col'}));
-      const h = new Array(k).fill(0);
+    wall.__layout = () => {
+      let k = 0;
       for (const t of items) {
-        if (t.hidden) { cols[0].appendChild(t); continue; }
-        const j = h.indexOf(Math.min(...h)); cols[j].appendChild(t); h[j] += 1 / (parseFloat(t.style.getPropertyValue('--ar')) || 1.7778);
+        if (t.hidden) { delete t.dataset.p; delete t.dataset.q; continue; }
+        t.dataset.p = k % 15 + 1; t.dataset.q = k % 5 + 1; k++;
       }
-      wall.replaceChildren(...cols); wall.classList.add('ready'); schedule();
+      wall.classList.add('ready'); schedule();
     };
-    wall.__layout(true);
-    new ResizeObserver(() => wall.__layout()).observe(wall);
+    wall.__layout();
   }
 
   // ── game filter: one tab at a time ("All" by default); the red line slides to the chosen tab ──
@@ -140,9 +137,11 @@
   lb.innerHTML = `<div class="lb-bg"></div><div class="lb-stage"></div>
     <div class="lb-ui"><p class="lb-cap"><span class="what"></span><span class="when"></span></p>
     <button class="lb-x" type="button" aria-label="Close">${svg(ICON.x, 1.25)}</button>
+    <span class="lb-g l" aria-hidden="true">${svg(ICON.l, 1.25)}</span><span class="lb-g r" aria-hidden="true">${svg(ICON.r, 1.25)}</span>
     <button class="lb-sr pv" type="button" aria-label="Previous">${svg(ICON.l)}</button><button class="lb-sr nx" type="button" aria-label="Next">${svg(ICON.r)}</button></div>`;
   document.body.appendChild(lb);
   const stage = lb.querySelector('.lb-stage'), bg = lb.querySelector('.lb-bg'), what = lb.querySelector('.what'), when = lb.querySelector('.when');
+  const cap = lb.querySelector('.lb-cap'), gl = lb.querySelector('.lb-g.l'), gr = lb.querySelector('.lb-g.r');
   let list = [], i = 0, cur = null, busy = false, opener = null;
   const OPEN = {duration: 560, easing: 'cubic-bezier(.22,.8,.18,1)'}, SLIDE = {duration: 480, easing: 'cubic-bezier(.25,.8,.25,1)'};
 
@@ -197,9 +196,22 @@
     const t = list[i];
     what.textContent = t.dataset.cap || '';
     when.textContent = t.dataset.date ? t.dataset.date : '';
+    frame(fit(t));
+  }
+  function frame(f) {                                 // caption under the image's bottom-left corner; nav hints beside it
+    const below = f.y + f.h + 12, inside = below + 22 > innerHeight - 6;
+    cap.classList.toggle('in', inside);
+    cap.style.left = Math.max(14, f.x + (inside ? 14 : 0)) + 'px';
+    cap.style.top = (inside ? f.y + f.h - 34 : below) + 'px';
+    cap.style.maxWidth = Math.max(160, f.w - (inside ? 28 : 0)) + 'px';
+    const gut = f.x, show = list.length > 1 && gut >= 48;
+    for (const [el, x] of [[gl, gut / 2], [gr, innerWidth - gut / 2]]) {
+      el.style.display = show ? '' : 'none';
+      el.style.transform = `translate(${x - 14}px, ${f.y + f.h / 2 - 14}px)`;
+    }
   }
   function show(k, dir) {                             // dir: -1 / 1 slide sideways; 0 just place
-    if (busy) return;
+    if (busy || (dir && list.length < 2)) return;
     i = (k + list.length) % list.length;
     const old = cur, el = slide(list[i]); cur = el;
     stage.appendChild(el); label();
@@ -219,7 +231,8 @@
 
   function open(t) {
     const g = t.closest('[data-list]');
-    list = ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
+    list = g && g.hasAttribute('data-solo') ? [t] : ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
+    lb.classList.toggle('solo', list.length < 2);
     opener = t; lb.classList.add('open'); document.documentElement.classList.add('lb-lock');
     show(list.indexOf(t), 0);
     t.classList.add('away');                           // the tile's image is now the one in the viewer
@@ -272,10 +285,14 @@
     }
     idle();
   });
-  addEventListener('resize', () => { if (!lbOpen() || !cur) return; const f = fit(cur.__t); cur.__f = f; cur.style.width = f.w + 'px'; cur.style.height = f.h + 'px'; place(cur, f); });
+  addEventListener('resize', () => { if (!lbOpen() || !cur) return; const f = fit(cur.__t); cur.__f = f; cur.style.width = f.w + 'px'; cur.style.height = f.h + 'px'; place(cur, f); frame(f); });
 
   // pointer: the outer thirds of the screen move back / forward (the cursor turns into a thin arrow), the middle closes
-  const zone = x => x < innerWidth * .3 ? -1 : x > innerWidth * .7 ? 1 : 0;
+  const zone = x => {
+    if (!cur || list.length < 2) return 0;
+    const f = cur.__f, edge = Math.min(140, f.w * .12);
+    return x < f.x + edge ? -1 : x > f.x + f.w - edge ? 1 : 0;
+  };
   stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const z = zone(e.clientX); stage.dataset.z = z < 0 ? 'l' : z > 0 ? 'r' : 'c'; idle(); });
   let idleT = 0;
   function idle() { lb.classList.remove('idle'); clearTimeout(idleT); if (fine) idleT = setTimeout(() => lbOpen() && lb.classList.add('idle'), 2400); }
@@ -303,7 +320,7 @@
     if (ptype === 'mouse' || !axis || axis === 'n') {          // a click / tap
       if (!moved && cur) {
         if (ptype === 'mouse') { const z = zone(e.clientX); if (z) show(i + z, z); else close(); }
-        else lb.classList.toggle('idle');
+        else { const z = zone(e.clientX); if (z && e.clientX < cur.__f.x || z && e.clientX > cur.__f.x + cur.__f.w) show(i + z, z); else lb.classList.toggle('idle'); }
       }
       return;
     }
