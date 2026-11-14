@@ -61,15 +61,16 @@
 .wall .m[hidden]{display:none}
 @media (max-width:479px){ .wall{--g:3px;padding:0} }
 
-/* game filter: the games' own logos in a row across the hero (two games: far left and far right; more spread evenly).
-   Pick one to show only its shots, pick it again to show everything. Quiet grey until chosen, then full colour. */
-.games{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;width:100%;margin-top:clamp(18px, 3vw, 30px);flex-wrap:wrap}
+/* game filter: the games' own logos in a row from one screen edge to the other (two games: far left and far right;
+   more spread evenly). All in colour while everything shows; pick games to show only theirs (the rest go quiet grey),
+   pick them again to show everything. */
+.games{display:flex;align-items:center;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
 .games button{display:grid;place-items:center;min-height:52px;padding:6px 0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.games button img{display:block;height:clamp(30px, 3.4vw, 40px);width:auto;filter:grayscale(1) brightness(1.5);opacity:.42;
+.games button img{display:block;height:clamp(30px, 3.2vw, 42px);width:auto;opacity:.92;
   transition:opacity .45s ease, filter .45s ease, transform .6s cubic-bezier(.2,.7,.2,1)}
-.games button:hover img{opacity:.8;transform:translateY(-1px)}
-.games button[aria-pressed=true] img{filter:none;opacity:1}
-.games.picked button[aria-pressed=false] img{opacity:.22}
+.games button:hover img{opacity:1;transform:translateY(-1px)}
+.games.picked button[aria-pressed=false] img{filter:grayscale(1) brightness(1.5);opacity:.3}
+.games.picked button[aria-pressed=false]:hover img{opacity:.6}
 .games button:focus-visible{outline:2px solid var(--signal);outline-offset:6px;border-radius:4px}
 
 /* ── viewer ── */
