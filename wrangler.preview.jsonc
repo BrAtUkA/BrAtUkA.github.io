@@ -1,0 +1,22 @@
+// The review preview at preview.bratuka.dev: the same site, built from the `preview` branch.
+// It lives on the bratuka.dev zone (not workers.dev), so it gets the zone's network settings
+// (no Encrypted Client Hello, no HTTP/3), which some networks reset or break.
+// Deployed by Workers Builds on every push to `preview`: `npx wrangler deploy --config wrangler.preview.jsonc`.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bratuka-preview",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "preview.bratuka.dev", "custom_domain": true }],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "observability": { "enabled": true },
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bratuka-media" }]
+}
