@@ -33,6 +33,22 @@ p{margin:0;color:#8b8185}a{color:#ff3a4e}</style></head>
   return new Response(body, { status: 410, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=3600', ...SECURITY } });
 }
 
+// Static assets ignore Range. Video is small here (under 4 MB), so slice the body in the Worker.
+async function ranged(request, res) {
+  const h = new Headers(res.headers); h.set('accept-ranges', 'bytes');
+  const range = request.headers.get('range');
+  const m = range && /^bytes=(\d*)-(\d*)$/.exec(range.trim());
+  if (!m || request.method !== 'GET') return new Response(res.body, { status: 200, headers: h });
+  const buf = await res.arrayBuffer(), size = buf.byteLength;
+  let start = m[1] === '' ? size - Number(m[2]) : Number(m[1]);
+  let end = m[1] === '' || m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
+  if (m[1] === '' && m[2] === '') return new Response(buf, { status: 200, headers: h });
+  start = Math.max(0, start);
+  if (start >= size || start > end) { h.set('content-range', `bytes */${size}`); h.delete('content-length'); return new Response(null, { status: 416, headers: h }); }
+  h.set('content-range', `bytes ${start}-${end}/${size}`); h.set('content-length', String(end - start + 1));
+  return new Response(buf.slice(start, end + 1), { status: 206, headers: h });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -44,7 +60,8 @@ export default {
       if (m) return Response.redirect(to + (m[1] || '/') + url.search, 301);
     }
 
-    const res = await env.ASSETS.fetch(request);
+    let res = await env.ASSETS.fetch(request);
+    if (res.status === 200 && /\.(mp4|webm)$/.test(path)) res = await ranged(request, res);   // Safari plays video only with 206 replies
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
     const type = out.headers.get('content-type') || '';
