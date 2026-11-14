@@ -342,6 +342,7 @@
     const tv = el.__tv; if (!tv) return; el.__tv = null;
     const h = tv.__home; tv.__home = null; delete tv.dataset.keep; tv.playbackRate = 1;
     if (h && h.parent.isConnected) mov(h.parent, tv, h.next && h.next.parentNode === h.parent ? h.next : null);
+    if (viewing) { tv.pause(); return; }            // back behind the open viewer (browsing on): it rests until the page shows again
     if (!tv.paused && tv.readyState >= 2 && !tv.classList.contains('on')) {
       tv.style.transition = 'none'; tv.classList.add('on'); requestAnimationFrame(() => { tv.style.transition = ''; });
     }
@@ -375,6 +376,7 @@
         el.__ready.then(() => {
           if (cur !== el) return;
           travel(el);
+          if (old.__mv) { unloadV(old.__mv); old.__mv = null; }   // the outgoing one slides away on its travelling video (same frame): two decoding, not four
           old.animate([{transform: `translate3d(${of.x + ox}px, ${of.y}px, 0)`}, {transform: `translate3d(${of.x - dir * W}px, ${of.y}px, 0)`}], {...SLIDE, fill: 'forwards'})
             .onfinish = () => { release(old); old.remove(); };
           at(el, nf);
