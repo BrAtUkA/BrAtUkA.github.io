@@ -184,6 +184,7 @@
     };
     el.__raf = requestAnimationFrame(step);
   }
+  function unhide(t) { if (!t) return; t.classList.add('back'); t.classList.remove('away'); requestAnimationFrame(() => requestAnimationFrame(() => t.classList.remove('back'))); }
   function stopDrive(el) { if (el && el.__raf) { cancelAnimationFrame(el.__raf); el.__raf = 0; } }
   // the home previews fade their last rows out with a mask; a slide over such a tile wears the same fade, in screen
   // space, at strength s (0 = none, 1 = exactly the tile's), so it can blend in and out with the motion
@@ -226,6 +227,9 @@
       }
     }
     el.__f = f; el.__t = t; el.__in = inn;
+    // a new <img> must decode before it can draw, even when the file is cached: wait for it (briefly) before showing
+    const dec = inn.querySelector('canvas.still') ? Promise.resolve() : (base.decode ? base.decode().catch(() => {}) : Promise.resolve());
+    el.__ready = Promise.race([dec, new Promise(r => setTimeout(r, 150))]);
     return el;
   }
   // A loop never leaves its tile (moving a video element drops its decoded frames, and it would re-buffer). Opening:
@@ -340,14 +344,19 @@
     const old = cur, el = slide(list[i]); cur = el;
     stage.appendChild(el); label(el.__f);
     if (old) {
-      old.__t.classList.remove('away'); list[i].classList.add('away');
+      unhide(old.__t); list[i].classList.add('away');
       if (reduce || !dir) { release(old); old.remove(); }
       else {
         busy = true;
         const W = innerWidth, of = old.__f, nf = el.__f, ox = old.__dx || 0;
-        old.animate([{transform: `translate3d(${of.x + ox}px, ${of.y}px, 0)`}, {transform: `translate3d(${of.x - dir * W}px, ${of.y}px, 0)`}], {...SLIDE, fill: 'forwards'})
-          .onfinish = () => { release(old); old.remove(); };
-        el.animate([{transform: `translate3d(${nf.x + dir * W + ox}px, ${nf.y}px, 0)`}, {transform: `translate3d(${nf.x}px, ${nf.y}px, 0)`}], SLIDE).onfinish = () => { busy = false; };
+        at(el, nf, dir * W + ox);                  // waiting off screen until it can draw
+        el.__ready.then(() => {
+          if (cur !== el) return;
+          old.animate([{transform: `translate3d(${of.x + ox}px, ${of.y}px, 0)`}, {transform: `translate3d(${of.x - dir * W}px, ${of.y}px, 0)`}], {...SLIDE, fill: 'forwards'})
+            .onfinish = () => { release(old); old.remove(); };
+          at(el, nf);
+          el.animate([{transform: `translate3d(${nf.x + dir * W + ox}px, ${nf.y}px, 0)`}, {transform: `translate3d(${nf.x}px, ${nf.y}px, 0)`}], SLIDE).onfinish = () => { busy = false; };
+        });
       }
     }
     prefetch(list[(i + 1) % list.length]); prefetch(list[(i - 1 + list.length) % list.length]);
@@ -359,21 +368,26 @@
     lb.classList.toggle('solo', list.length < 2);
     token++;
     ui.getAnimations().forEach(a => a.cancel());
-    stage.querySelectorAll('.lb-slide').forEach(x => { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); });
+    stage.querySelectorAll('.lb-slide').forEach(x => { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); unhide(x.__t); x.remove(); });
     busy = false; bg.style.opacity = ''; lb.classList.remove('closing');   // nothing from a previous view may block this one
     opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
-    void lb.offsetWidth; lb.classList.add('bg-on');      // the backdrop is a CSS fade on this one class: no state to get stuck
     const r = t.getBoundingClientRect();
     cur = null; show(list.indexOf(t), 0);
-    t.classList.add('away');
-    if (!reduce) {
-      const f = cur.__f, el = cur, mask = softMask(el, t);
-      drive(el, tileState(r, f), openState(f), 560, EASE_OPEN, {
+    const el = cur, f = el.__f, my = token;
+    el.style.visibility = 'hidden';
+    el.__ready.then(() => {                           // decoded: from here on there is always something on screen
+      if (my !== token || cur !== el) return;
+      void lb.offsetWidth; lb.classList.add('bg-on');      // the backdrop is a CSS fade on this one class: no state to get stuck
+      if (reduce) { el.style.visibility = ''; t.classList.add('away'); return; }
+      const mask = softMask(el, t), from = tileState(r, f);
+      pose(el, from); if (mask) mask(from, 1);              // first frame: exactly the tile
+      el.style.visibility = ''; t.classList.add('away');
+      drive(el, from, openState(f), 560, EASE_OPEN, {
         mask: mask && ((S, p) => mask(S, 1 - Math.min(1, p / .6))),          // the soft edge melts away as it grows
         done: () => { if (cur === el) { at(el, f); el.__in.style.transform = ''; if (mask) mask(openState(f), 0); } }
       });
       ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
-    }
+    });
     try { history.pushState({lb: 1}, ''); } catch (err) {}
     lb.querySelector('.lb-x').focus({preventScroll: true});
     schedule(); idle();
@@ -381,13 +395,16 @@
   function shut() {
     if (!lbOpen() || !cur) return;
     const el = cur, t = el.__t, my = ++token; cur = null; busy = false;
-    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); } });
+    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); unhide(x.__t); x.remove(); } });
     const finish = () => {
-      if (my !== token) { el.remove(); t.classList.remove('away'); return; }   // opened again meanwhile: leave it alone
+      if (my !== token) { el.remove(); unhide(t); return; }   // opened again meanwhile: leave it alone
       lb.classList.remove('open', 'closing'); root.classList.remove('lb-on');
       ui.getAnimations().forEach(a => a.cancel());
       document.dispatchEvent(new Event('viewer:close')); schedule();
     };
+    if (el.style.visibility === 'hidden') {          // closed before it ever showed: nothing to animate back
+      release(el); el.remove(); unhide(t); lb.classList.remove('bg-on'); finish(); return;
+    }
     ui.getAnimations().forEach(a => a.cancel());
     ui.animate([{opacity: 0}, {opacity: 0}], {duration: 600, fill: 'forwards'});      // the caption leaves at once
     lb.classList.add('closing'); bg.style.opacity = ''; lb.classList.remove('bg-on');
@@ -399,7 +416,7 @@
     const land = () => {                            // exactly over its tile now: once the tile is ready, hand over
       freeze(el);
       release(el).then(() => {
-        t.classList.remove('away');
+        unhide(t);
         // a soft-edged tile is matched exactly (same fade): swap in one frame. Cross-fading two half-transparent copies
         // would stack them and weaken the fade for a moment. Opaque tiles cross-fade, which hides any tiny difference.
         if (reduce || soft) { el.remove(); finish(); return; }
@@ -415,7 +432,7 @@
       });
     } else {                                        // its tile is elsewhere: fade away where it is, about its centre
       const to = {x: from.x + from.w * .02, y: from.y + from.h * .02, w: from.w * .96, h: from.h * .96, sc: from.sc * .96};
-      drive(el, from, to, 340, EASE_OUT, {opacity: k => 1 - k, done: () => { t.classList.remove('away'); release(el); el.remove(); finish(); }});
+      drive(el, from, to, 340, EASE_OUT, {opacity: k => 1 - k, done: () => { unhide(t); release(el); el.remove(); finish(); }});
     }
     (opener && opener === t ? opener : t).focus({preventScroll: true});
   }
