@@ -362,7 +362,7 @@
     gr.style.transform = `translate3d(${innerWidth - f.x / 2 - 14}px, ${f.y + f.h / 2 - 14}px, 0)`;
   }
   function show(k, dir) {
-    if (busy || (dir && list.length < 2)) return;
+    if (busy || (dir && list.length < 2)) return false;
     i = (k + list.length) % list.length;
     const old = cur, el = slide(list[i]); cur = el;
     stage.appendChild(el); label(el.__f);
@@ -387,11 +387,12 @@
     prefetch(list[(i + 1) % list.length]); prefetch(list[(i - 1 + list.length) % list.length]);
     zone();
     state();
+    return true;
   }
 
   function open(t) {
     const g = t.closest('[data-list]');
-    list = g && g.hasAttribute('data-solo') ? [t] : ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
+    list = ((g && g.__items) || (g ? [...g.querySelectorAll('a.m')] : [t])).filter(x => !x.hidden);
     lb.classList.toggle('solo', list.length < 2);
     token++;
     ui.getAnimations().forEach(a => a.cancel());
@@ -523,7 +524,7 @@
   const paint = () => {
     pend = 0; if (!cur) return;
     const f = cur.__f;
-    if (axis === 'x') { cur.__dx = dx; at(cur, f, dx); }
+    if (axis === 'x') { const x = list.length < 2 ? dx * .18 : dx; cur.__dx = x; at(cur, f, x); }   // nothing either side: it only gives a little
     else if (axis === 'y') { const k = 1 - Math.min(1, Math.max(0, dy) / innerHeight) * .25; at(cur, f, f.w * (1 - k) / 2, dy + f.h * (1 - k) / 2, k); bg.style.opacity = String(Math.max(0, 1 - Math.max(0, dy) / innerHeight * 1.3)); }   // shrinks about its centre
   };
   stage.addEventListener('pointerdown', e => {
@@ -552,7 +553,7 @@
       return;
     }
     const v = (axis === 'x' ? dx : dy) / Math.max(1, performance.now() - t0), f = cur.__f;
-    if (axis === 'x' && (Math.abs(dx) > 70 || Math.abs(v) > .45)) show(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    if (axis === 'x' && (Math.abs(dx) > 70 || Math.abs(v) > .45) && show(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1)) {}   // moved on
     else if (axis === 'y' && (dy > 110 || v > .55)) close();
     else { cur.__dx = 0; cur.animate([{transform: cur.style.transform}, {transform: `translate3d(${f.x}px, ${f.y}px, 0) scale(1)`}], {duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)'}); at(cur, f); bg.style.opacity = ''; }
   });
