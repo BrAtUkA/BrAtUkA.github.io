@@ -152,6 +152,7 @@
     const wide = W > 640, side = wide ? 16 : 0, top = wide ? 16 : 0, bot = wide ? 46 : 0;
     let w = Math.min(W - side * 2, (H - top - bot) * ar), h = w / ar;
     if (!wide && h > H - 120) { h = H - 120; w = h * ar; }
+    w = Math.round(w); h = Math.round(h);
     return {w, h, x: Math.round((W - w) / 2), y: Math.round(top + (H - top - bot - h) / 2)};
   }
   const at = (el, f, dx = 0, dy = 0, k = 1) => { el.style.transform = `translate3d(${f.x + dx}px, ${f.y + dy}px, 0) scale(${k})`; };
@@ -163,17 +164,38 @@
     const b = el.getBoundingClientRect();
     return {x: b.left, y: b.top, w: b.width, h: b.height, sc: b.width / el.__f.w};
   }
-  function morph(A, B, f, ease, n = 28, fade = null) {           // fade: null, [from, to] or k => opacity
-    const outer = [], inner = [];
-    for (let k = 0; k <= n; k++) {
-      const p = ease(k / n), L = (a, b) => a + (b - a) * p;
-      const x = L(A.x, B.x), y = L(A.y, B.y), w = L(A.w, B.w), h = L(A.h, B.h), sc = L(A.sc, B.sc), ax = w / f.w, ay = h / f.h;
-      const o = {transform: `translate3d(${x}px, ${y}px, 0) scale(${ax}, ${ay})`};
-      if (fade) o.opacity = typeof fade === 'function' ? fade(k / n) : L(fade[0], fade[1]);
-      outer.push(o);
-      inner.push({transform: `translate3d(${(f.w - f.w * sc / ax) / 2}px, ${(f.h - f.h * sc / ay) / 2}px, 0) scale(${sc / ax}, ${sc / ay})`});
-    }
-    return [outer, inner];
+  // Drive the slide between two states, frame by frame. The target is read every frame, so a closing image follows its
+  // tile if the page scrolls. Only transforms (and, for soft-edged preview tiles, a mask) change.
+  function pose(el, S) {
+    const f = el.__f, ax = S.w / f.w, ay = S.h / f.h;
+    el.style.transform = `translate3d(${S.x}px, ${S.y}px, 0) scale(${ax}, ${ay})`;
+    el.__in.style.transform = `translate3d(${(f.w - f.w * S.sc / ax) / 2}px, ${(f.h - f.h * S.sc / ay) / 2}px, 0) scale(${S.sc / ax}, ${S.sc / ay})`;
+  }
+  function drive(el, from, to, D, ease, opt = {}) {
+    stopDrive(el);
+    const t0 = performance.now(), L = (a, b, p) => a + (b - a) * p;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / D), p = ease(k), B = typeof to === 'function' ? to() : to;
+      const S = {x: L(from.x, B.x, p), y: L(from.y, B.y, p), w: L(from.w, B.w, p), h: L(from.h, B.h, p), sc: L(from.sc, B.sc, p)};
+      pose(el, S);
+      if (opt.opacity) el.style.opacity = opt.opacity(k);
+      if (opt.mask) opt.mask(S, p);
+      if (k < 1) el.__raf = requestAnimationFrame(step); else { el.__raf = 0; opt.done && opt.done(); }
+    };
+    el.__raf = requestAnimationFrame(step);
+  }
+  function stopDrive(el) { if (el && el.__raf) { cancelAnimationFrame(el.__raf); el.__raf = 0; } }
+  // the home previews fade their last rows out with a mask; a slide over such a tile wears the same fade, in screen
+  // space, at strength s (0 = none, 1 = exactly the tile's), so it can blend in and out with the motion
+  function softMask(el, t) {
+    const g = t.closest('.preview .grid'); if (!g) return null;
+    const fade = parseFloat(getComputedStyle(g.closest('.preview')).getPropertyValue('--fade')) || 200;
+    return (S, s) => {
+      const b = g.getBoundingClientRect(), ay = S.h / el.__f.h, ly = y => (y - S.y) / ay;
+      if (s < .002) { el.style.webkitMaskImage = el.style.maskImage = 'none'; return; }
+      const m = `linear-gradient(180deg, #000 ${ly(b.bottom - fade)}px, rgba(0,0,0,${1 - .82 * s}) ${ly(b.bottom - 46)}px, rgba(0,0,0,${1 - s}) ${ly(b.bottom)}px)`;
+      el.style.webkitMaskImage = el.style.maskImage = m;
+    };
   }
   const EASE_OUT = x => 1 - Math.pow(1 - x, 3);
   function hiURL(t, w) {
@@ -188,7 +210,7 @@
   function slide(t) {
     const f = fit(t), el = document.createElement('div'), inn = document.createElement('div');
     el.className = 'lb-slide'; inn.className = 'lb-in';
-    el.style.width = inn.style.width = f.w + 'px'; el.style.height = inn.style.height = f.h + 'px'; at(el, f);
+    el.style.width = f.w + 'px'; el.style.height = f.h + 'px'; inn.style.width = f.w + 'px'; inn.style.height = f.h + 'px'; at(el, f);
     el.appendChild(inn);
     const im = t.querySelector('img');
     const base = new Image(); base.alt = im ? im.alt : ''; base.decoding = 'async';
@@ -228,6 +250,10 @@
     const ready = tv && tv.readyState >= 2 && tv.currentSrc;
     const t0 = ready ? tv.currentTime : 0;
     if (ready) { snap(tv, inn, 'still'); tv.dataset.keep = 1; if (tv.paused) tv.play().catch(() => {}); }   // keeps playing, unseen, in step
+    if (!ready && tv) {                              // never loaded: load it now and keep it in step, unseen, for the hand-back
+      attach(t); tv.dataset.keep = 1; tv.play().catch(() => {});
+      follow(tv, () => playing(inn.parentNode));
+    }
     let vv = null;
     if (ready) {                                     // the viewer's own copy of the tile's (cached) file
       vv = document.createElement('video'); vv.className = 'copy'; vv.muted = true; vv.loop = true; vv.playsInline = true; vv.preload = 'auto'; vv.src = tv.currentSrc;
@@ -264,7 +290,22 @@
     };
     mv.addEventListener('canplay', sync, {once: true});
   }
+  // nudge a video's playback rate so it shows the same moment as ref() (both loop over the same window)
+  function follow(v, ref) {
+    const step = () => {
+      if (!v.dataset.keep) { v.playbackRate = 1; return; }
+      const r = ref();
+      if (r && !r.paused && r.readyState >= 2 && v.readyState >= 2 && v.duration) {
+        const d = v.duration; let x = v.currentTime - r.currentTime; x -= d * Math.round(x / d);
+        if (Math.abs(x) > 2.5) v.currentTime = (r.currentTime + .25) % d;
+        else v.playbackRate = Math.abs(x) < .04 ? 1 : x > 0 ? (x > .3 ? .6 : .85) : (x < -.3 ? 1.6 : 1.2);
+      }
+      setTimeout(step, 120);
+    };
+    step();
+  }
   function playing(el) {                              // the video the viewer is showing right now, if any
+    if (!el) return null;
     const m = el.querySelector('video.master.on'), c = el.querySelector('video.copy.on');
     return m && !m.paused ? m : c && !c.paused ? c : (m || c);
   }
@@ -273,9 +314,12 @@
     if (!el) return Promise.resolve();
     el.querySelectorAll('video').forEach(x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); });
     const tv = el.__t && el.__t.querySelector('video');
-    if (!tv || !tv.currentSrc || tv.readyState < 1) return Promise.resolve();
+    if (!tv || !tv.dataset.ok) return Promise.resolve();
     delete tv.dataset.keep;
-    return (tv.paused ? tv.play().catch(() => {}) : Promise.resolve()).then(() => frameOf(tv, 700));
+    return (tv.paused ? tv.play().catch(() => {}) : Promise.resolve()).then(() => frameOf(tv, 1200)).then(() => {
+      tv.style.transition = 'none'; tv.classList.add('on');            // shown at once (not its first-load fade)
+      requestAnimationFrame(() => { tv.style.transition = ''; });
+    });
   }
   function label(f) {
     const t = list[i];
@@ -315,22 +359,19 @@
     lb.classList.toggle('solo', list.length < 2);
     token++;
     ui.getAnimations().forEach(a => a.cancel());
-    stage.querySelectorAll('.lb-slide').forEach(x => { x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); });
+    stage.querySelectorAll('.lb-slide').forEach(x => { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); });
     busy = false; bg.style.opacity = ''; lb.classList.remove('closing');   // nothing from a previous view may block this one
     opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
     void lb.offsetWidth; lb.classList.add('bg-on');      // the backdrop is a CSS fade on this one class: no state to get stuck
     const r = t.getBoundingClientRect();
     cur = null; show(list.indexOf(t), 0);
-    // only a still under a preview's soft edge needs the brief overlap (it fades in over its half-faded tile);
-    // everything else hides its tile at once under an opaque image (a loop's video has just left its tile)
-    const soft = !t.dataset.v && !!t.closest('.preview');
-    if (soft) { const opened = token; setTimeout(() => { if (opened === token && cur && cur.__t === t) t.classList.add('away'); }, reduce ? 0 : 120); }
-    else t.classList.add('away');
+    t.classList.add('away');
     if (!reduce) {
-      // fade in over the first fifth: tiles under the home previews' soft edge are partly transparent
-      const f = cur.__f, [outer, inner] = morph(tileState(r, f), openState(f), f, EASE_OPEN, 28, soft ? (k => Math.min(1, k / .2)) : null);
-      cur.animate(outer, {duration: 560, easing: 'linear'});
-      cur.__in.animate(inner, {duration: 560, easing: 'linear'});
+      const f = cur.__f, el = cur, mask = softMask(el, t);
+      drive(el, tileState(r, f), openState(f), 560, EASE_OPEN, {
+        mask: mask && ((S, p) => mask(S, 1 - Math.min(1, p / .6))),          // the soft edge melts away as it grows
+        done: () => { if (cur === el) { at(el, f); el.__in.style.transform = ''; if (mask) mask(openState(f), 0); } }
+      });
       ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
     }
     try { history.pushState({lb: 1}, ''); } catch (err) {}
@@ -340,7 +381,7 @@
   function shut() {
     if (!lbOpen() || !cur) return;
     const el = cur, t = el.__t, my = ++token; cur = null; busy = false;
-    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); } });
+    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); } });
     const finish = () => {
       if (my !== token) { el.remove(); t.classList.remove('away'); return; }   // opened again meanwhile: leave it alone
       lb.classList.remove('open', 'closing'); root.classList.remove('lb-on');
@@ -350,6 +391,7 @@
     ui.getAnimations().forEach(a => a.cancel());
     ui.animate([{opacity: 0}, {opacity: 0}], {duration: 600, fill: 'forwards'});      // the caption leaves at once
     lb.classList.add('closing'); bg.style.opacity = ''; lb.classList.remove('bg-on');
+    stopDrive(el);
     const f = el.__f, from = nowState(el), r = t.getBoundingClientRect();
     el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
     const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
@@ -357,19 +399,19 @@
       freeze(el); t.classList.remove('away');
       release(el).then(() => {
         if (reduce) { el.remove(); finish(); return; }
-        el.animate([{opacity: 1}, {opacity: 0}], {duration: 160, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
+        el.animate([{opacity: 1}, {opacity: 0}], {duration: 140, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
       });
     };
     if (reduce) return land();
     if (onScreen) {
-      const [outer, inner] = morph(from, tileState(r, f), f, EASE_OUT, 24);
-      el.animate(outer, {duration: 520, easing: 'linear', fill: 'forwards'}).onfinish = land;
-      el.__in.animate(inner, {duration: 520, easing: 'linear', fill: 'forwards'});
+      const mask = softMask(el, t);
+      drive(el, from, () => tileState(t.getBoundingClientRect(), f), 520, EASE_OUT, {
+        mask: mask && ((S, p) => mask(S, Math.max(0, (p - .35) / .65))),     // the soft edge grows in with the glide
+        done: land
+      });
     } else {                                        // its tile is elsewhere: fade away where it is, about its centre
       const to = {x: from.x + from.w * .02, y: from.y + from.h * .02, w: from.w * .96, h: from.h * .96, sc: from.sc * .96};
-      const [outer, inner] = morph(from, to, f, EASE_OUT, 16, [1, 0]);
-      el.animate(outer, {duration: 340, easing: 'linear', fill: 'forwards'}).onfinish = () => { t.classList.remove('away'); release(el); el.remove(); finish(); };
-      el.__in.animate(inner, {duration: 340, easing: 'linear', fill: 'forwards'});
+      drive(el, from, to, 340, EASE_OUT, {opacity: k => 1 - k, done: () => { t.classList.remove('away'); release(el); el.remove(); finish(); }});
     }
     (opener && opener === t ? opener : t).focus({preventScroll: true});
   }
@@ -426,6 +468,7 @@
   };
   stage.addEventListener('pointerdown', e => {
     if (e.button || !cur || busy) return;
+    if (cur.__raf) { stopDrive(cur); at(cur, cur.__f); cur.__in.style.transform = ''; }
     down = true; moved = false; axis = ''; sx = e.clientX; sy = e.clientY; dx = dy = 0; t0 = performance.now(); ptype = e.pointerType;
     stage.setPointerCapture(e.pointerId);
   });
@@ -439,6 +482,7 @@
   stage.addEventListener('pointerup', e => {
     if (!down) return; down = false;
     if (!cur) return;
+    stopDrive(cur);
     if (pend) { cancelAnimationFrame(pend); paint(); }
     if (ptype === 'mouse' || !axis || axis === 'n') {
       if (!moved && cur) {

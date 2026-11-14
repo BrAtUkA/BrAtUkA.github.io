@@ -103,6 +103,7 @@ html{scrollbar-gutter:stable}
 .lb-stage[data-z=l],.lb-stage[data-z=r]{cursor:pointer}
 .lb-slide{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;overflow:hidden;background:#0b0809;backface-visibility:hidden}
 .lb-in{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.lb-in > *{inset:-1px !important;width:calc(100% + 2px) !important;height:calc(100% + 2px) !important}   /* 1px overdraw on every side, clipped by the frame */
 .lb-in img,.lb-in video,.lb-in canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .lb-in .hi,.lb-in video{opacity:0;transition:opacity .35s ease}
 .lb-in .hi.on,.lb-in video.on{opacity:1}
