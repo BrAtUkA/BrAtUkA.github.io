@@ -15,5 +15,7 @@
     // the Worker sees every request first: moved and removed paths, then headers on what the assets return
     "run_worker_first": true
   },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // pushes to any other branch (e.g. `preview`) build a Preview on workers.dev for review before production
+  "previews": {}
 }
