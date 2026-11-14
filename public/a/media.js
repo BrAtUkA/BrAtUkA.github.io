@@ -28,6 +28,7 @@
   const loops = tiles.filter(t => t.dataset.v);
   const ratio = new Map();
   const MAX = coarse ? 2 : 4;
+  let viewing = false;                                // the viewer covers the page (not while it closes)
   function attach(t) {
     const v = t.querySelector('video'); if (!v || v.dataset.ok) return v;
     v.dataset.ok = 1;
@@ -41,7 +42,7 @@
   function schedule() {
     if (!loops.length) return;
     const mid = innerHeight / 2;
-    const want = loops.filter(t => !t.hidden && (ratio.get(t) || 0) >= .25 && !reduce && !document.hidden && !lbOpen())
+    const want = loops.filter(t => !t.hidden && (ratio.get(t) || 0) >= .25 && !reduce && !document.hidden && !viewing)
       .map(t => { const r = t.getBoundingClientRect(); return [Math.abs(r.top + r.height / 2 - mid), t]; })
       .sort((a, b) => a[0] - b[0]).slice(0, MAX).map(x => x[1]);
     for (const t of loops) {
@@ -132,6 +133,7 @@
   const lb = document.createElement('div');
   lb.className = 'lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Viewer');
   lb.innerHTML = `<div class="lb-bg"></div><div class="lb-stage"></div>
+    <div class="lb-st" aria-hidden="true"><svg class="lb-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><circle class="arc" cx="8" cy="8" r="6.5" pathLength="100"/></svg></div>
     <div class="lb-ui"><p class="lb-cap"><span class="what"></span><span class="when"></span></p>
     <span class="lb-g l" aria-hidden="true">${svg(ICON.l, 1.25)}</span><span class="lb-g r" aria-hidden="true">${svg(ICON.r, 1.25)}</span>
     <button class="lb-x" type="button" aria-label="Close">${svg(ICON.x, 1.25)}</button>
@@ -140,6 +142,22 @@
   const stage = lb.querySelector('.lb-stage'), bg = lb.querySelector('.lb-bg'), ui = lb.querySelector('.lb-ui');
   const what = lb.querySelector('.what'), when = lb.querySelector('.when'), cap = lb.querySelector('.lb-cap');
   const gl = lb.querySelector('.lb-g.l'), gr = lb.querySelector('.lb-g.r');
+  const st = lb.querySelector('.lb-st'), ring = lb.querySelector('.lb-ring');
+  // loading: a small ring at the end of the caption line, only when the full quality takes a moment; it closes into a
+  // full circle once it is in. Preview builds have a "slow loading" switch, to see it (end of this file).
+  const PREV = /workers\.dev$|^localhost$|^127\./.test(location.hostname);
+  let SLOW = false;
+  try { SLOW = PREV && localStorage.getItem('ld-slow') === '1'; } catch (e) {}
+  let ldT = 0, ldEl = null;
+  function state() {                                 // the current slide's loading state, shown on the viewer
+    clearTimeout(ldT);
+    const el = cur; if (!el) { lb.dataset.ld = ''; ldEl = null; return; }
+    if (el.__hq) lb.dataset.ld = lb.dataset.ld === 'wait' && ldEl === el ? 'fin' : 'ok';
+    else { lb.dataset.ld = 'pend'; ldT = setTimeout(() => { if (cur === el && !el.__hq) lb.dataset.ld = 'wait'; }, 300); }
+    ldEl = el;
+  }
+  function hq(el) { if (!el || el.__hq) return; el.__hq = true; if (el === cur) state(); }   // full quality is on screen
+  const later = fn => SLOW ? setTimeout(fn, 2600) : fn();
   let list = [], i = 0, cur = null, busy = false, opener = null;
   const EASE_OPEN = x => 1 - Math.pow(1 - x, 4);                    // fast out, long soft landing
   let token = 0;                                                   // a newer open makes an older close's clean-up a no-op
@@ -211,7 +229,7 @@
 
   function slide(t) {
     const f = fit(t), el = document.createElement('div'), inn = document.createElement('div');
-    el.className = 'lb-slide'; inn.className = 'lb-in';
+    el.className = 'lb-slide'; inn.className = 'lb-in'; el.__hq = false;
     el.style.width = f.w + 'px'; el.style.height = f.h + 'px'; inn.style.width = f.w + 'px'; inn.style.height = f.h + 'px'; at(el, f);
     el.appendChild(inn);
     const im = t.querySelector('img');
@@ -223,9 +241,9 @@
       const u = hiURL(t, f.w), path = x => new URL(x, location.href).pathname;
       if (path(u) !== path(base.src)) {
         const hi = new Image(); hi.className = 'hi'; hi.alt = ''; hi.decoding = 'async'; hi.src = u;
-        (hi.decode ? hi.decode() : Promise.resolve()).then(() => hi.classList.add('on')).catch(() => {});
+        (hi.decode ? hi.decode() : Promise.resolve()).then(() => later(() => { hi.classList.add('on'); hq(el); })).catch(() => hq(el));
         inn.appendChild(hi);
-      }
+      } else el.__hq = true;
     }
     el.__f = f; el.__t = t; el.__in = inn;
     // a new <img> must decode before it can draw, even when the file is cached: wait for it (briefly) before showing
@@ -254,10 +272,10 @@
     const tv = t.querySelector('video');
     const ready = tv && tv.readyState >= 2 && tv.currentSrc;
     const t0 = ready ? tv.currentTime : 0;
-    if (ready) { snap(tv, inn, 'still'); tv.dataset.keep = 1; if (tv.paused) tv.play().catch(() => {}); }   // keeps playing, unseen, in step
+    if (ready) { snap(tv, inn, 'still'); tv.dataset.keep = 1; if (tv.paused) tv.play().catch(() => {}); follow(tv, () => shown(inn.parentNode)); }   // keeps playing, unseen, in step
     if (!ready && tv) {                              // never loaded: load it now and keep it in step, unseen, for the hand-back
       attach(t); tv.dataset.keep = 1; tv.play().catch(() => {});
-      follow(tv, () => playing(inn.parentNode));
+      follow(tv, () => shown(inn.parentNode));
     }
     let vv = null;
     if (ready) {                                     // the viewer's own copy of the tile's (cached) file
@@ -274,19 +292,21 @@
     // sync like a player: one seek slightly ahead, then nudge the playback rate until both show the same moment
     const ref = () => (vv && vv.classList.contains('on') && !vv.paused ? vv : null);
     const drift = () => { const r = ref(), d = mv.duration || 1; if (!r) return 0; let x = mv.currentTime - r.currentTime; x -= d * Math.round(x / d); return x; };
-    const swap = () => { mv.playbackRate = 1; mv.classList.add('on'); setTimeout(() => { if (vv) vv.pause(); }, 450); };
+    // the cut: same frame, so the only change is the sharpness; the copy stops once the master is on top
+    const swap = () => { mv.playbackRate = 1; later(() => requestAnimationFrame(() => { if (!mv.isConnected) return; mv.classList.add('on'); hq(inn.parentNode); setTimeout(() => { if (vv) vv.pause(); }, 250); })); };
     const sync = () => {
       if (!mv.isConnected) return;
       const r = ref();
       mv.currentTime = ((r ? r.currentTime : t0) + .3) % (mv.duration || 1e9);
       mv.addEventListener('seeked', () => {
         mv.play().then(() => {
-          const s0 = performance.now();
+          const s0 = performance.now(); let ok = 0;
           const step = () => {
             if (!mv.isConnected) return;
+            if (!ref() || performance.now() - s0 > 5000) return swap();
             const x = drift();
-            if (!ref() || Math.abs(x) < .045 || performance.now() - s0 > 4000) return swap();
-            mv.playbackRate = x > 0 ? (x > .3 ? .6 : .85) : (x < -.3 ? 1.6 : 1.2);
+            if (Math.abs(x) < IN_STEP) { if (++ok >= 3) return swap(); } else ok = 0;     // held in step for a few frames
+            rate(mv, x);
             requestAnimationFrame(step);
           };
           requestAnimationFrame(step);
@@ -296,16 +316,21 @@
     mv.addEventListener('canplay', sync, {once: true});
   }
   // nudge a video's playback rate so it shows the same moment as ref() (both loop over the same window)
+  // Both encodes of a loop share their timestamps, so matching clocks means matching frames. The rate is steered in
+  // proportion to the gap (no fixed steps), so it settles to within a few milliseconds instead of hunting around.
+  const IN_STEP = .006;
+  const gap = (v, r) => { const d = v.duration || 1; let x = v.currentTime - r.currentTime; return x - d * Math.round(x / d); };
+  function rate(v, x) { const k = Math.round(Math.min(1.5, Math.max(.5, 1 - x * 6)) * 100) / 100; if (v.playbackRate !== k) v.playbackRate = k; }
   function follow(v, ref) {
+    if (v.__fol) return; v.__fol = 1;
     const step = () => {
-      if (!v.dataset.keep) { v.playbackRate = 1; return; }
+      if (!v.dataset.keep) { v.playbackRate = 1; v.__fol = 0; return; }
       const r = ref();
       if (r && !r.paused && r.readyState >= 2 && v.readyState >= 2 && v.duration) {
-        const d = v.duration; let x = v.currentTime - r.currentTime; x -= d * Math.round(x / d);
-        if (Math.abs(x) > 2.5) v.currentTime = (r.currentTime + .25) % d;
-        else v.playbackRate = Math.abs(x) < .04 ? 1 : x > 0 ? (x > .3 ? .6 : .85) : (x < -.3 ? 1.6 : 1.2);
+        const x = gap(v, r);
+        if (Math.abs(x) > 2.5) v.currentTime = (r.currentTime + .25) % v.duration; else rate(v, x);
       }
-      setTimeout(step, 120);
+      requestAnimationFrame(step);
     };
     step();
   }
@@ -314,6 +339,12 @@
     const m = el.querySelector('video.master.on'), c = el.querySelector('video.copy.on');
     return m && !m.paused ? m : c && !c.paused ? c : (m || c);
   }
+  function shown(el) {                                // the video actually on screen in the viewer (null: a still is)
+    if (!el) return null;
+    const m = el.querySelector('video.master.on'), c = el.querySelector('video.copy.on');
+    return m && !m.paused ? m : c && !c.paused ? c : null;
+  }
+  function unload(el) { el.querySelectorAll('video').forEach(x => { x.pause(); x.removeAttribute('src'); x.innerHTML = ''; x.load(); }); }
   function freeze(el) { const v = playing(el); if (v) snap(v, el.__in, 'still'); }
   function release(el) {                              // stop the viewer's videos; the tile's own video is already in step
     if (!el) return Promise.resolve();
@@ -334,6 +365,7 @@
     cap.classList.toggle('in', inside);
     cap.style.transform = `translate3d(${Math.max(14, f.x + (inside ? 14 : 0))}px, ${inside ? f.y + f.h - 34 : below}px, 0)`;
     cap.style.maxWidth = Math.max(160, f.w - (inside ? 28 : 0)) + 'px';
+    ring.style.transform = `translate3d(${Math.min(innerWidth - 14, f.x + f.w - (inside ? 14 : 0)) - 14}px, ${inside ? f.y + f.h - 31 : below + 3}px, 0)`;   // mirrors the caption's inset
     const show = list.length > 1 && f.x >= 48;
     gl.style.display = gr.style.display = show ? '' : 'none';
     gl.style.transform = `translate3d(${f.x / 2 - 14}px, ${f.y + f.h / 2 - 14}px, 0)`;
@@ -362,6 +394,7 @@
     }
     prefetch(list[(i + 1) % list.length]); prefetch(list[(i - 1 + list.length) % list.length]);
     zone();
+    state();
   }
 
   function open(t) {
@@ -372,7 +405,7 @@
     ui.getAnimations().forEach(a => a.cancel());
     stage.querySelectorAll('.lb-slide').forEach(x => { stopDrive(x); x.getAnimations().forEach(a => a.cancel()); release(x); unhide(x.__t); x.remove(); });
     busy = false; bg.style.opacity = ''; lb.classList.remove('closing');   // nothing from a previous view may block this one
-    opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
+    opener = t; viewing = true; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
     const r = t.getBoundingClientRect();
     cur = null; show(list.indexOf(t), 0); zone();
     const el = cur, f = el.__f, my = token;
@@ -389,6 +422,7 @@
         done: () => { if (cur === el) { at(el, f); el.__in.style.transform = ''; if (mask) mask(openState(f), 0); } }
       });
       ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
+      st.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
     });
     try { history.pushState({lb: 1}, ''); } catch (err) {}
     lb.querySelector('.lb-x').focus({preventScroll: true});
@@ -410,24 +444,46 @@
     ui.getAnimations().forEach(a => a.cancel());
     ui.animate([{opacity: 0}, {opacity: 0}], {duration: 600, fill: 'forwards'});      // the caption leaves at once
     lb.classList.add('closing'); bg.style.opacity = ''; lb.classList.remove('bg-on');
+    viewing = false; schedule();                    // the page's loops carry on while this one glides home
     stopDrive(el);
     const f = el.__f, from = nowState(el), r = t.getBoundingClientRect();
     el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
     const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
     const soft = !!t.closest('.preview .grid');
-    const land = () => {                            // exactly over its tile now: once the tile is ready, hand over
-      freeze(el);
-      release(el).then(() => {
-        unhide(t);
-        // a soft-edged tile is matched exactly (same fade): swap in one frame. Cross-fading two half-transparent copies
-        // would stack them and weaken the fade for a moment. Opaque tiles cross-fade, which hides any tiny difference.
-        if (reduce || soft) { el.remove(); finish(); return; }
-        el.animate([{opacity: 1}, {opacity: 0}], {duration: 140, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
-      });
+    const mask = softMask(el, t), tv = t.querySelector('video');
+    const land = () => {                            // exactly over its tile now: hand over
+      if (!tv || !tv.dataset.ok) {                  // a still
+        release(el).then(() => {
+          unhide(t);
+          // a soft-edged tile is matched exactly (same fade): swap in one frame. Cross-fading two half-transparent copies
+          // would stack them and weaken the fade for a moment. Opaque tiles cross-fade, which hides any tiny difference.
+          if (reduce || soft) { el.remove(); finish(); return; }
+          el.animate([{opacity: 1}, {opacity: 0}], {duration: 140, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
+        });
+        return;
+      }
+      // a loop: the tile's own video has played on underneath, steered onto the viewer's clock. The moment it shows the
+      // same frame, the tile takes over in one frame: no freeze, no fade. (Still playing while it waits, never stuck.)
+      const t1 = performance.now(); let froze = false;
+      if (tv.paused) tv.play().catch(() => {});
+      const swap = () => {
+        delete tv.dataset.keep; tv.playbackRate = 1;
+        tv.style.transition = 'none'; tv.classList.add('on'); unhide(t);
+        el.remove(); unload(el); requestAnimationFrame(() => { tv.style.transition = ''; });
+        finish();
+      };
+      const wait = () => {
+        if (my !== token) return;
+        if (!reduce) { const S = tileState(t.getBoundingClientRect(), f); pose(el, S); if (mask) mask(S, 1); }   // stays on it if the page moves
+        const r = shown(el), live = !tv.paused && tv.readyState >= 3, waited = performance.now() - t1;
+        if ((live && (!r || Math.abs(gap(tv, r)) < IN_STEP * 2)) || (live && waited > 400) || waited > 1500) return swap();
+        if (!live && waited > 400 && !froze) { froze = true; freeze(el); }
+        requestAnimationFrame(wait);
+      };
+      wait();
     };
-    if (reduce) return land();
     if (onScreen) {
-      const mask = softMask(el, t), s0 = el.__ms || 0;
+      const s0 = el.__ms || 0;
       drive(el, from, () => tileState(t.getBoundingClientRect(), f), 520, EASE_OUT, {
         mask: mask && ((S, p) => mask(S, s0 + (1 - s0) * Math.max(0, (p - .35) / .65))),     // the soft edge grows in with the glide, from wherever it is
         done: land
@@ -523,4 +579,12 @@
     else { cur.__dx = 0; cur.animate([{transform: cur.style.transform}, {transform: `translate3d(${f.x}px, ${f.y}px, 0) scale(1)`}], {duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)'}); at(cur, f); bg.style.opacity = ''; }
   });
   stage.addEventListener('pointercancel', () => { down = false; if (cur) { at(cur, cur.__f); cur.__dx = 0; } bg.style.opacity = ''; });
+
+  // preview builds only: slow loading down, to see the ring
+  if (PREV) {
+    const c = document.createElement('button'); c.type = 'button'; c.className = 'ld-pick';
+    const mark = () => { c.textContent = 'slow loading: ' + (SLOW ? 'on' : 'off'); c.classList.toggle('on', SLOW); };
+    c.addEventListener('click', () => { SLOW = !SLOW; try { localStorage.setItem('ld-slow', SLOW ? '1' : '0'); } catch (err) {} mark(); });
+    mark(); document.body.appendChild(c);
+  }
 })();

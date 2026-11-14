@@ -108,7 +108,7 @@ html{scrollbar-gutter:stable}
 .lb-in img,.lb-in video,.lb-in canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .lb-in .hi,.lb-in video{opacity:0;transition:opacity .35s ease}
 .lb-in .hi.on,.lb-in video.on{opacity:1}
-.lb-in video.copy{transition:none}
+.lb-in video.copy,.lb-in video.master{transition:none}
 .lb-ui{position:absolute;inset:0;pointer-events:none;transition:opacity .35s}
 .lb.idle .lb-ui{opacity:0}
 .lb.closing .lb-ui{opacity:0;transition:opacity .12s}
@@ -130,3 +130,21 @@ html{scrollbar-gutter:stable}
 .lb-sr:focus-visible{width:44px;height:44px;clip-path:none;margin-top:-22px;pointer-events:auto;border-radius:50%;background:rgba(10,8,9,.5);display:grid;place-items:center}
 .lb-sr svg{width:20px;height:20px} .lb-sr.pv{left:16px} .lb-sr.nx{right:16px}
 @media (prefers-reduced-motion:reduce){ .lb-ui,.lb-in .hi,.lb-in video,.lb-cap{transition:none} }
+
+/* loading: a small ring at the end of the caption line, only when the full quality takes a moment (data-ld: pend,
+   wait, fin = just finished, ok) */
+.lb-st{position:absolute;inset:0;pointer-events:none}
+.lb.closing .lb-st{opacity:0;transition:opacity .12s}
+.lb-ring{position:absolute;left:0;top:0;width:14px;height:14px;fill:none;stroke-width:1.2;opacity:0;transition:opacity .4s}
+.lb-ring circle{stroke:rgba(236,230,227,.14)}
+.lb-ring .arc{stroke:rgba(236,230,227,.75);stroke-dasharray:22 100;stroke-linecap:round;transform-origin:8px 8px;transition:stroke-dasharray .35s ease}
+.lb[data-ld=wait] .lb-ring{opacity:1}
+.lb[data-ld=wait] .lb-ring .arc{animation:lb-spin .9s linear infinite}
+@keyframes lb-spin{to{transform:rotate(360deg)}}
+.lb[data-ld=fin] .lb-ring{opacity:0;transition:opacity .5s ease .4s}
+.lb[data-ld=fin] .lb-ring .arc{stroke-dasharray:100 100}
+@media (prefers-reduced-motion: reduce){.lb-ring .arc{animation:none !important}}
+/* preview builds only */
+.ld-pick{position:fixed;left:12px;top:12px;z-index:200;padding:7px 12px;border-radius:999px;background:rgba(20,15,17,.88);border:1px solid var(--hair);
+  font:11px/1 var(--f-mono);color:var(--ash);letter-spacing:.04em;cursor:pointer}
+.ld-pick.on{color:var(--bone)}
