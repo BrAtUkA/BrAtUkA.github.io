@@ -44,11 +44,15 @@ window.GlassPill = (box) => {
     float k = .012 * DPR;                                            // a little dispersion at the rim
     vec3 col = vec3(texture(S, (p + off * (1. + k)) / R).r, texture(S, (p + off) / R).g, texture(S, (p + off * (1. - k)) / R).b);
     float a = texture(S, (p + off) / R).a;
-    vec3 body = T * (.2 + .06 * sin(TIME * .7 + p.x / (40. * DPR)));  // the game's colour, slowly breathing
+    float yv = (p.y - P.z) / (P.w - P.z);                          // 0 at the top of the pill, 1 at the bottom
+    vec3 body = T * (.22 - .08 * yv);                               // the game's colour, deepening toward the bottom
     vec3 glass = col + body * (1. - a) * .9;
-    float top = bulge * smoothstep(.25, -.7, g.y);                  // rim facing up catches the light
-    float hl = exp(-pow((p.x - LX) / (hh * 3.2), 2.));
-    glass += vec3(1.) * top * (.18 + .42 * hl) + vec3(1.) * pow(rim, 7.) * .22;
+    // light: crisp hairlines only (no glow). A bright one along the top edge, strongest under the pointer, and a faint
+    // reflected one along the bottom.
+    float line = smoothstep(-1.6 * DPR, -.5 * DPR, d) * (1. - smoothstep(-.5 * DPR, .2 * DPR, d));
+    float hl = exp(-pow((p.x - LX) / (hh * 2.6), 2.));
+    float up = smoothstep(.2, -.75, g.y), down = smoothstep(-.2, .75, g.y);
+    glass += vec3(1.) * line * (up * (.32 + .55 * hl) + down * .12);
     float ga = max(a, .88);
     vec4 inn = vec4(glass * ga, ga);
     o = mix(dim, inn, inside);
