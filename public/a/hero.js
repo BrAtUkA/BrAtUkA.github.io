@@ -268,7 +268,7 @@ void main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   };
   function loadTurn() {                                   // turntable frames load after the hero is up, into one texture array
-    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${i * TURN.step}.webp`))).then((ims) => {
+    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${i * TURN.step}.webp${hero.dataset.tv ? '?v=' + hero.dataset.tv : ''}`))).then((ims) => {
       const w0 = ims[0].naturalWidth, h0 = ims[0].naturalHeight, lv = 1 + Math.floor(Math.log2(Math.max(w0, h0)));
       const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
