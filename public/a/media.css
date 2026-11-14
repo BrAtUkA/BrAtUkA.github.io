@@ -90,7 +90,8 @@ html:not(.js) .tabs-line{display:none}
 /* ── viewer ──
    The image fills the screen with thin borders (none on phones); the caption sits quietly at the bottom. The outer
    thirds of the screen are back / forward (a thin arrow cursor), the middle closes. */
-html{scrollbar-gutter:stable}                 /* the page width never changes when overlays come and go */
+html{scrollbar-gutter:stable}
+.lb-on .m img{transform:none !important;transition:none} .lb-on .m::after{opacity:0 !important}   /* no hover zoom or shade while a piece is viewed or landing */                 /* the page width never changes when overlays come and go */
 .m.away img,.m.away video,.m.away .lq{visibility:hidden}
 .lb{position:fixed;inset:0;z-index:80;visibility:hidden;overscroll-behavior:contain;contain:strict}
 .lb.open{visibility:visible}
@@ -102,7 +103,7 @@ html{scrollbar-gutter:stable}                 /* the page width never changes wh
 .lb-stage[data-z=l],.lb-stage[data-z=r]{cursor:pointer}
 .lb-slide{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;overflow:hidden;background:#0b0809;backface-visibility:hidden}
 .lb-in{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-.lb-in img,.lb-in video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.lb-in img,.lb-in video,.lb-in canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .lb-in .hi,.lb-in video.master{opacity:0;transition:opacity .35s ease}
 .lb-in .hi.on,.lb-in video.master.on{opacity:1}
 .lb-ui{position:absolute;inset:0;pointer-events:none;transition:opacity .35s}

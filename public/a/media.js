@@ -239,12 +239,26 @@
     };
     mv.addEventListener('canplay', sync, {once: true});
   }
-  function release(el) {                              // hand an adopted tile video back to its tile, still playing
-    if (!el) return;
-    el.querySelectorAll('video.master').forEach(v => { v.pause(); v.removeAttribute('src'); v.innerHTML = ''; v.load(); });
-    el.querySelectorAll('video:not(.master)').forEach(v => { if (v.__home) { v.__home.appendChild(v); v.play().catch(() => {}); } });
+  function freeze(el) {                               // the adopted loop's current frame, as a still in the slide
+    const v = el.querySelector('.lb-in video:not(.master)'), m = el.querySelector('video.master.on'), src = m || v;
+    if (!src || src.readyState < 2) return;
+    const c = document.createElement('canvas'); c.width = src.videoWidth; c.height = src.videoHeight; c.className = 'still';
+    try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); el.__in.appendChild(c); } catch (e) {}
   }
-
+  function release(el) {                              // hand an adopted tile video back to its tile, still playing
+    if (!el) return Promise.resolve();
+    el.querySelectorAll('video.master').forEach(v => { v.pause(); v.removeAttribute('src'); v.innerHTML = ''; v.load(); });
+    const waits = [];
+    el.querySelectorAll('video:not(.master)').forEach(v => {
+      if (!v.__home) return;
+      v.__home.appendChild(v); v.classList.add('on');
+      waits.push(new Promise(res => {
+        const done = () => res(); setTimeout(done, 260);                     // never wait long
+        v.play().then(() => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(done) : requestAnimationFrame(() => requestAnimationFrame(done))).catch(done);
+      }));
+    });
+    return Promise.all(waits);
+  }
   function label(f) {
     const t = list[i];
     what.textContent = t.dataset.cap || '';
@@ -264,6 +278,7 @@
     const old = cur, el = slide(list[i]); cur = el;
     stage.appendChild(el); label(el.__f);
     if (old) {
+      old.__t.classList.remove('away'); list[i].classList.add('away');
       if (reduce || !dir) { release(old); old.remove(); }
       else {
         busy = true;
@@ -282,15 +297,20 @@
     lb.classList.toggle('solo', list.length < 2);
     token++;
     ui.getAnimations().forEach(a => a.cancel());
-    stage.querySelectorAll('.lb-slide').forEach(x => { x.getAnimations().forEach(a => a.cancel()); release(x); x.remove(); });
+    stage.querySelectorAll('.lb-slide').forEach(x => { x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); });
     busy = false; bg.style.opacity = ''; lb.classList.remove('closing');   // nothing from a previous view may block this one
     opener = t; root.classList.add('lb-on'); lb.classList.add('open'); document.dispatchEvent(new Event('viewer:open'));
     void lb.offsetWidth; lb.classList.add('bg-on');      // the backdrop is a CSS fade on this one class: no state to get stuck
     const r = t.getBoundingClientRect();
     cur = null; show(list.indexOf(t), 0);
+    // only a still under a preview's soft edge needs the brief overlap (it fades in over its half-faded tile);
+    // everything else hides its tile at once under an opaque image (a loop's video has just left its tile)
+    const soft = !t.dataset.v && !!t.closest('.preview');
+    if (soft) { const opened = token; setTimeout(() => { if (opened === token && cur && cur.__t === t) t.classList.add('away'); }, reduce ? 0 : 120); }
+    else t.classList.add('away');
     if (!reduce) {
       // fade in over the first fifth: tiles under the home previews' soft edge are partly transparent
-      const f = cur.__f, [outer, inner] = morph(tileState(r, f), openState(f), f, EASE_OPEN, 28, k => Math.min(1, k / .2));
+      const f = cur.__f, [outer, inner] = morph(tileState(r, f), openState(f), f, EASE_OPEN, 28, soft ? (k => Math.min(1, k / .2)) : null);
       cur.animate(outer, {duration: 560, easing: 'linear'});
       cur.__in.animate(inner, {duration: 560, easing: 'linear'});
       ui.animate([{opacity: 0}, {opacity: 0, offset: .55}, {opacity: 1}], {duration: 720});
@@ -302,30 +322,37 @@
   function shut() {
     if (!lbOpen() || !cur) return;
     const el = cur, t = el.__t, my = ++token; cur = null; busy = false;
-    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { x.getAnimations().forEach(a => a.cancel()); release(x); x.remove(); } });   // a slide still leaving
+    stage.querySelectorAll('.lb-slide').forEach(x => { if (x !== el) { x.getAnimations().forEach(a => a.cancel()); release(x); x.__t.classList.remove('away'); x.remove(); } });
     const finish = () => {
-      release(el); el.remove();
-      if (my !== token) return;                     // the viewer was opened again meanwhile: leave it alone
+      if (my !== token) { el.remove(); t.classList.remove('away'); return; }   // opened again meanwhile: leave it alone
       lb.classList.remove('open', 'closing'); root.classList.remove('lb-on');
       ui.getAnimations().forEach(a => a.cancel());
       document.dispatchEvent(new Event('viewer:close')); schedule();
     };
-    ui.getAnimations().forEach(a => a.cancel());    // the caption leaves at once, even straight after opening
-    ui.animate([{opacity: 0}, {opacity: 0}], {duration: 600, fill: 'forwards'});
+    ui.getAnimations().forEach(a => a.cancel());
+    ui.animate([{opacity: 0}, {opacity: 0}], {duration: 600, fill: 'forwards'});      // the caption leaves at once
     lb.classList.add('closing'); bg.style.opacity = ''; lb.classList.remove('bg-on');
     const f = el.__f, from = nowState(el), r = t.getBoundingClientRect();
     el.getAnimations().forEach(a => a.cancel()); el.__in.getAnimations().forEach(a => a.cancel());
     const onScreen = !t.hidden && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
-    if (reduce) return finish();
-    const D = onScreen ? 520 : 340;
-    const to = onScreen ? tileState(r, f)
-      : {x: from.x + from.w * .02, y: from.y + from.h * .02, w: from.w * .96, h: from.h * .96, sc: from.sc * .96};   // shrink about its own centre
-    // into its tile: the tile is underneath all along, so fading the image over the last third hands over to it
-    // without a pop (even under the previews' soft edge). Elsewhere: a plain fade where it is.
-    const fade = onScreen ? (k => k < .66 ? 1 : 1 - (k - .66) / .34) : [1, 0];
-    const [outer, inner] = morph(from, to, f, EASE_OUT, 24, fade);
-    el.animate(outer, {duration: D, easing: 'linear', fill: 'forwards'}).onfinish = finish;
-    el.__in.animate(inner, {duration: D, easing: 'linear', fill: 'forwards'});
+    const land = () => {                            // exactly over its tile now: reveal the tile under it, then let go
+      freeze(el); t.classList.remove('away');
+      release(el).then(() => {
+        if (reduce) { el.remove(); finish(); return; }
+        el.animate([{opacity: 1}, {opacity: 0}], {duration: 160, easing: 'linear', fill: 'forwards'}).onfinish = () => { el.remove(); finish(); };
+      });
+    };
+    if (reduce) return land();
+    if (onScreen) {
+      const [outer, inner] = morph(from, tileState(r, f), f, EASE_OUT, 24);
+      el.animate(outer, {duration: 520, easing: 'linear', fill: 'forwards'}).onfinish = land;
+      el.__in.animate(inner, {duration: 520, easing: 'linear', fill: 'forwards'});
+    } else {                                        // its tile is elsewhere: fade away where it is, about its centre
+      const to = {x: from.x + from.w * .02, y: from.y + from.h * .02, w: from.w * .96, h: from.h * .96, sc: from.sc * .96};
+      const [outer, inner] = morph(from, to, f, EASE_OUT, 16, [1, 0]);
+      el.animate(outer, {duration: 340, easing: 'linear', fill: 'forwards'}).onfinish = () => { t.classList.remove('away'); release(el); el.remove(); finish(); };
+      el.__in.animate(inner, {duration: 340, easing: 'linear', fill: 'forwards'});
+    }
     (opener && opener === t ? opener : t).focus({preventScroll: true});
   }
   // close at once; the history entry the viewer added is popped alongside (its popstate is then ignored)
