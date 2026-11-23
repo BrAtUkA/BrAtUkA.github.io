@@ -87,12 +87,12 @@ export default {
     for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
     const review = url.hostname.endsWith('.workers.dev') || url.hostname === 'preview.bratuka.dev';
     if (review) out.headers.set('x-robots-tag', 'noindex, nofollow');   // review previews stay out of search
-    // and out of the visitor stats: the analytics token belongs to bratuka.dev (elsewhere it is refused, with console errors)
-    if (review && (out.headers.get('content-type') || '').includes('text/html'))
-      return new HTMLRewriter().on('script[src*="cloudflareinsights.com"]', { element(e) { e.remove(); } }).transform(out);
     const type = out.headers.get('content-type') || '';
     if (path.startsWith('/a/')) out.headers.set('cache-control', 'public, max-age=604800, stale-while-revalidate=86400');   // renders: a week
     else if (type.includes('text/html')) out.headers.set('cache-control', 'public, max-age=0, must-revalidate');
+    // previews stay out of the visitor stats: the analytics token belongs to bratuka.dev (elsewhere it is refused, with console errors)
+    if (review && type.includes('text/html'))
+      return new HTMLRewriter().on('script[src*="cloudflareinsights.com"]', { element(e) { e.remove(); } }).transform(out);
     return out;
   },
 };
