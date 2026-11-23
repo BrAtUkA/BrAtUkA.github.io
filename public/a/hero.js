@@ -1,5 +1,5 @@
 /* ── reeded glass hero ──
-   - a/b-plate.webp: the B as red optical glass, rendered in Blender Cycles from the logo's own Bezier curves
+   - a/hero-home.webp: the B as red optical glass, rendered in Blender Cycles (render_heroshape.py, shape B), with its turn frames in a/turn-home/
    - a/glass-refraction.png: one flute of a real reeded-glass panel baked in Cycles; per pixel, how far it shifts
      the view behind it for three wavelengths (dispersion) plus transmittance
    The lighting is analytic: each reed is a cylindrical lens (same profile as the bake) and one normal per pixel
@@ -9,8 +9,8 @@
 (() => {
   const hero = document.querySelector('.hero'), cv = document.getElementById('glass');
   if (!hero || !cv) return;
-  const BASE = hero.dataset.base || '', PLATE_SRC = BASE + (hero.dataset.plate || 'a/b-plate.webp'), HAS_TURN = hero.dataset.turn !== 'off';
-  const TURN_SRC = BASE + (hero.dataset.turn && hero.dataset.turn !== 'off' ? hero.dataset.turn : 'a/turn/b');   // frame i is TURN_SRC + i + '.webp'
+  const BASE = hero.dataset.base || '', PLATE_SRC = BASE + (hero.dataset.plate || 'a/hero-home.webp'), HAS_TURN = hero.dataset.turn !== 'off';
+  const TURN_SRC = BASE + (hero.dataset.turn && hero.dataset.turn !== 'off' ? hero.dataset.turn : 'a/turn-home/b');   // frame i is TURN_SRC + i + '.webp'
   const flags = new URLSearchParams(location.search), hash = location.hash;
   const POSTER = flags.has('poster'), DEBUG = flags.has('debug') || hash === '#debug';
   if (POSTER) document.documentElement.classList.add('poster-capture');
