@@ -7,7 +7,7 @@
    wall turned away from the light, and the light that escapes at each groove (box-filtered over 4 sub-pixel taps).
    Phase wrap uses Paper Shaders' smoothFract (Apache-2.0, https://shaders.paper.design). */
 (() => {
-  const hero = document.querySelector('.hero'), cv = document.getElementById('glass'), poster = document.getElementById('poster');
+  const hero = document.querySelector('.hero'), cv = document.getElementById('glass');
   if (!hero || !cv) return;
   const BASE = hero.dataset.base || '', PLATE_SRC = BASE + (hero.dataset.plate || 'a/b-plate.webp'), HAS_TURN = hero.dataset.turn !== 'off';
   const TURN_SRC = BASE + (hero.dataset.turn && hero.dataset.turn !== 'off' ? hero.dataset.turn : 'a/turn/b');   // frame i is TURN_SRC + i + '.webp'
@@ -16,8 +16,34 @@
   if (POSTER) document.documentElement.classList.add('poster-capture');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saveData = !!(navigator.connection && navigator.connection.saveData);
-  const fallback = () => { poster.classList.add('show'); if (cv.parentNode) cv.remove(); };
-  if (!POSTER && (reduce || saveData)) { fallback(); return; }
+  // Reduced motion, Save-Data or software-only graphics: the real glass, drawn once at the real size (and again on
+  // resize), never animated. Only without WebGL at all does a still picture stand in (see fallback).
+  let STILL = !POSTER && (reduce || saveData);
+  // Without WebGL the still is put together from two pictures, the empty glass (tiled at the live reed width) and the
+  // shape with the glass over it, placed by the same rules as the live hero (layout() below), so it fits any screen.
+  const fallback = () => {
+    if (cv.parentNode) cv.remove();
+    const S = hero.dataset.still; if (!S || hero.querySelector('.still')) return;
+    const box = document.createElement('div'); box.className = 'still'; box.setAttribute('aria-hidden', 'true');
+    const img = new Image(); img.alt = ''; img.decoding = 'async'; box.appendChild(img);
+    hero.insertBefore(box, hero.firstChild);
+    const V = hero.dataset.sv ? '?v=' + hero.dataset.sv : '';     // content version (build_site.py)
+    fetch(BASE + S + '.json' + V).then((r) => r.json()).then((G) => {
+      let mode = '';
+      const place = () => {
+        const r = hero.getBoundingClientRect(), W = r.width, H = r.height, o = hero.dataset, wide = W / H > 1.1;
+        const w = Math.max(22, Math.min(40, W / 40));
+        let Hb = wide ? Math.min(H * (+o.size || .66), W * .4) : Math.min(H * (+o.sizeN || .38), W * .78 / G.pa);
+        Hb *= +o.k || 1.0105;
+        const x = wide ? W * (+o.x || .68) : W * .5, y = wide ? H * (+o.y || .5) : H * (+o.yN || .32), md = wide ? 'w' : 'n', c = G[md];
+        if (md !== mode) { mode = md; img.src = `${BASE}${S}-${md}.webp${V}`; box.style.backgroundImage = `url(${BASE}${S}-${md}-glass.webp${V})`; }
+        box.style.backgroundSize = `${w}px 100%`;                        // the glass strip is one reed wide
+        img.style.width = c.wd * Hb + 'px'; img.style.height = c.ht * Hb + 'px';
+        img.style.transform = `translate3d(${x + c.l * Hb}px, ${y + c.t * Hb}px, 0)`;
+      };
+      place(); addEventListener('resize', place, { passive: true });
+    }).catch(() => box.remove());
+  };
 
   let gl = null;
   try { gl = cv.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: POSTER }); } catch (e) { gl = null; }
@@ -27,7 +53,7 @@
   try {
     const dbgInfo = gl.getExtension('WEBGL_debug_renderer_info');
     const renderer = String(gl.getParameter(dbgInfo ? dbgInfo.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
-    if (!POSTER && flags.get('gl') !== 'force' && /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) { fallback(); return; }
+    if (!POSTER && flags.get('gl') !== 'force' && /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) STILL = true;   // one frame is fine on the CPU; animating is not
   } catch (e) { /* if the renderer can't be read, keep the live hero */ }
 
   const FS = `#version 300 es
@@ -158,7 +184,7 @@ void main() {
   /* quality tiers: once a tier proves too slow it is never used again */
   const TIERS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];   // never below 1: thin edges need real pixels
   const FORCED = flags.has('tier') ? Math.max(0, Math.min(3, +flags.get('tier') | 0)) : -1;
-  let tier = FORCED >= 0 ? FORCED : (POSTER ? 0 : 1), ceiling = 0;
+  let tier = FORCED >= 0 ? FORCED : (POSTER || STILL ? 0 : 1), ceiling = 0;
 
   const PLATE = { k: +hero.dataset.k || 1.0105, dx: +(hero.dataset.dx || .0011), dy: +(hero.dataset.dy || .0004) };                  // plate box vs the B inside it (from turn2/encode.py)
   let W = 1, H = 1, dpr = 1, w = 30, Hb = 400, aspect = 1, B0 = { x: 0, y: 0 };
@@ -172,6 +198,7 @@ void main() {
     Hb = wide ? Math.min(H * (+o.size || .66), W * .4) : Math.min(H * (+o.sizeN || .38), W * .78 / aspect);
     Hb *= PLATE.k;                                        // the plate box includes room for the B to turn
     B0 = wide ? { x: W * (+o.x || .68), y: H * (+o.y || .5) } : { x: W * .5, y: H * (+o.yN || .32) };
+    if (POSTER) window.__geo = { W, H, Hb, x: B0.x, y: B0.y, w, aspect, k: PLATE.k, wide };   // for the still pictures (render_still.js)
   }
 
   const st = { scroll: 0, sv: 0, mx: .5, my: .5, vx: 0, vy: 0, sx: .5, gate: 1, phase: 0 };
@@ -255,7 +282,7 @@ void main() {
     }
     raf = requestAnimationFrame(frame);
   }
-  const start = () => { if (POSTER || running || !visible || document.hidden || !ready || document.documentElement.classList.contains('lb-on')) return; running = true; last = 0; winStart = performance.now(); raf = requestAnimationFrame(frame); };
+  const start = () => { if (POSTER || STILL || running || !visible || document.hidden || !ready || document.documentElement.classList.contains('lb-on')) return; running = true; last = 0; winStart = performance.now(); raf = requestAnimationFrame(frame); };
   const stop = () => { running = false; cancelAnimationFrame(raf); };
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? start() : stop(); }, { threshold: 0 }).observe(hero);
   document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
@@ -293,8 +320,8 @@ void main() {
       layout();
     } catch (err) { console.error(err); fallback(); return; }
     ready = true; t0 = performance.now();
-    if (LOOK.turn > 0 && !POSTER && HAS_TURN) loadTurn();
-    if (POSTER) { t0 -= 10000; st.gate = 0; lastAct = performance.now(); const s0 = state(performance.now(), 0); s0.gx += +(flags.get('gx') || 0); draw(s0); window.__posterReady = true; return; }
+    if (LOOK.turn > 0 && !POSTER && !STILL && HAS_TURN) loadTurn();
+    if (POSTER || STILL) { t0 -= 10000; st.gate = 0; lastAct = performance.now(); const s0 = state(performance.now(), 0); s0.gx += +(flags.get('gx') || 0); draw(s0); if (POSTER) window.__posterReady = true; return; }
     start();
   }).catch(fallback);
 })();

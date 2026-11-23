@@ -42,6 +42,8 @@
   .rb .m:nth-child(3){grid-column:span 2;grid-row:span 2} .rb .m:nth-child(5){grid-column:span 2;grid-row:span 3}
   .gb{grid-template-columns:repeat(2, minmax(0, 1fr));grid-auto-rows:24vw;grid-auto-flow:dense}
   .gb .m:nth-child(n){grid-column:span 1;grid-row:span 2} .gb .m:nth-child(5n+1){grid-column:span 2;grid-row:span 3} .gb .m.tall{grid-row:span 4}
+  /* the last two sit side by side: if either is tall, both are, so the grid ends flush (no hole under the shorter one) */
+  .gb .m:nth-last-child(2):not(:nth-child(5n+1)):has(+ .m.tall), .gb .m.tall:nth-last-child(2):not(:nth-child(5n+1)) + .m{grid-row:span 4}
   .preview{--fade:150px}
 }
 .more{position:relative;z-index:2;display:flex;justify-content:center;margin-top:-30px}
