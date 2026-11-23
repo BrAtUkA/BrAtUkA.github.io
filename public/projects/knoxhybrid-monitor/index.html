@@ -72,6 +72,40 @@ a{color:inherit;text-decoration:none}
 .acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
 @media (max-width:760px){ .nav a.opt{display:none} }
 
+/* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
+.cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
+.cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
+.cs.flip figure{order:2}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
+.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
+.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
+.cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
+.cs-t .st{text-transform:none;letter-spacing:.03em}
+.cs-t .star{display:inline-flex;align-items:center;gap:4px}
+.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
+.go svg{width:18px;height:18px;transition:transform .3s}
+.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
+.cs-rest .y{white-space:nowrap}
+.cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
+@media (hover:hover) and (pointer:fine){
+  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
+}
+.cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
+@media (max-width:860px){
+  .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
+  .cs.flip figure{order:0}
+  .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest .d{grid-column:1;grid-row:2}
+  .cs-rest .y{display:none}
+  .cs-rest svg{grid-column:2;grid-row:1 / span 2}
+}
+
 
 .nav a[aria-current=page]{color:var(--bone)}
 .foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 28px;padding-block:44px calc(36px + env(safe-area-inset-bottom, 0px));font-size:var(--t-s)}
@@ -79,7 +113,7 @@ a{color:inherit;text-decoration:none}
 .foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
 </style>
 <link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
-<link rel="stylesheet" href="../../a/project.css?v=ec37a082">
+<link rel="stylesheet" href="../../a/project.css?v=bb4d7bc1">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "KnoxHybrid Monitor", "description": "A Windows tray app for Knox solar inverters. It shows live readings, alerts you when the power goes out and comes back, and uses about 3 MB of memory and no CPU while it waits.", "url": "https://bratuka.dev/projects/knoxhybrid-monitor/", "codeRepository": "https://github.com/BrAtUkA/knoxhybrid-monitor", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/p/knoxhybrid-monitor/cover-960.webp?v=36e9da1a"}</script>
 </head>
 <body class="pp">
@@ -159,11 +193,11 @@ a{color:inherit;text-decoration:none}
 <h2 id="what-s-next">What&rsquo;s next</h2>
 <p>Support for more inverter brands. If yours uses a ShineMonitor-based portal, open an issue on GitHub and it can be added.</p></article>
   </div></div>
-  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><span></span><a class="p-all link" href="../../projects/">All projects</a><span></span></div></nav>
+  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><a class="p-nx prev" href="../../projects/pdf-dark-mode-converter/"><span class="mono">Previous project</span><strong>PDF Dark Mode Converter</strong><span class="t">A browser tool that converts PDFs to dark mode in 16 themes.</span></a><a class="p-all link" href="../../projects/">All projects</a><a class="p-nx next" href="../../projects/blend-cammocap/"><span class="mono">Next project</span><strong>Blend-CamMoCap</strong><span class="t">An Android app and Blender add-on that turn a phone into a handheld virtual camera over Wi-Fi, with a live viewfinder, lens control and takes baked into ordinary keyframes.</span></a></div></nav>
 </main>
 <footer class="foot gut"><div class="wrap" style="display:contents"><a class="link home" href="../../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>bratuka.dev</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a><span class="mono">© 2026 BrAtUkA</span></div></footer>
 <script src="../../a/media.js?v=345213c5" defer></script>
-<script src="../../a/project.js?v=55026053" defer></script>
+<script src="../../a/project.js?v=ed9a40e5" defer></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
 </body>
 </html>

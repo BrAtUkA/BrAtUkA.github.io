@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Computer-Use Agent · BrAtUkA</title>
+<meta name="description" content="An autonomous agent that controls a Windows PC from a plain-language goal, using a local vision-language model split into three roles. It runs on a single consumer GPU.">
+<link rel="canonical" href="https://bratuka.dev/projects/computer-use-agent/">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#060405">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://bratuka.dev/projects/computer-use-agent/">
+<meta property="og:site_name" content="BrAtUkA">
+<meta property="og:title" content="Computer-Use Agent · BrAtUkA">
+<meta property="og:description" content="An autonomous agent that controls a Windows PC from a plain-language goal, using a local vision-language model split into three roles. It runs on a single consumer GPU.">
+<meta property="og:image" content="https://bratuka.dev/a/m/proj-cua-demo-960.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@BrAtUkA_dev">
+<link rel="icon" href="../../a/favicon.svg?v=201c26f2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../a/apple-touch-icon.png?v=7b0d26e1">
+<link rel="preload" href="../../a/fonts/geist-latin.woff2?v=91da2c05" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<style>@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin-ext.woff2?v=c99ca7ca) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin.woff2?v=91da2c05) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin-ext.woff2?v=c493e11b) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin.woff2?v=d8f727de) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
+<style>
+/* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
+   owner's own renders and screenshots carry the visuals. No cards: rows, hairlines and full-bleed strips. */
+:root{
+  color-scheme: dark;
+  --void:#060405;     /* page ground: black with a trace of red */
+  --hair:#231c1e;     /* hairlines */
+  --bone:#ece6e3;     /* primary text */
+  --ash:#8b8185;      /* secondary text */
+  --signal:#ff3a4e;   /* the only UI accent: links, focus */
+  --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
+  --max:1280px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void);color:var(--bone)}
+body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:var(--max);margin:0 auto}
+.mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
+.link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
+.link:hover{color:var(--signal)}
+::selection{background:var(--signal);color:var(--void)}
+
+/* ── hero ── */
+.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+#glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.still{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#000;background-repeat:repeat-x;background-position:0 0}   /* no WebGL: glass + shape, placed like the live hero */
+.still img{position:absolute;left:0;top:0;display:block;max-width:none;
+  -webkit-mask-image:radial-gradient(closest-side, #000 82%, transparent);mask-image:radial-gradient(closest-side, #000 82%, transparent)}
+.poster-capture .top,.poster-capture .intro,.poster-capture .games,.poster-capture .hero::after{visibility:hidden !important}   /* capturing the stills: glass and shape only */
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;z-index:1;pointer-events:none;
+  background:linear-gradient(0deg, var(--void) 0%, color-mix(in srgb, var(--void) 60%, transparent) 40%, transparent 100%)}
+.top{position:absolute;z-index:3;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top, 0px) + 22px)}
+.top .wrap{display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:500;letter-spacing:.01em}
+.brand img{width:22px;height:auto;display:block}
+.nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
+.nav a:hover{color:var(--bone)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro .wrap{display:grid;gap:22px}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
+.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro p strong{color:var(--bone);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+@media (max-width:760px){ .nav a.opt{display:none} }
+
+/* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
+.cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
+.cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
+.cs.flip figure{order:2}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
+.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
+.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
+.cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
+.cs-t .st{text-transform:none;letter-spacing:.03em}
+.cs-t .star{display:inline-flex;align-items:center;gap:4px}
+.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
+.go svg{width:18px;height:18px;transition:transform .3s}
+.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
+.cs-rest .y{white-space:nowrap}
+.cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
+@media (hover:hover) and (pointer:fine){
+  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
+}
+.cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
+@media (max-width:860px){
+  .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
+  .cs.flip figure{order:0}
+  .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest .d{grid-column:1;grid-row:2}
+  .cs-rest .y{display:none}
+  .cs-rest svg{grid-column:2;grid-row:1 / span 2}
+}
+
+
+.nav a[aria-current=page]{color:var(--bone)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 28px;padding-block:44px calc(36px + env(safe-area-inset-bottom, 0px));font-size:var(--t-s)}
+.foot .home{display:inline-flex;align-items:center;gap:10px}
+.foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
+</style>
+<link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
+<link rel="stylesheet" href="../../a/project.css?v=bb4d7bc1">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "Computer-Use Agent", "description": "An autonomous agent that controls a Windows PC from a plain-language goal, using a local vision-language model split into three roles. It runs on a single consumer GPU.", "url": "https://bratuka.dev/projects/computer-use-agent/", "codeRepository": "https://github.com/BrAtUkA/Computer-Use-Agent", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2025", "image": "https://bratuka.dev/a/m/proj-cua-demo-960.webp"}</script>
+</head>
+<body class="pp">
+<header class="top gut"><div class="wrap"><a class="brand" href="../../">BrAtUkA</a><nav class="nav" aria-label="Site"><a href="../../projects/" aria-current="page">Projects</a><a href="../../renders/">Renders</a><a href="../../gallery/">Gallery</a><a href="../../#about" class="opt">About</a><a href="../../#contact">Contact</a></nav></div></header>
+<main class="p" data-list>
+  <section class="p-hero gut"><div class="wrap">
+    <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span>AI agent · 2025</p>
+    <h1><span>Computer-Use Agent</span></h1>
+    <p class="p-tag">Tell it what you want done in plain words, and it uses your Windows desktop to do it, looking at the screen, clicking and typing.</p>
+    <div class="p-acts"><a class="link" href="https://github.com/BrAtUkA/Computer-Use-Agent" target="_blank" rel="noopener">Source ↗</a><a class="p-star" href="https://github.com/BrAtUkA/Computer-Use-Agent" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>4<span class="vh"> stars on GitHub</span></a></div>
+  </div></section>
+  <div class="p-cover gut"><div class="wrap"><a class="m" href="../../a/m/proj-cua-demo-1280.webp?v=a0c03faa" style="--ar:1.7778;width:min(100%, 1280px)" data-full="../../a/m/proj-cua-demo" data-ws="480,960,1280" data-w="1280" data-h="720" data-cap="Asked to open Disk Management, the agent opens the Start menu, searches, launches it and reports back. Real time." data-q="a0c03faa" data-v="../../a/m/proj-cua-demo" data-t="720"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAAAwBACdASogABIAPu1crE2ppKSiMBgMATAdiWcAACnPHjfkmVeoaWvB9gAA/uxTwG319nxxaxMKJu4AKjaQT/Kg+10zXomiOlYVwQe/9osoOFD3e1XWj6pZI5TdhZAOf1A4RS+gfENXe/QA)"></i><picture><source type="image/avif" srcset="../../a/m/proj-cua-demo-480.avif?v=a0c03faa 480w, ../../a/m/proj-cua-demo-960.avif?v=a0c03faa 960w, ../../a/m/proj-cua-demo-1280.avif?v=a0c03faa 1280w" sizes="(max-width:760px) 100vw, 980px"><img src="../../a/m/proj-cua-demo-960.webp?v=a0c03faa" srcset="../../a/m/proj-cua-demo-480.webp?v=a0c03faa 480w, ../../a/m/proj-cua-demo-960.webp?v=a0c03faa 960w, ../../a/m/proj-cua-demo-1280.webp?v=a0c03faa 1280w" sizes="(max-width:760px) 100vw, 980px" alt="Computer-Use Agent demo: the agent opens Disk Management on its own" width="1280" height="720" fetchpriority=high decoding="async"></picture><video muted loop playsinline preload="none" aria-hidden="true"></video></a></div></div>
+  <div class="p-body gut"><div class="wrap p-grid">
+    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Semester project, Agentic AI</dd></div><div><dt>Released</dt><dd>June 2025 · v2 February 2026</dd></div><div><dt>Model</dt><dd>Holo2-4B, running locally</dd></div><div><dt>Needs</dt><dd>NVIDIA GPU, 8 GB or more</dd></div><div><dt>Stack</dt><dd>Python · PyTorch · Transformers · Gradio</dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#what-it-does">What it does</a></li><li><a href="#one-model-three-roles">One model, three roles</a></li><li><a href="#what-it-can-do">What it can do</a></li><li><a href="#testing-each-part">Testing each part</a></li><li><a href="#what-changed-in-v2">What changed in v2</a></li></ol></nav></aside>
+    <article class="p-art"><h2 id="what-it-does">What it does</h2>
+<p>You type a goal, like <em>open Disk Management</em> or <em>search for flights to New York</em>, and press <strong>Start Agent</strong>. It takes a screenshot, decides what to do, moves the mouse, clicks and types, and repeats until the task is done or it runs out of steps. You can watch it think as it goes and stop it at any time.</p>
+<p>Everything runs on your own machine. There&rsquo;s no cloud API: the model is Holo2-4B from H Company, a 4-billion-parameter vision-language model tuned for using computer interfaces, loaded in 8-bit so it fits on a laptop GPU.</p>
+<h2 id="one-model-three-roles">One model, three roles</h2>
+<p>Deciding what to do next and finding exactly where that is on the screen are different jobs. So the same model plays three roles, each with its own prompt.</p>
+<figure class="p-dg"><div class="dgw"><svg class="dg" viewBox="0 0 960 270" role="img" aria-label="The agent loop: a screenshot goes to the Navigator, which picks the next action; the Localizer turns the target into screen coordinates; PyAutoGUI performs it; an optional Validator checks the result, and the step joins the history for the next screenshot. When the Navigator has the answer, the task ends.">
+<defs><marker id="cua-loop-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip"/></marker><marker id="cua-loop-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip hot"/></marker></defs>
+<rect class="dg-node dg-in" style="--d:0.00s" x="0" y="80" width="150" height="76" rx="10"/>
+<g class="dg-in" style="--d:0.15s"><text class="dg-title" x="75.0" y="115.0" text-anchor="middle">Screenshot</text><text class="dg-note" x="75.0" y="133.0" text-anchor="middle">the whole desktop</text></g>
+<path class="dg-link dg-in" style="--d:0.20s" d="M150 118.0 H196" marker-end="url(#cua-loop-a)"/>
+<rect class="dg-node hot dg-in" style="--d:0.30s" x="200" y="80" width="170" height="76" rx="10"/>
+<g class="dg-in" style="--d:0.45s"><text class="dg-title" x="285.0" y="115.0" text-anchor="middle">Navigator</text><text class="dg-note" x="285.0" y="133.0" text-anchor="middle">thought + next action</text></g>
+<path class="dg-link hot dg-in" style="--d:0.50s" d="M370 118.0 H416" marker-end="url(#cua-loop-h)"/>
+<rect class="dg-node hot dg-in" style="--d:0.60s" x="420" y="80" width="170" height="76" rx="10"/>
+<g class="dg-in" style="--d:0.75s"><text class="dg-title" x="505.0" y="115.0" text-anchor="middle">Localizer</text><text class="dg-note" x="505.0" y="133.0" text-anchor="middle">element → x, y (0–1000)</text></g>
+<path class="dg-link hot dg-in" style="--d:0.80s" d="M590 118.0 H636" marker-end="url(#cua-loop-h)"/>
+<rect class="dg-node dg-in" style="--d:0.90s" x="640" y="80" width="150" height="76" rx="10"/>
+<g class="dg-in" style="--d:1.05s"><text class="dg-title" x="715.0" y="115.0" text-anchor="middle">PyAutoGUI</text><text class="dg-note" x="715.0" y="133.0" text-anchor="middle">click · type · scroll</text></g>
+<path class="dg-link dg-in" style="--d:1.10s" d="M790 118.0 H836" marker-end="url(#cua-loop-a)"/>
+<rect class="dg-node dg-in" style="--d:1.20s" x="840" y="80" width="120" height="76" rx="10"/>
+<g class="dg-in" style="--d:1.35s"><text class="dg-title" x="900.0" y="115.0" text-anchor="middle">Validator</text><text class="dg-note" x="900.0" y="133.0" text-anchor="middle">optional check</text></g>
+<path class="dg-link dg-in" style="--d:1.40s" d="M900 156 V224 H75 V160" marker-end="url(#cua-loop-a)"/>
+<g class="dg-in" style="--d:1.50s"><text class="dg-note" x="487" y="246" text-anchor="middle">each step is added to the history the Navigator sees next</text></g>
+<path class="dg-link dg-in" style="--d:1.60s" d="M285 80 V36 H356" marker-end="url(#cua-loop-a)"/>
+<g class="dg-in" style="--d:1.70s"><text class="dg-note" x="364" y="40">answer → task done</text></g>
+</svg>
+</div><figcaption>One step of the loop. The Navigator decides, the Localizer finds the exact spot, PyAutoGUI acts, and the step is remembered for the next one.</figcaption></figure>
+<ul>
+<li><strong>Navigator.</strong> Sees the screenshot, the goal and the history of earlier steps, then writes its reasoning and picks the next action, like <em>click the Start button</em> or <em>type &ldquo;Disk Management&rdquo; and press Enter</em>.</li>
+<li><strong>Localizer.</strong> Gets the screenshot and a short description of the target, and answers with its position on a 0 to 1,000 grid. That&rsquo;s scaled to your actual screen, so it works at any resolution.</li>
+<li><strong>Validator.</strong> Optional. After an action, it checks whether it worked, and its verdict goes into the history so the Navigator can correct course.</li>
+</ul>
+<p>Each role answers in structured JSON, checked against a Pydantic model before anything happens on screen.</p>
+<h2 id="what-it-can-do">What it can do</h2>
+<p>The Navigator chooses from a small set of actions: click an element, type into it, type and press Enter, scroll, go back, refresh, wait, or give the final answer. Keeping the list short makes the model&rsquo;s job easier and its mistakes easier to spot.</p>
+<p>There are four speed presets, which set how large the screenshot is before the model sees it. Smaller is faster but can miss small buttons.</p>
+<dl class="p-stats"><div><dt>1280 px</dt><dd>Quality</dd></div><div><dt>896 px</dt><dd>Balanced (default)</dd></div><div><dt>768 px</dt><dd>Fast</dd></div><div><dt>512 px</dt><dd>Fastest</dd></div></dl>
+<h2 id="testing-each-part">Testing each part</h2>
+<p>The Gradio interface has a tab for each role as well as the autonomous mode. You can upload a screenshot and ask the Localizer where something is, or ask the Navigator what it would do next, without letting it touch the mouse. That makes it easy to see which part is getting things wrong.</p>
+<h2 id="what-changed-in-v2">What changed in v2</h2>
+<p>The first version, in June 2025, used Holo1.5-3B. In February 2026 I moved it to Holo2-4B, which improved both accuracy and reasoning.</p></article>
+  </div></div>
+  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><a class="p-nx prev" href="../../projects/spoti2yt/"><span class="mono">Previous project</span><strong>spoti2yt</strong><span class="t">A Windows tray app that converts tracks and whole playlists between Spotify and YouTube, in both directions, from a global hotkey, with a matcher that handles lyric videos, live versions and fan uploads.</span></a><a class="p-all link" href="../../projects/">All projects</a><span></span></div></nav>
+</main>
+<footer class="foot gut"><div class="wrap" style="display:contents"><a class="link home" href="../../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>bratuka.dev</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a><span class="mono">© 2026 BrAtUkA</span></div></footer>
+<script src="../../a/media.js?v=345213c5" defer></script>
+<script src="../../a/project.js?v=ed9a40e5" defer></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
+</body>
+</html>

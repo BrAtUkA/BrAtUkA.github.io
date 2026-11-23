@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blend-CamMoCap · BrAtUkA</title>
+<meta name="description" content="An Android app and Blender add-on that turn a phone into a handheld virtual camera over Wi-Fi, with a live viewfinder, lens control and takes baked into ordinary keyframes.">
+<link rel="canonical" href="https://bratuka.dev/projects/blend-cammocap/">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#060405">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://bratuka.dev/projects/blend-cammocap/">
+<meta property="og:site_name" content="BrAtUkA">
+<meta property="og:title" content="Blend-CamMoCap · BrAtUkA">
+<meta property="og:description" content="An Android app and Blender add-on that turn a phone into a handheld virtual camera over Wi-Fi, with a live viewfinder, lens control and takes baked into ordinary keyframes.">
+<meta property="og:image" content="https://bratuka.dev/a/m/proj-cammocap-demo-960.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@BrAtUkA_dev">
+<link rel="icon" href="../../a/favicon.svg?v=201c26f2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../a/apple-touch-icon.png?v=7b0d26e1">
+<link rel="preload" href="../../a/fonts/geist-latin.woff2?v=91da2c05" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<style>@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin-ext.woff2?v=c99ca7ca) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin.woff2?v=91da2c05) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin-ext.woff2?v=c493e11b) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin.woff2?v=d8f727de) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
+<style>
+/* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
+   owner's own renders and screenshots carry the visuals. No cards: rows, hairlines and full-bleed strips. */
+:root{
+  color-scheme: dark;
+  --void:#060405;     /* page ground: black with a trace of red */
+  --hair:#231c1e;     /* hairlines */
+  --bone:#ece6e3;     /* primary text */
+  --ash:#8b8185;      /* secondary text */
+  --signal:#ff3a4e;   /* the only UI accent: links, focus */
+  --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
+  --max:1280px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void);color:var(--bone)}
+body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:var(--max);margin:0 auto}
+.mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
+.link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
+.link:hover{color:var(--signal)}
+::selection{background:var(--signal);color:var(--void)}
+
+/* ── hero ── */
+.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+#glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.still{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#000;background-repeat:repeat-x;background-position:0 0}   /* no WebGL: glass + shape, placed like the live hero */
+.still img{position:absolute;left:0;top:0;display:block;max-width:none;
+  -webkit-mask-image:radial-gradient(closest-side, #000 82%, transparent);mask-image:radial-gradient(closest-side, #000 82%, transparent)}
+.poster-capture .top,.poster-capture .intro,.poster-capture .games,.poster-capture .hero::after{visibility:hidden !important}   /* capturing the stills: glass and shape only */
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;z-index:1;pointer-events:none;
+  background:linear-gradient(0deg, var(--void) 0%, color-mix(in srgb, var(--void) 60%, transparent) 40%, transparent 100%)}
+.top{position:absolute;z-index:3;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top, 0px) + 22px)}
+.top .wrap{display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:500;letter-spacing:.01em}
+.brand img{width:22px;height:auto;display:block}
+.nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
+.nav a:hover{color:var(--bone)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro .wrap{display:grid;gap:22px}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
+.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro p strong{color:var(--bone);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+@media (max-width:760px){ .nav a.opt{display:none} }
+
+/* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
+.cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
+.cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
+.cs.flip figure{order:2}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
+.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
+.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
+.cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
+.cs-t .st{text-transform:none;letter-spacing:.03em}
+.cs-t .star{display:inline-flex;align-items:center;gap:4px}
+.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
+.go svg{width:18px;height:18px;transition:transform .3s}
+.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
+.cs-rest .y{white-space:nowrap}
+.cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
+@media (hover:hover) and (pointer:fine){
+  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
+}
+.cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
+@media (max-width:860px){
+  .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
+  .cs.flip figure{order:0}
+  .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest .d{grid-column:1;grid-row:2}
+  .cs-rest .y{display:none}
+  .cs-rest svg{grid-column:2;grid-row:1 / span 2}
+}
+
+
+.nav a[aria-current=page]{color:var(--bone)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 28px;padding-block:44px calc(36px + env(safe-area-inset-bottom, 0px));font-size:var(--t-s)}
+.foot .home{display:inline-flex;align-items:center;gap:10px}
+.foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
+</style>
+<link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
+<link rel="stylesheet" href="../../a/project.css?v=bb4d7bc1">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "Blend-CamMoCap", "description": "An Android app and Blender add-on that turn a phone into a handheld virtual camera over Wi-Fi, with a live viewfinder, lens control and takes baked into ordinary keyframes.", "url": "https://bratuka.dev/projects/blend-cammocap/", "codeRepository": "https://github.com/BrAtUkA/Blend-CamMoCap", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/m/proj-cammocap-demo-960.webp"}</script>
+</head>
+<body class="pp">
+<header class="top gut"><div class="wrap"><a class="brand" href="../../">BrAtUkA</a><nav class="nav" aria-label="Site"><a href="../../projects/" aria-current="page">Projects</a><a href="../../renders/">Renders</a><a href="../../gallery/">Gallery</a><a href="../../#about" class="opt">About</a><a href="../../#contact">Contact</a></nav></div></header>
+<main class="p" data-list>
+  <section class="p-hero gut"><div class="wrap">
+    <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span>Android app + Blender add-on · 2026</p>
+    <h1><span>Blend-CamMoCap</span></h1>
+    <p class="p-tag">Use your Android phone as a camera in Blender. Move the phone and the camera moves with it, then one button turns the move into keyframes.</p>
+    <div class="p-acts"><a class="link" href="https://github.com/BrAtUkA/Blend-CamMoCap/releases" target="_blank" rel="noopener">Download ↗</a><a class="link" href="https://github.com/BrAtUkA/Blend-CamMoCap" target="_blank" rel="noopener">Source ↗</a><a class="p-star" href="https://github.com/BrAtUkA/Blend-CamMoCap" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>12<span class="vh"> stars on GitHub</span></a></div>
+  </div></section>
+  <div class="p-cover gut"><div class="wrap"><a class="m" href="../../a/m/proj-cammocap-demo-1918.webp?v=c68d3442" style="--ar:2.0448;width:min(100%, 1918px)" data-full="../../a/m/proj-cammocap-demo" data-ws="480,960,1440,1918" data-w="1918" data-h="938" data-cap="An early build. Turning the phone turns Blender&#x27;s camera, live." data-q="c68d3442" data-v="../../a/m/proj-cammocap-demo" data-t="720,938"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAADQAwCdASogABAAPu1kqk4ppaQiMAgBMB2JaQAAUfatSukNZN+/HwAA/uTtFmPvqxPExioM7JuKIO2/EYQU0k0tE5oe9YuaGYVQGk6AliTIL7D1dJpt0FTgQqKPmr+AYEcwAA==)"></i><picture><source type="image/avif" srcset="../../a/m/proj-cammocap-demo-480.avif?v=c68d3442 480w, ../../a/m/proj-cammocap-demo-960.avif?v=c68d3442 960w, ../../a/m/proj-cammocap-demo-1440.avif?v=c68d3442 1440w, ../../a/m/proj-cammocap-demo-1918.avif?v=c68d3442 1918w" sizes="(max-width:760px) 100vw, 980px"><img src="../../a/m/proj-cammocap-demo-960.webp?v=c68d3442" srcset="../../a/m/proj-cammocap-demo-480.webp?v=c68d3442 480w, ../../a/m/proj-cammocap-demo-960.webp?v=c68d3442 960w, ../../a/m/proj-cammocap-demo-1440.webp?v=c68d3442 1440w, ../../a/m/proj-cammocap-demo-1918.webp?v=c68d3442 1918w" sizes="(max-width:760px) 100vw, 980px" alt="Blend-CamMoCap demo: a phone moving the Blender camera live" width="1918" height="938" fetchpriority=high decoding="async"></picture><video muted loop playsinline preload="none" aria-hidden="true"></video></a></div></div>
+  <div class="p-body gut"><div class="wrap p-grid">
+    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Design and code, solo</dd></div><div><dt>Built</dt><dd>July 2026 · 208 commits in 10 days</dd></div><div><dt>Needs</dt><dd>Android 8+, Blender 4.2+</dd></div><div><dt>Stack</dt><dd>Kotlin · Jetpack Compose · ARCore · Python</dd></div><div><dt>License</dt><dd>Noncommercial (app), GPL (add-on)</dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#why-i-built-it">Why I built it</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#shooting-with-it">Shooting with it</a></li><li><a href="#built-to-be-tested">Built to be tested</a></li><li><a href="#what-s-next">What’s next</a></li></ol></nav></aside>
+    <article class="p-art"><h2 id="why-i-built-it">Why I built it</h2>
+<p>Camera moves animated by hand look like they were animated by hand. A real handheld camera has small drifts and corrections that are hard to fake with keyframes. Studios get that feel from motion-capture rigs. I wanted it from the phone in my pocket.</p>
+<p>Blend-CamMoCap is two halves: an Android app and a Blender add-on. They find each other on your Wi-Fi with a QR code. Tap <strong>Go live</strong>, and Blender&rsquo;s camera follows the phone. Hit <strong>Record</strong>, move, hit it again, and the move is baked into normal keyframes you can trim and edit like any other animation.</p>
+<p>There&rsquo;s no account, no cloud and no subscription. The phone and the PC talk directly, and nothing leaves the room.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The hard part is that Wi-Fi is unreliable, and a camera that stutters or jumps is useless. So the live preview and the take you keep travel separately.</p>
+<figure class="p-dg"><div class="dgw"><svg class="dg" viewBox="0 0 960 332" role="img" aria-label="Three paths between the phone and Blender. The live preview sends the phone pose over UDP, where a lost packet only means a brief freeze. The take is recorded on the phone at full rate and uploaded after the cut, then baked into keyframes. Blender draws its camera off screen and streams the frames back to the phone as a viewfinder.">
+<defs><marker id="cam-pipeline-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip"/></marker><marker id="cam-pipeline-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip hot"/></marker></defs>
+<text class="dg-lane" x="0" y="74">Preview</text>
+<text class="dg-lane" x="0" y="184">Take</text>
+<text class="dg-lane" x="0" y="294">Viewfinder</text>
+<rect class="dg-node dg-in" style="--d:0.00s" x="110" y="40" width="160" height="60" rx="10"/>
+<g class="dg-in" style="--d:0.15s"><text class="dg-title" x="190.0" y="67.0" text-anchor="middle">Phone pose</text><text class="dg-note" x="190.0" y="85.0" text-anchor="middle">rotation + ARCore 6DOF</text></g>
+<path class="dg-link hot dg-in" style="--d:0.20s" d="M270 70 H306" marker-end="url(#cam-pipeline-h)"/>
+<rect class="dg-node hot dg-in" style="--d:0.30s" x="310" y="40" width="180" height="60" rx="10"/>
+<g class="dg-in" style="--d:0.45s"><text class="dg-title" x="400.0" y="67.0" text-anchor="middle">UDP, latest wins</text><text class="dg-note" x="400.0" y="85.0" text-anchor="middle">100 Hz · drops are fine</text></g>
+<path class="dg-link hot dg-in" style="--d:0.50s" d="M490 70 H526" marker-end="url(#cam-pipeline-h)"/>
+<rect class="dg-node hot dg-in" style="--d:0.60s" x="530" y="40" width="170" height="60" rx="10"/>
+<g class="dg-in" style="--d:0.75s"><text class="dg-title" x="615.0" y="67.0" text-anchor="middle">Blender add-on</text><text class="dg-note" x="615.0" y="85.0" text-anchor="middle">applies at 120 Hz</text></g>
+<path class="dg-link hot dg-in" style="--d:0.80s" d="M700 70 H746" marker-end="url(#cam-pipeline-h)"/>
+<rect class="dg-node hot dg-in" style="--d:0.90s" x="750" y="40" width="160" height="60" rx="10"/>
+<g class="dg-in" style="--d:1.05s"><text class="dg-title" x="830.0" y="67.0" text-anchor="middle">Live camera</text><text class="dg-note" x="830.0" y="85.0" text-anchor="middle">in the viewport</text></g>
+<path class="dg-link dg-in" style="--d:1.00s" d="M190 100 V180 H306" marker-end="url(#cam-pipeline-a)"/>
+<rect class="dg-node dg-in" style="--d:1.10s" x="310" y="150" width="180" height="60" rx="10"/>
+<g class="dg-in" style="--d:1.25s"><text class="dg-title" x="400.0" y="177.0" text-anchor="middle">Saved on the phone</text><text class="dg-note" x="400.0" y="195.0" text-anchor="middle">every sample, full rate</text></g>
+<path class="dg-link dg-in" style="--d:1.30s" d="M490 180 H526" marker-end="url(#cam-pipeline-a)"/>
+<rect class="dg-node dg-in" style="--d:1.40s" x="530" y="150" width="170" height="60" rx="10"/>
+<g class="dg-in" style="--d:1.55s"><text class="dg-title" x="615.0" y="177.0" text-anchor="middle">TCP upload</text><text class="dg-note" x="615.0" y="195.0" text-anchor="middle">after you stop</text></g>
+<path class="dg-link dg-in" style="--d:1.60s" d="M700 180 H746" marker-end="url(#cam-pipeline-a)"/>
+<rect class="dg-node dg-in" style="--d:1.70s" x="750" y="150" width="160" height="60" rx="10"/>
+<g class="dg-in" style="--d:1.85s"><text class="dg-title" x="830.0" y="177.0" text-anchor="middle">Keyframes</text><text class="dg-note" x="830.0" y="195.0" text-anchor="middle">resampled at scene FPS</text></g>
+<path class="dg-link dg-in" style="--d:1.90s" d="M910 70 H936 V290 H704" marker-end="url(#cam-pipeline-a)"/>
+<rect class="dg-node dg-in" style="--d:2.00s" x="530" y="260" width="170" height="60" rx="10"/>
+<g class="dg-in" style="--d:2.15s"><text class="dg-title" x="615.0" y="287.0" text-anchor="middle">Camera drawn</text><text class="dg-note" x="615.0" y="305.0" text-anchor="middle">off screen, as JPEG</text></g>
+<path class="dg-link dg-in" style="--d:2.20s" d="M530 290 H494" marker-end="url(#cam-pipeline-a)"/>
+<g class="dg-in" style="--d:2.30s"><text class="dg-note" x="512" y="282" text-anchor="middle">TCP</text></g>
+<rect class="dg-node dg-in" style="--d:2.30s" x="310" y="260" width="180" height="60" rx="10"/>
+<g class="dg-in" style="--d:2.45s"><text class="dg-title" x="400.0" y="287.0" text-anchor="middle">Viewfinder</text><text class="dg-note" x="400.0" y="305.0" text-anchor="middle">on the phone</text></g>
+</svg>
+</div><figcaption>Three paths between the phone and Blender. Only the preview goes over the lossy connection; the take is copied in full after you stop.</figcaption></figure>
+<ul>
+<li><strong>The preview only cares about now.</strong> The phone sends its position as small UDP packets, a hundred times a second. Each one is the whole current pose, not a change, so a lost packet means a brief freeze rather than a jump. Blender applies the newest pose at 120 Hz.</li>
+<li><strong>The take doesn&rsquo;t depend on the Wi-Fi.</strong> While you record, the phone also saves every sample to its own storage. When you stop, it uploads that file in full and the add-on resamples it at the scene&rsquo;s frame rate. A glitch mid-take only affects what you saw, never what you keep.</li>
+<li><strong>The viewfinder shows the real shot.</strong> Blender draws its camera off screen and streams the frames to the phone. It keeps working when Blender is minimised or you&rsquo;re in another editor, because it isn&rsquo;t a copy of your screen.</li>
+</ul>
+<dl class="p-stats"><div><dt>100 Hz</dt><dd>pose updates from the phone</dd></div><div><dt>120 Hz</dt><dd>applied in Blender</dd></div><div><dt>0</dt><dd>accounts or cloud services</dd></div></dl>
+<h2 id="shooting-with-it">Shooting with it</h2>
+<ul>
+<li><strong>Rotation, or the full move.</strong> By default the phone controls where the camera points. Turn on 6DOF and ARCore tracks the phone&rsquo;s position too, so walking moves the camera through the scene. If tracking gets poor, the phone says why (&ldquo;point at a detailed surface&rdquo;) and holds still instead of lurching.</li>
+<li><strong>Lens on the phone.</strong> A zoom dial under the viewfinder sets Blender&rsquo;s focal length, and a zoom during a take is recorded with the move.</li>
+<li><strong>Shoot away from the PC.</strong> Takes can be recorded on the phone alone and applied later. The phone keeps a searchable library of takes you can rename, re-apply or delete.</li>
+<li><strong>Shoot over your animation.</strong> The timeline plays while you record, so you can follow a moving subject by hand. Every take is kept; nothing is overwritten.</li>
+</ul>
+<h2 id="built-to-be-tested">Built to be tested</h2>
+<p>Phone sensors and Blender use different ideas of which way is up, and it&rsquo;s easy for one side to drift out of step with the other. Both halves are tested against the same set of shared example data, so the Android code and the Blender code have to agree exactly.</p>
+<ul>
+<li><strong>A fake phone.</strong> A small script pretends to be the app, so the add-on can be developed and tested without a handset.</li>
+<li><strong>A Motion Lab.</strong> It measures lag, jitter and how faithfully a take is baked, and fails the test run if any of them get worse.</li>
+<li><strong>Several Blenders.</strong> The add-on is tested headless on Blender 4.5, 5.0 and 5.1.</li>
+</ul>
+<h2 id="what-s-next">What&rsquo;s next</h2>
+<p>The wire protocol is written down and versioned, so other clients can be checked against the same test data. An iOS app is the obvious next one.</p></article>
+  </div></div>
+  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><a class="p-nx prev" href="../../projects/knoxhybrid-monitor/"><span class="mono">Previous project</span><strong>KnoxHybrid Monitor</strong><span class="t">A Windows tray app for Knox solar inverters.</span></a><a class="p-all link" href="../../projects/">All projects</a><a class="p-nx next" href="../../projects/netguard/"><span class="mono">Next project</span><strong>NetGuard</strong><span class="t">A real-time network intrusion detection system.</span></a></div></nav>
+</main>
+<footer class="foot gut"><div class="wrap" style="display:contents"><a class="link home" href="../../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>bratuka.dev</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a><span class="mono">© 2026 BrAtUkA</span></div></footer>
+<script src="../../a/media.js?v=345213c5" defer></script>
+<script src="../../a/project.js?v=ed9a40e5" defer></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
+</body>
+</html>

@@ -8,12 +8,23 @@ Topics: Rust / Tauri, Python, TypeScript, C# / .NET, Reverse Engineering, AI / M
 ## Tools and Web Apps
 - [PDF Dark Mode Converter](https://bratuka.github.io/pdf-dark-mode-converter/) - Privacy-first, browser-native PDF theming with 16+ themes, GPU acceleration, offline processing, and no file uploads.
 
+## Project Write-ups
+- [All projects](https://bratuka.dev/projects/) - What each project does and how it works, with screenshots and diagrams.
+- [PDF Dark Mode Converter](https://bratuka.dev/projects/pdf-dark-mode-converter/)
+- [KnoxHybrid Monitor](https://bratuka.dev/projects/knoxhybrid-monitor/)
+- [Blend-CamMoCap](https://bratuka.dev/projects/blend-cammocap/) - Android phone as a handheld virtual camera for Blender, baked to keyframes.
+- [NetGuard](https://bratuka.dev/projects/netguard/)
+- [ComicK Revive](https://bratuka.dev/projects/comick-revive/)
+- [spoti2yt](https://bratuka.dev/projects/spoti2yt/)
+- [Computer-Use Agent](https://bratuka.dev/projects/computer-use-agent/)
+
 ## Featured Public-Source Projects
 - [PDF Dark Mode Converter](https://github.com/BrAtUkA/pdf-dark-mode-converter) - Browser-native PDF theming tool. Source available under the PolyForm Noncommercial licence.
 - [KnoxHybrid Monitor](https://github.com/BrAtUkA/knoxhybrid-monitor) - Rust and Tauri system-tray app that periodically monitors Knox solar-inverter data. Open source under the MIT licence.
 - [spoti2yt](https://github.com/BrAtUkA/spoti2yt) - Windows tray app for bidirectional Spotify and YouTube track or playlist conversion. Source available under the PolyForm Noncommercial licence.
 - [ComicK Revive](https://github.com/BrAtUkA/ComicK-Revive) - Chromium reading extension with a multi-source catalog, offline caching, library, history, and position resume. Source available under the PolyForm Noncommercial licence.
 - [Computer-Use Agent](https://github.com/BrAtUkA/Computer-Use-Agent) - Experimental local VLM-powered computer-control agent with publicly viewable source.
+- [Blend-CamMoCap](https://github.com/BrAtUkA/Blend-CamMoCap) - Android app and Blender add-on that turn a phone into a handheld virtual camera over Wi-Fi. Free for noncommercial use.
 - [NetGuard](https://github.com/BrAtUkA/NetGuard) - Semester-project network IDS using XGBoost, anomaly and behavioral detection, MITRE ATT&CK mapping, and a forensics dashboard. Open source under the MIT licence.
 
 ## Connect

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Projects · BrAtUkA</title>
+<meta name="description" content="Software by BrAtUkA: a PDF dark mode converter, a solar inverter monitor, a phone-to-Blender camera, an intrusion detection system and more.">
+<link rel="canonical" href="https://bratuka.dev/projects/">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#060405">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://bratuka.dev/projects/">
+<meta property="og:site_name" content="BrAtUkA">
+<meta property="og:title" content="Projects · BrAtUkA">
+<meta property="og:description" content="Software by BrAtUkA: a PDF dark mode converter, a solar inverter monitor, a phone-to-Blender camera, an intrusion detection system and more.">
+<meta property="og:image" content="https://bratuka.dev/a/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@BrAtUkA_dev">
+<link rel="icon" href="../a/favicon.svg?v=201c26f2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../a/apple-touch-icon.png?v=7b0d26e1">
+<link rel="preload" href="../a/fonts/geist-latin.woff2?v=91da2c05" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<style>@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../a/fonts/geist-latin-ext.woff2?v=c99ca7ca) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../a/fonts/geist-latin.woff2?v=91da2c05) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../a/fonts/geist-mono-latin-ext.woff2?v=c493e11b) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../a/fonts/geist-mono-latin.woff2?v=d8f727de) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
+<style>
+/* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
+   owner's own renders and screenshots carry the visuals. No cards: rows, hairlines and full-bleed strips. */
+:root{
+  color-scheme: dark;
+  --void:#060405;     /* page ground: black with a trace of red */
+  --hair:#231c1e;     /* hairlines */
+  --bone:#ece6e3;     /* primary text */
+  --ash:#8b8185;      /* secondary text */
+  --signal:#ff3a4e;   /* the only UI accent: links, focus */
+  --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
+  --max:1280px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void);color:var(--bone)}
+body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:var(--max);margin:0 auto}
+.mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
+.link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
+.link:hover{color:var(--signal)}
+::selection{background:var(--signal);color:var(--void)}
+
+/* ── hero ── */
+.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+#glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.still{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#000;background-repeat:repeat-x;background-position:0 0}   /* no WebGL: glass + shape, placed like the live hero */
+.still img{position:absolute;left:0;top:0;display:block;max-width:none;
+  -webkit-mask-image:radial-gradient(closest-side, #000 82%, transparent);mask-image:radial-gradient(closest-side, #000 82%, transparent)}
+.poster-capture .top,.poster-capture .intro,.poster-capture .games,.poster-capture .hero::after{visibility:hidden !important}   /* capturing the stills: glass and shape only */
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;z-index:1;pointer-events:none;
+  background:linear-gradient(0deg, var(--void) 0%, color-mix(in srgb, var(--void) 60%, transparent) 40%, transparent 100%)}
+.top{position:absolute;z-index:3;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top, 0px) + 22px)}
+.top .wrap{display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:500;letter-spacing:.01em}
+.brand img{width:22px;height:auto;display:block}
+.nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
+.nav a:hover{color:var(--bone)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro .wrap{display:grid;gap:22px}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
+.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro p strong{color:var(--bone);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+@media (max-width:760px){ .nav a.opt{display:none} }
+
+/* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
+.cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
+.cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
+.cs.flip figure{order:2}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
+.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
+.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
+.cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
+.cs-t .st{text-transform:none;letter-spacing:.03em}
+.cs-t .star{display:inline-flex;align-items:center;gap:4px}
+.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
+.go svg{width:18px;height:18px;transition:transform .3s}
+.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
+.cs-rest .y{white-space:nowrap}
+.cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
+@media (hover:hover) and (pointer:fine){
+  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
+}
+.cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
+@media (max-width:860px){
+  .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
+  .cs.flip figure{order:0}
+  .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest .d{grid-column:1;grid-row:2}
+  .cs-rest .y{display:none}
+  .cs-rest svg{grid-column:2;grid-row:1 / span 2}
+}
+
+
+.nav a[aria-current=page]{color:var(--bone)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 28px;padding-block:44px calc(36px + env(safe-area-inset-bottom, 0px));font-size:var(--t-s)}
+.foot .home{display:inline-flex;align-items:center;gap:10px}
+.foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
+</style>
+<link rel="stylesheet" href="../a/media.css?v=95f4ac7f">
+<link rel="stylesheet" href="../a/project.css?v=bb4d7bc1">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "CollectionPage", "name": "Projects", "url": "https://bratuka.dev/projects/", "hasPart": [{"@type": "SoftwareSourceCode", "name": "PDF Dark Mode Converter", "url": "https://bratuka.dev/projects/pdf-dark-mode-converter/"}, {"@type": "SoftwareSourceCode", "name": "KnoxHybrid Monitor", "url": "https://bratuka.dev/projects/knoxhybrid-monitor/"}, {"@type": "SoftwareSourceCode", "name": "Blend-CamMoCap", "url": "https://bratuka.dev/projects/blend-cammocap/"}, {"@type": "SoftwareSourceCode", "name": "NetGuard", "url": "https://bratuka.dev/projects/netguard/"}, {"@type": "SoftwareSourceCode", "name": "ComicK Revive", "url": "https://bratuka.dev/projects/comick-revive/"}, {"@type": "SoftwareSourceCode", "name": "spoti2yt", "url": "https://bratuka.dev/projects/spoti2yt/"}, {"@type": "SoftwareSourceCode", "name": "Computer-Use Agent", "url": "https://bratuka.dev/projects/computer-use-agent/"}]}</script>
+</head>
+<body class="pp">
+<header class="top gut"><div class="wrap"><a class="brand" href="../">BrAtUkA</a><nav class="nav" aria-label="Site"><a href="../projects/" aria-current="page">Projects</a><a href="../renders/">Renders</a><a href="../gallery/">Gallery</a><a href="../#about" class="opt">About</a><a href="../#contact">Contact</a></nav></div></header>
+<main class="p pi">
+  <section class="p-hero gut"><div class="wrap">
+    <p class="p-kick mono"><a href="../">BrAtUkA</a><span aria-hidden="true">/</span>Projects</p>
+    <h1><span>Projects</span></h1>
+    <p class="p-tag">Software I've designed and built, from small tools to an intrusion detection system. Each page explains what it does and how it works.</p>
+  </div></section>
+  <section class="gut" aria-label="Projects"><div class="wrap"><a class="cs" href="../projects/pdf-dark-mode-converter/"><figure><picture><source type="image/avif" srcset="../a/p/pdf-dark-mode-converter/card-480.avif?v=7a547ea2 480w, ../a/p/pdf-dark-mode-converter/card-960.avif?v=7a547ea2 960w, ../a/p/pdf-dark-mode-converter/card-1440.avif?v=7a547ea2 1440w, ../a/p/pdf-dark-mode-converter/card-1600.avif?v=7a547ea2 1600w" sizes="(max-width:860px) 92vw, 640px"><img src="../a/p/pdf-dark-mode-converter/card-960.webp?v=7a547ea2" srcset="../a/p/pdf-dark-mode-converter/card-480.webp?v=7a547ea2 480w, ../a/p/pdf-dark-mode-converter/card-960.webp?v=7a547ea2 960w, ../a/p/pdf-dark-mode-converter/card-1440.webp?v=7a547ea2 1440w, ../a/p/pdf-dark-mode-converter/card-1600.webp?v=7a547ea2 1600w" sizes="(max-width:860px) 92vw, 640px" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure><div class="cs-t"><p class="mono">Web tool · 2026</p><h3>PDF Dark Mode Converter</h3><p>Turns any PDF dark, right in your browser. Nothing is uploaded, photos keep their colours, and the text stays selectable.</p><p class="mono st">pdf.js · pdf-lib · JavaScript<span class="star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>35</span></p><span class="go">Read more<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></span></div></a><a class="cs flip" href="../projects/knoxhybrid-monitor/"><figure><picture><source type="image/avif" srcset="../a/p/knoxhybrid-monitor/card-480.avif?v=dfea3199 480w, ../a/p/knoxhybrid-monitor/card-960.avif?v=dfea3199 960w, ../a/p/knoxhybrid-monitor/card-1440.avif?v=dfea3199 1440w, ../a/p/knoxhybrid-monitor/card-1600.avif?v=dfea3199 1600w" sizes="(max-width:860px) 92vw, 640px"><img src="../a/p/knoxhybrid-monitor/card-960.webp?v=dfea3199" srcset="../a/p/knoxhybrid-monitor/card-480.webp?v=dfea3199 480w, ../a/p/knoxhybrid-monitor/card-960.webp?v=dfea3199 960w, ../a/p/knoxhybrid-monitor/card-1440.webp?v=dfea3199 1440w, ../a/p/knoxhybrid-monitor/card-1600.webp?v=dfea3199 1600w" sizes="(max-width:860px) 92vw, 640px" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure><div class="cs-t"><p class="mono">Windows tray app · 2026</p><h3>KnoxHybrid Monitor</h3><p>A small Windows app for Knox solar inverters. It shows live readings and alerts you when the power goes out.</p><p class="mono st">Rust · Tauri v2 · HTML, CSS, JS<span class="star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>12</span></p><span class="go">Read more<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></span></div></a><a class="cs" href="../projects/blend-cammocap/"><figure><picture><source type="image/avif" srcset="../a/p/blend-cammocap/card-480.avif?v=e9b403bc 480w, ../a/p/blend-cammocap/card-960.avif?v=e9b403bc 960w, ../a/p/blend-cammocap/card-1440.avif?v=e9b403bc 1440w, ../a/p/blend-cammocap/card-1600.avif?v=e9b403bc 1600w" sizes="(max-width:860px) 92vw, 640px"><img src="../a/p/blend-cammocap/card-960.webp?v=e9b403bc" srcset="../a/p/blend-cammocap/card-480.webp?v=e9b403bc 480w, ../a/p/blend-cammocap/card-960.webp?v=e9b403bc 960w, ../a/p/blend-cammocap/card-1440.webp?v=e9b403bc 1440w, ../a/p/blend-cammocap/card-1600.webp?v=e9b403bc 1600w" sizes="(max-width:860px) 92vw, 640px" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure><div class="cs-t"><p class="mono">Android app + Blender add-on · 2026</p><h3>Blend-CamMoCap</h3><p>Use your Android phone as a camera in Blender. Move the phone and the camera moves with it, then one button turns the move into keyframes.</p><p class="mono st">Kotlin · Jetpack Compose · ARCore · Python<span class="star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>12</span></p><span class="go">Read more<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></span></div></a><a class="cs flip" href="../projects/netguard/"><figure><picture><source type="image/avif" srcset="../a/p/netguard/card-480.avif?v=60bd5fe3 480w, ../a/p/netguard/card-960.avif?v=60bd5fe3 960w, ../a/p/netguard/card-1440.avif?v=60bd5fe3 1440w, ../a/p/netguard/card-1600.avif?v=60bd5fe3 1600w" sizes="(max-width:860px) 92vw, 640px"><img src="../a/p/netguard/card-960.webp?v=60bd5fe3" srcset="../a/p/netguard/card-480.webp?v=60bd5fe3 480w, ../a/p/netguard/card-960.webp?v=60bd5fe3 960w, ../a/p/netguard/card-1440.webp?v=60bd5fe3 1440w, ../a/p/netguard/card-1600.webp?v=60bd5fe3 1600w" sizes="(max-width:860px) 92vw, 640px" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure><div class="cs-t"><p class="mono">Intrusion detection · 2026</p><h3>NetGuard</h3><p>Watches the traffic on your network, flags attacks as they happen, and explains each one in plain terms.</p><p class="mono st">Python · FastAPI · XGBoost · MongoDB · React<span class="star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>2</span></p><span class="go">Read more<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></span></div></a><a class="cs" href="../projects/comick-revive/"><figure><picture><source type="image/avif" srcset="../a/p/comick-revive/card-480.avif?v=1e86dd2e 480w, ../a/p/comick-revive/card-960.avif?v=1e86dd2e 960w, ../a/p/comick-revive/card-1440.avif?v=1e86dd2e 1440w, ../a/p/comick-revive/card-1600.avif?v=1e86dd2e 1600w" sizes="(max-width:860px) 92vw, 640px"><img src="../a/p/comick-revive/card-960.webp?v=1e86dd2e" srcset="../a/p/comick-revive/card-480.webp?v=1e86dd2e 480w, ../a/p/comick-revive/card-960.webp?v=1e86dd2e 960w, ../a/p/comick-revive/card-1440.webp?v=1e86dd2e 1440w, ../a/p/comick-revive/card-1600.webp?v=1e86dd2e 1600w" sizes="(max-width:860px) 92vw, 640px" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure><div class="cs-t"><p class="mono">Browser extension · 2026</p><h3>ComicK Revive</h3><p>A full manga reader that lives in your browser. It reads from more than 70 sites, remembers your exact page, and works offline.</p><p class="mono st">TypeScript · Vite · IndexedDB<span class="star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>2</span></p><span class="go">Read more<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></span></div></a><a class="cs flip" href="../projects/spoti2yt/"><figure><picture><source type="image/avif" srcset="../a/p/spoti2yt/card-480.avif?v=e33c7ae4 480w, ../a/p/spoti2yt/card-960.avif?v=e33c7ae4 960w, ../a/p/spoti2yt/card-1440.avif?v=e33c7ae4 1440w, ../a/p/spoti2yt/card-1600.avif?v=e33c7ae4 1600w" sizes="(max-width:860px) 92vw, 640px"><img src="../a/p/spoti2yt/card-960.webp?v=e33c7ae4" srcset="../a/p/spoti2yt/card-480.webp?v=e33c7ae4 480w, ../a/p/spoti2yt/card-960.webp?v=e33c7ae4 960w, ../a/p/spoti2yt/card-1440.webp?v=e33c7ae4 1440w, ../a/p/spoti2yt/card-1600.webp?v=e33c7ae4 1600w" sizes="(max-width:860px) 92vw, 640px" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure><div class="cs-t"><p class="mono">Windows tray app · 2026</p><h3>spoti2yt</h3><p>Copy a song link from Spotify or YouTube, press a hotkey, and the link for the other one is on your clipboard.</p><p class="mono st">Rust · Tauri v2 · Svelte 5 · SQLite<span class="star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>2</span></p><span class="go">Read more<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></span></div></a><a class="cs" href="../projects/computer-use-agent/"><figure><picture><source type="image/avif" srcset="../a/p/computer-use-agent/card-480.avif?v=f74c5e4b 480w, ../a/p/computer-use-agent/card-960.avif?v=f74c5e4b 960w, ../a/p/computer-use-agent/card-1440.avif?v=f74c5e4b 1440w, ../a/p/computer-use-agent/card-1600.avif?v=f74c5e4b 1600w" sizes="(max-width:860px) 92vw, 640px"><img src="../a/p/computer-use-agent/card-960.webp?v=f74c5e4b" srcset="../a/p/computer-use-agent/card-480.webp?v=f74c5e4b 480w, ../a/p/computer-use-agent/card-960.webp?v=f74c5e4b 960w, ../a/p/computer-use-agent/card-1440.webp?v=f74c5e4b 1440w, ../a/p/computer-use-agent/card-1600.webp?v=f74c5e4b 1600w" sizes="(max-width:860px) 92vw, 640px" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure><div class="cs-t"><p class="mono">AI agent · 2025</p><h3>Computer-Use Agent</h3><p>Tell it what you want done in plain words, and it uses your Windows desktop to do it, looking at the screen, clicking and typing.</p><p class="mono st">Python · PyTorch · Transformers · Gradio<span class="star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>4</span></p><span class="go">Read more<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></span></div></a></div></section>
+  <section class="gut pi-arch" aria-labelledby="arch-h"><div class="wrap">
+    <h2 id="arch-h">Older projects</h2><p class="pi-sub">Smaller or earlier work. These link to the code on GitHub.</p>
+    <ol class="cs-rest ext"><li><a href="https://github.com/BrAtUkA/Stegano" target="_blank" rel="noopener"><strong>Stealth Messenger</strong><span class="d">Hides text or whole files inside PNG images, with optional AES-256 encryption.</span><span class="mono y">Python · 2025</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></a></li><li><a href="https://github.com/BrAtUkA/Jobbly" target="_blank" rel="noopener"><strong>Jobbly</strong><span class="d">A two-sided hiring app: job seekers matched by skill, companies screening with assessments.</span><span class="mono y">Flutter · Supabase · 2025</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></a></li><li><a href="https://github.com/BrAtUkA/QMS" target="_blank" rel="noopener"><strong>Quiz Management System</strong><span class="d">A desktop app for making and taking quizzes, with separate teacher and student portals.</span><span class="mono y">Java · 2024</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></a></li><li><a href="https://github.com/BrAtUkA/Image-editor.cpp" target="_blank" rel="noopener"><strong>Image Editor</strong><span class="d">A Windows image editor built with C++/CLI and Windows Forms.</span><span class="mono y">C++/CLI · 2024</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></a></li><li><a href="https://github.com/BrAtUkA/PySockets-p2p" target="_blank" rel="noopener"><strong>PySockets p2p</strong><span class="d">A peer-to-peer host directory on plain Python sockets, with no libraries.</span><span class="mono y">Python · 2021</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></a></li><li><a href="https://github.com/BrAtUkA/ColorView" target="_blank" rel="noopener"><strong>ColorView</strong><span class="d">A small page that previews HEX and RGB colours, in plain JavaScript.</span><span class="mono y">JavaScript · 2021</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg></a></li></ol>
+  </div></section>
+</main>
+<footer class="foot gut"><div class="wrap" style="display:contents"><a class="link home" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>bratuka.dev</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a><span class="mono">© 2026 BrAtUkA</span></div></footer>
+<script src="../a/media.js?v=345213c5" defer></script>
+<script src="../a/project.js?v=ed9a40e5" defer></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>spoti2yt · BrAtUkA</title>
+<meta name="description" content="A Windows tray app that converts tracks and whole playlists between Spotify and YouTube, in both directions, from a global hotkey, with a matcher that handles lyric videos, live versions and fan uploads.">
+<link rel="canonical" href="https://bratuka.dev/projects/spoti2yt/">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#060405">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://bratuka.dev/projects/spoti2yt/">
+<meta property="og:site_name" content="BrAtUkA">
+<meta property="og:title" content="spoti2yt · BrAtUkA">
+<meta property="og:description" content="A Windows tray app that converts tracks and whole playlists between Spotify and YouTube, in both directions, from a global hotkey, with a matcher that handles lyric videos, live versions and fan uploads.">
+<meta property="og:image" content="https://bratuka.dev/a/p/spoti2yt/convert-done-960.webp?v=c1cdc852">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@BrAtUkA_dev">
+<link rel="icon" href="../../a/favicon.svg?v=201c26f2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../a/apple-touch-icon.png?v=7b0d26e1">
+<link rel="preload" href="../../a/fonts/geist-latin.woff2?v=91da2c05" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<style>@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin-ext.woff2?v=c99ca7ca) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin.woff2?v=91da2c05) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin-ext.woff2?v=c493e11b) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin.woff2?v=d8f727de) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
+<style>
+/* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
+   owner's own renders and screenshots carry the visuals. No cards: rows, hairlines and full-bleed strips. */
+:root{
+  color-scheme: dark;
+  --void:#060405;     /* page ground: black with a trace of red */
+  --hair:#231c1e;     /* hairlines */
+  --bone:#ece6e3;     /* primary text */
+  --ash:#8b8185;      /* secondary text */
+  --signal:#ff3a4e;   /* the only UI accent: links, focus */
+  --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
+  --max:1280px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void);color:var(--bone)}
+body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:var(--max);margin:0 auto}
+.mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
+.link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
+.link:hover{color:var(--signal)}
+::selection{background:var(--signal);color:var(--void)}
+
+/* ── hero ── */
+.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+#glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.still{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#000;background-repeat:repeat-x;background-position:0 0}   /* no WebGL: glass + shape, placed like the live hero */
+.still img{position:absolute;left:0;top:0;display:block;max-width:none;
+  -webkit-mask-image:radial-gradient(closest-side, #000 82%, transparent);mask-image:radial-gradient(closest-side, #000 82%, transparent)}
+.poster-capture .top,.poster-capture .intro,.poster-capture .games,.poster-capture .hero::after{visibility:hidden !important}   /* capturing the stills: glass and shape only */
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;z-index:1;pointer-events:none;
+  background:linear-gradient(0deg, var(--void) 0%, color-mix(in srgb, var(--void) 60%, transparent) 40%, transparent 100%)}
+.top{position:absolute;z-index:3;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top, 0px) + 22px)}
+.top .wrap{display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:500;letter-spacing:.01em}
+.brand img{width:22px;height:auto;display:block}
+.nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
+.nav a:hover{color:var(--bone)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro .wrap{display:grid;gap:22px}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
+.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro p strong{color:var(--bone);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+@media (max-width:760px){ .nav a.opt{display:none} }
+
+/* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
+.cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
+.cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
+.cs.flip figure{order:2}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
+.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
+.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
+.cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
+.cs-t .st{text-transform:none;letter-spacing:.03em}
+.cs-t .star{display:inline-flex;align-items:center;gap:4px}
+.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
+.go svg{width:18px;height:18px;transition:transform .3s}
+.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
+.cs-rest .y{white-space:nowrap}
+.cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
+@media (hover:hover) and (pointer:fine){
+  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
+}
+.cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
+@media (max-width:860px){
+  .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
+  .cs.flip figure{order:0}
+  .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest .d{grid-column:1;grid-row:2}
+  .cs-rest .y{display:none}
+  .cs-rest svg{grid-column:2;grid-row:1 / span 2}
+}
+
+
+.nav a[aria-current=page]{color:var(--bone)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 28px;padding-block:44px calc(36px + env(safe-area-inset-bottom, 0px));font-size:var(--t-s)}
+.foot .home{display:inline-flex;align-items:center;gap:10px}
+.foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
+</style>
+<link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
+<link rel="stylesheet" href="../../a/project.css?v=bb4d7bc1">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "spoti2yt", "description": "A Windows tray app that converts tracks and whole playlists between Spotify and YouTube, in both directions, from a global hotkey, with a matcher that handles lyric videos, live versions and fan uploads.", "url": "https://bratuka.dev/projects/spoti2yt/", "codeRepository": "https://github.com/BrAtUkA/spoti2yt", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/p/spoti2yt/convert-done-960.webp?v=c1cdc852"}</script>
+</head>
+<body class="pp">
+<header class="top gut"><div class="wrap"><a class="brand" href="../../">BrAtUkA</a><nav class="nav" aria-label="Site"><a href="../../projects/" aria-current="page">Projects</a><a href="../../renders/">Renders</a><a href="../../gallery/">Gallery</a><a href="../../#about" class="opt">About</a><a href="../../#contact">Contact</a></nav></div></header>
+<main class="p" data-list>
+  <section class="p-hero gut"><div class="wrap">
+    <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span>Windows tray app · 2026</p>
+    <h1><img class="p-icon" src="../../a/p/spoti2yt/icon-256.webp?v=a94b54ea" alt="" width="256" height="256"><span>spoti2yt</span></h1>
+    <p class="p-tag">Copy a song link from Spotify or YouTube, press a hotkey, and the link for the other one is on your clipboard.</p>
+    <div class="p-acts"><a class="link" href="https://github.com/BrAtUkA/spoti2yt/releases" target="_blank" rel="noopener">Download ↗</a><a class="link" href="https://github.com/BrAtUkA/spoti2yt" target="_blank" rel="noopener">Source ↗</a><a class="p-star" href="https://github.com/BrAtUkA/spoti2yt" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>2<span class="vh"> stars on GitHub</span></a></div>
+  </div></section>
+  <div class="p-cover gut"><div class="wrap"><a class="m" href="../../a/p/spoti2yt/convert-done-1920.webp?v=0376f199" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/convert-done" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="A playlist converted to YouTube, with a match score for every track. Sample data." data-q="0376f199"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAABwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JZwDKAC0HpuZzmUAA/vB02Umt9LZQNm7iXRGmEwTb4fWnvNg1kxscupEIi4VFhxx8gKiDYRrjx18hz4j0Q7EAAAA=)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/convert-done-480.avif?v=0376f199 480w, ../../a/p/spoti2yt/convert-done-960.avif?v=0376f199 960w, ../../a/p/spoti2yt/convert-done-1440.avif?v=0376f199 1440w, ../../a/p/spoti2yt/convert-done-1920.avif?v=0376f199 1920w" sizes="(max-width:760px) 100vw, 1280px"><img src="../../a/p/spoti2yt/convert-done-960.webp?v=0376f199" srcset="../../a/p/spoti2yt/convert-done-480.webp?v=0376f199 480w, ../../a/p/spoti2yt/convert-done-960.webp?v=0376f199 960w, ../../a/p/spoti2yt/convert-done-1440.webp?v=0376f199 1440w, ../../a/p/spoti2yt/convert-done-1920.webp?v=0376f199 1920w" sizes="(max-width:760px) 100vw, 1280px" alt="spoti2yt converting a 14-track playlist to YouTube, with a match score on every row" width="1920" height="1320" fetchpriority=high decoding="async"></picture></a></div></div>
+  <div class="p-body gut"><div class="wrap p-grid">
+    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Design and code, solo</dd></div><div><dt>Platform</dt><dd>Windows 10 and 11</dd></div><div><dt>Stack</dt><dd>Rust · Tauri v2 · Svelte 5 · SQLite</dd></div><div><dt>Installer</dt><dd>About 24 MB, all included</dd></div><div><dt>License</dt><dd>PolyForm Noncommercial</dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#why-i-built-it">Why I built it</a></li><li><a href="#the-matcher">The matcher</a></li><li><a href="#playlists">Playlists</a></li><li><a href="#around-the-edges">Around the edges</a></li></ol></nav></aside>
+    <article class="p-art"><h2 id="why-i-built-it">Why I built it</h2>
+<p>Music gets shared as YouTube links and as Spotify links, and they rarely match the app you use. Finding the same song on the other platform is a small, annoying job that keeps coming up.</p>
+<p>spoti2yt does it with one keypress. Copy a link from either platform, press the hotkey, and the matching link replaces it on your clipboard, with a sound and a small notification. It started as a Python script and was rewritten in Rust so the matching is more reliable, it uses no CPU while waiting, and it has a real window.</p>
+<dl class="p-keys"><div><dt><kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>Y</kbd></dt><dd>Spotify → YouTube</dd></div><div><dt><kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>U</kbd></dt><dd>YouTube → Spotify</dd></div><div><dt><kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>J</kbd></dt><dd>The song playing on Spotify → YouTube</dd></div><div><dt><kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>P</kbd></dt><dd>A playlist → every track link</dd></div><div><dt><kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>L</kbd></dt><dd>Add the copied song to Liked Songs</dd></div><div><dt><kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>T</kbd></dt><dd>Song details plus its YouTube link</dd></div></dl>
+<p>If the clipboard doesn&rsquo;t hold the right kind of link, the hotkey does nothing, on purpose. Every hotkey can be changed or turned off.</p>
+<h2 id="the-matcher">The matcher</h2>
+<p>This is the core of the project. YouTube is full of near-copies of every song: lyric videos, live versions, sped-up edits, covers, fan uploads. Comparing titles isn&rsquo;t enough, because the wrong video often has the closest title.</p>
+<p>So every result gets a score out of 1, built from three parts: how close the title is, whether the channel matches the artist, and how close the length is. Official &ldquo;Artist - Topic&rdquo; channels get a bonus. Results with words the Spotify track doesn&rsquo;t have, like <em>live</em> or <em>sped up</em>, get a penalty. A result has to clear a confidence floor, 0.60 by default, to be used at all.</p>
+<figure class="p-dg"><div class="dgw"><svg class="dg" viewBox="0 0 1010 330" role="img" aria-label="Three YouTube results for the same Spotify track. The official Topic upload scores full marks and is picked. A live version loses points for its length and a junk penalty and falls under the confidence floor. A lyric channel scores well on title and length but is rejected because its artist does not match.">
+<defs><marker id="s2y-score-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip"/></marker><marker id="s2y-score-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip hot"/></marker></defs>
+<line class="dg-tick" x1="330" y1="296" x2="330" y2="302"/><text class="dg-axis" x="330" y="318" text-anchor="middle">0.0</text>
+<line class="dg-tick" x1="430.0" y1="296" x2="430.0" y2="302"/><text class="dg-axis" x="430.0" y="318" text-anchor="middle">0.2</text>
+<line class="dg-tick" x1="530.0" y1="296" x2="530.0" y2="302"/><text class="dg-axis" x="530.0" y="318" text-anchor="middle">0.4</text>
+<line class="dg-tick" x1="630.0" y1="296" x2="630.0" y2="302"/><text class="dg-axis" x="630.0" y="318" text-anchor="middle">0.6</text>
+<line class="dg-tick" x1="730.0" y1="296" x2="730.0" y2="302"/><text class="dg-axis" x="730.0" y="318" text-anchor="middle">0.8</text>
+<line class="dg-tick" x1="830.0" y1="296" x2="830.0" y2="302"/><text class="dg-axis" x="830.0" y="318" text-anchor="middle">1.0</text>
+<line class="dg-tick" x1="930.0" y1="296" x2="930.0" y2="302"/><text class="dg-axis" x="930.0" y="318" text-anchor="middle">1.2</text>
+<line class="dg-rule" x1="330" y1="296" x2="930.0" y2="296"/>
+<line class="dg-floor" x1="630.0" y1="30" x2="630.0" y2="292"/>
+<text class="dg-note" x="638.0" y="26">confidence floor 0.60</text>
+<g class="dg-legend" transform="translate(0 22)"><rect class="dg-s1" x="0" y="-6" width="12" height="12" rx="2"/><text x="18" y="4">title ×0.45</text><rect class="dg-s2" x="104" y="-6" width="12" height="12" rx="2"/><text x="122" y="4">artist ×0.35</text><rect class="dg-s3" x="214" y="-6" width="12" height="12" rx="2"/><text x="232" y="4">length ×0.20</text></g>
+<g class="dg-in" style="--d:0.30s"><text class="dg-title" x="0" y="80">Lost In The Light</text></g>
+<g class="dg-in" style="--d:0.30s"><text class="dg-note" x="0" y="100">Bahamas - Topic</text></g>
+<rect class="dg-s1 dg-in" style="--d:0.30s" x="330.0" y="68" width="225.0" height="26"/>
+<rect class="dg-s2 dg-in" style="--d:0.42s" x="555.0" y="68" width="175.0" height="26"/>
+<rect class="dg-s3 dg-in" style="--d:0.54s" x="730.0" y="68" width="97.0" height="26"/>
+<rect class="dg-bonus dg-in" style="--d:0.70s" x="827.0" y="68" width="100.0" height="26"/>
+<g class="dg-in" style="--d:0.80s"><text class="dg-note" x="877.0" y="62" text-anchor="middle">+ Topic channel</text></g>
+<g class="dg-in" style="--d:0.90s"><text class="dg-verdict ok" x="939.0" y="86">picked · 1.00</text></g>
+<g class="dg-in" style="--d:0.80s"><text class="dg-title" x="0" y="156">Lost in the Light (Live)</text></g>
+<g class="dg-in" style="--d:0.80s"><text class="dg-note" x="0" y="176">Bahamas</text></g>
+<rect class="dg-s1 dg-in" style="--d:0.80s" x="330.0" y="144" width="202.5" height="26"/>
+<rect class="dg-s2 dg-in" style="--d:0.92s" x="532.5" y="144" width="175.0" height="26"/>
+<rect class="dg-s3 dg-in" style="--d:1.04s" x="707.5" y="144" width="40.0" height="26"/>
+<rect class="dg-pen dg-in" style="--d:1.20s" x="547.5" y="144" width="200.0" height="26"/>
+<g class="dg-in" style="--d:1.30s"><text class="dg-note" x="647.5" y="138" text-anchor="middle">− junk penalty</text></g>
+<g class="dg-in" style="--d:1.40s"><text class="dg-verdict" x="759.5" y="162">too low · 0.44</text></g>
+<g class="dg-in" style="--d:1.30s"><text class="dg-title" x="0" y="232">Lost in the Light (Lyrics)</text></g>
+<g class="dg-in" style="--d:1.30s"><text class="dg-note" x="0" y="252">Indie Lyrics</text></g>
+<rect class="dg-s1 dg-in" style="--d:1.30s" x="330.0" y="220" width="213.8" height="26"/>
+<rect class="dg-s2 dg-in" style="--d:1.42s" x="543.8" y="220" width="17.5" height="26"/>
+<rect class="dg-s3 dg-in" style="--d:1.54s" x="561.2" y="220" width="99.0" height="26"/>
+<g class="dg-in" style="--d:1.90s"><text class="dg-verdict" x="672.25" y="238">artist check failed</text></g>
+</svg>
+</div><figcaption>How three YouTube results for one Spotify song are scored. The weights and bonuses are the real ones; the similarity values for each result are illustrative.</figcaption></figure>
+<p>Going the other way, from YouTube to Spotify, the artist is harder to know. The app collects guesses from the channel name, the uploader, YouTube Music&rsquo;s own data and both halves of a title like &ldquo;Artist - Song&rdquo;, and tries each one. That&rsquo;s what lets a lyric video posted by a random channel still find the right Spotify track.</p>
+<p>Every confident match is saved in a local SQLite database, in both directions. Converting the same song again is instant, whichever way you go.</p>
+<h2 id="playlists">Playlists</h2>
+<p>Paste a playlist link, or pick one of your own, to see every track. <strong>Convert all to YouTube</strong> resolves them a few at a time and shows the score for each as it lands.</p>
+<div class="p-figs wide"><figure class="p-fi" style="--ar:1.4545"><a class="m" href="../../a/p/spoti2yt/playlist-1920.webp?v=d65a8f04" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/playlist" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="A playlist loaded and ready to convert. The covers are drawn by the app itself, not taken from Spotify. Sample data." data-q="d65a8f04"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZQDA3CIj1qzaKgltGT3nIAD+8MvBKEg4z7+WNX6cJuwOXeVmw/9yWJY+KCbdPdHYhaYuYXJ7qyrMvNkBQ/Trd/Fu29YYvdJH4tsAAAA=)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/playlist-480.avif?v=d65a8f04 480w, ../../a/p/spoti2yt/playlist-960.avif?v=d65a8f04 960w, ../../a/p/spoti2yt/playlist-1440.avif?v=d65a8f04 1440w, ../../a/p/spoti2yt/playlist-1920.avif?v=d65a8f04 1920w" sizes="(max-width:760px) 100vw, 980px"><img src="../../a/p/spoti2yt/playlist-960.webp?v=d65a8f04" srcset="../../a/p/spoti2yt/playlist-480.webp?v=d65a8f04 480w, ../../a/p/spoti2yt/playlist-960.webp?v=d65a8f04 960w, ../../a/p/spoti2yt/playlist-1440.webp?v=d65a8f04 1440w, ../../a/p/spoti2yt/playlist-1920.webp?v=d65a8f04 1920w" sizes="(max-width:760px) 100vw, 980px" alt="A playlist loaded and ready to convert. The covers are drawn by the app itself, not taken from Spotify. Sample data." width="1920" height="1320" loading=lazy decoding="async"></picture></a><figcaption>A playlist loaded and ready to convert. The covers are drawn by the app itself, not taken from Spotify. Sample data.</figcaption></figure></div>
+<p>When a track can&rsquo;t be matched confidently, you can review it: see the nearest results with their scores, preview them, paste your own link, or ask it to search wider. A picked match is saved, so it&rsquo;s right from then on.</p>
+<div class="p-figs wide"><figure class="p-fi" style="--ar:1.4545"><a class="m" href="../../a/p/spoti2yt/convert-review-1920.webp?v=9b4339f5" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/convert-review" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="Reviewing a track that didn&#x27;t match: the closest results with their scores, and a Pick button for each. Sample data." data-q="9b4339f5"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAAAQBACdASoYABAAPu1kqk4ppaQiMAgBMB2JZwDKACIj2Wl7GAzLqSAEAAD+8MvBKrg2dbABKLkuR+ELpUkDhzE2gy0O94xGyAWycEeHAkUyLnL6/6azkzZmT7bguq9kJocKMeY6Ihx7Nw6fAAA=)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/convert-review-480.avif?v=9b4339f5 480w, ../../a/p/spoti2yt/convert-review-960.avif?v=9b4339f5 960w, ../../a/p/spoti2yt/convert-review-1440.avif?v=9b4339f5 1440w, ../../a/p/spoti2yt/convert-review-1920.avif?v=9b4339f5 1920w" sizes="(max-width:760px) 100vw, 980px"><img src="../../a/p/spoti2yt/convert-review-960.webp?v=9b4339f5" srcset="../../a/p/spoti2yt/convert-review-480.webp?v=9b4339f5 480w, ../../a/p/spoti2yt/convert-review-960.webp?v=9b4339f5 960w, ../../a/p/spoti2yt/convert-review-1440.webp?v=9b4339f5 1440w, ../../a/p/spoti2yt/convert-review-1920.webp?v=9b4339f5 1920w" sizes="(max-width:760px) 100vw, 980px" alt="Reviewing a track that didn&#x27;t match: the closest results with their scores, and a Pick button for each. Sample data." width="1920" height="1320" loading=lazy decoding="async"></picture></a><figcaption>Reviewing a track that didn't match: the closest results with their scores, and a Pick button for each. Sample data.</figcaption></figure></div>
+<h2 id="around-the-edges">Around the edges</h2>
+<ul>
+<li><strong>Now playing.</strong> A bar along the bottom controls Spotify: play, pause, skip, shuffle, repeat, seek, volume and like. Skipping feels instant because it already knows the next song in the queue. Controls need Spotify Premium; free accounts get a read-only bar.</li>
+<li><strong>Private by design.</strong> You sign in through your own free Spotify developer app, using the OAuth PKCE flow, so no shared app or server sits in the middle. The sign-in token is kept in the Windows Credential Manager. There&rsquo;s no telemetry.</li>
+<li><strong>Nothing extra to install.</strong> The installer includes yt-dlp, which does the YouTube searching, and fetches WebView2 if it&rsquo;s missing.</li>
+</ul>
+<div class="p-figs pair" style="max-width:3868px"><figure class="p-fi" style="--ar:1.4545"><a class="m" href="../../a/p/spoti2yt/settings-1920.webp?v=09b85b1b" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/settings" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="Settings: account, hotkeys and match behaviour." data-q="09b85b1b"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAAAwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JaWZAADc1VZGgAP7wokTWnC7Y0fHYXMNh+9HMPnn9dooAPibeBAAA)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/settings-480.avif?v=09b85b1b 480w, ../../a/p/spoti2yt/settings-960.avif?v=09b85b1b 960w, ../../a/p/spoti2yt/settings-1440.avif?v=09b85b1b 1440w, ../../a/p/spoti2yt/settings-1920.avif?v=09b85b1b 1920w" sizes="(max-width:760px) 100vw, 490px"><img src="../../a/p/spoti2yt/settings-960.webp?v=09b85b1b" srcset="../../a/p/spoti2yt/settings-480.webp?v=09b85b1b 480w, ../../a/p/spoti2yt/settings-960.webp?v=09b85b1b 960w, ../../a/p/spoti2yt/settings-1440.webp?v=09b85b1b 1440w, ../../a/p/spoti2yt/settings-1920.webp?v=09b85b1b 1920w" sizes="(max-width:760px) 100vw, 490px" alt="Settings: account, hotkeys and match behaviour." width="1920" height="1320" loading=lazy decoding="async"></picture></a><figcaption>Settings: account, hotkeys and match behaviour.</figcaption></figure><figure class="p-fi" style="--ar:1.4545"><a class="m" href="../../a/p/spoti2yt/history-1920.webp?v=5fa60158" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/history" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="History, with each conversion&#x27;s score. A lightning bolt means it came from the cache." data-q="5fa60158"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAAAQAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JaQAAetCnSxgA/vCM5VxJoQ5UInI17kV7dXFOOY6yM1VXVZmHMQgA)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/history-480.avif?v=5fa60158 480w, ../../a/p/spoti2yt/history-960.avif?v=5fa60158 960w, ../../a/p/spoti2yt/history-1440.avif?v=5fa60158 1440w, ../../a/p/spoti2yt/history-1920.avif?v=5fa60158 1920w" sizes="(max-width:760px) 100vw, 490px"><img src="../../a/p/spoti2yt/history-960.webp?v=5fa60158" srcset="../../a/p/spoti2yt/history-480.webp?v=5fa60158 480w, ../../a/p/spoti2yt/history-960.webp?v=5fa60158 960w, ../../a/p/spoti2yt/history-1440.webp?v=5fa60158 1440w, ../../a/p/spoti2yt/history-1920.webp?v=5fa60158 1920w" sizes="(max-width:760px) 100vw, 490px" alt="History, with each conversion&#x27;s score. A lightning bolt means it came from the cache." width="1920" height="1320" loading=lazy decoding="async"></picture></a><figcaption>History, with each conversion's score. A lightning bolt means it came from the cache.</figcaption></figure></div></article>
+  </div></div>
+  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><a class="p-nx prev" href="../../projects/comick-revive/"><span class="mono">Previous project</span><strong>ComicK Revive</strong><span class="t">A Chrome extension that brings back a manga reader after ComicK dropped its own.</span></a><a class="p-all link" href="../../projects/">All projects</a><a class="p-nx next" href="../../projects/computer-use-agent/"><span class="mono">Next project</span><strong>Computer-Use Agent</strong><span class="t">An autonomous agent that controls a Windows PC from a plain-language goal, using a local vision-language model split into three roles.</span></a></div></nav>
+</main>
+<footer class="foot gut"><div class="wrap" style="display:contents"><a class="link home" href="../../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>bratuka.dev</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a><span class="mono">© 2026 BrAtUkA</span></div></footer>
+<script src="../../a/media.js?v=345213c5" defer></script>
+<script src="../../a/project.js?v=ed9a40e5" defer></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
+</body>
+</html>

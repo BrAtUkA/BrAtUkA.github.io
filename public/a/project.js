@@ -14,6 +14,19 @@
     addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(pick); }, { passive: true });
     pick();
   }
+  // before / after: the range input sits over the frame, so dragging, tapping and the arrow keys all move the line
+  document.querySelectorAll('.p-cmp').forEach((c) => {
+    const f = c.querySelector('.p-cmp-f'), r = c.querySelector('input[type=range]'), tag = c.querySelector('.p-cmp-t.b');
+    const set = () => f.style.setProperty('--x', r.value + '%');
+    r.addEventListener('input', set); set();
+    const chips = [...c.querySelectorAll('.p-cmp-c button')], imgs = [...c.querySelectorAll('.p-cmp-b img')];
+    chips.forEach((b, i) => b.addEventListener('click', () => {
+      chips.forEach((x) => x.setAttribute('aria-pressed', x === b));
+      imgs.forEach((im, k) => { if (k === i) im.loading = 'eager'; im.classList.toggle('on', k === i); });
+      tag.textContent = b.textContent.trim();
+    }));
+  });
+
   const dgs = document.querySelectorAll('.dg');
   if (!('IntersectionObserver' in window)) { dgs.forEach((d) => d.classList.add('on')); return; }
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } }), { threshold: 0.3 });

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PDF Dark Mode Converter · BrAtUkA</title>
+<meta name="description" content="A browser tool that converts PDFs to dark mode in 16 themes. It runs entirely on your device, keeps photos in their original colours and keeps the text selectable.">
+<link rel="canonical" href="https://bratuka.dev/projects/pdf-dark-mode-converter/">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#060405">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://bratuka.dev/projects/pdf-dark-mode-converter/">
+<meta property="og:site_name" content="BrAtUkA">
+<meta property="og:title" content="PDF Dark Mode Converter · BrAtUkA">
+<meta property="og:description" content="A browser tool that converts PDFs to dark mode in 16 themes. It runs entirely on your device, keeps photos in their original colours and keeps the text selectable.">
+<meta property="og:image" content="https://bratuka.dev/a/p/pdf-dark-mode-converter/cover-960.webp?v=cebf9935">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@BrAtUkA_dev">
+<link rel="icon" href="../../a/favicon.svg?v=201c26f2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../a/apple-touch-icon.png?v=7b0d26e1">
+<link rel="preload" href="../../a/fonts/geist-latin.woff2?v=91da2c05" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<style>@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin-ext.woff2?v=c99ca7ca) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin.woff2?v=91da2c05) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin-ext.woff2?v=c493e11b) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin.woff2?v=d8f727de) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
+<style>
+/* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
+   owner's own renders and screenshots carry the visuals. No cards: rows, hairlines and full-bleed strips. */
+:root{
+  color-scheme: dark;
+  --void:#060405;     /* page ground: black with a trace of red */
+  --hair:#231c1e;     /* hairlines */
+  --bone:#ece6e3;     /* primary text */
+  --ash:#8b8185;      /* secondary text */
+  --signal:#ff3a4e;   /* the only UI accent: links, focus */
+  --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
+  --max:1280px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void);color:var(--bone)}
+body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:var(--max);margin:0 auto}
+.mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
+.link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
+.link:hover{color:var(--signal)}
+::selection{background:var(--signal);color:var(--void)}
+
+/* ── hero ── */
+.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+#glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.still{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#000;background-repeat:repeat-x;background-position:0 0}   /* no WebGL: glass + shape, placed like the live hero */
+.still img{position:absolute;left:0;top:0;display:block;max-width:none;
+  -webkit-mask-image:radial-gradient(closest-side, #000 82%, transparent);mask-image:radial-gradient(closest-side, #000 82%, transparent)}
+.poster-capture .top,.poster-capture .intro,.poster-capture .games,.poster-capture .hero::after{visibility:hidden !important}   /* capturing the stills: glass and shape only */
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;z-index:1;pointer-events:none;
+  background:linear-gradient(0deg, var(--void) 0%, color-mix(in srgb, var(--void) 60%, transparent) 40%, transparent 100%)}
+.top{position:absolute;z-index:3;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top, 0px) + 22px)}
+.top .wrap{display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:500;letter-spacing:.01em}
+.brand img{width:22px;height:auto;display:block}
+.nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
+.nav a:hover{color:var(--bone)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro .wrap{display:grid;gap:22px}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
+.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro p strong{color:var(--bone);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+@media (max-width:760px){ .nav a.opt{display:none} }
+
+/* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
+.cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
+.cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
+.cs.flip figure{order:2}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
+.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
+.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
+.cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
+.cs-t .st{text-transform:none;letter-spacing:.03em}
+.cs-t .star{display:inline-flex;align-items:center;gap:4px}
+.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
+.go svg{width:18px;height:18px;transition:transform .3s}
+.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
+.cs-rest .y{white-space:nowrap}
+.cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
+@media (hover:hover) and (pointer:fine){
+  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
+}
+.cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
+@media (max-width:860px){
+  .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
+  .cs.flip figure{order:0}
+  .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest .d{grid-column:1;grid-row:2}
+  .cs-rest .y{display:none}
+  .cs-rest svg{grid-column:2;grid-row:1 / span 2}
+}
+
+
+.nav a[aria-current=page]{color:var(--bone)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 28px;padding-block:44px calc(36px + env(safe-area-inset-bottom, 0px));font-size:var(--t-s)}
+.foot .home{display:inline-flex;align-items:center;gap:10px}
+.foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
+</style>
+<link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
+<link rel="stylesheet" href="../../a/project.css?v=bb4d7bc1">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "PDF Dark Mode Converter", "description": "A browser tool that converts PDFs to dark mode in 16 themes. It runs entirely on your device, keeps photos in their original colours and keeps the text selectable.", "url": "https://bratuka.dev/projects/pdf-dark-mode-converter/", "codeRepository": "https://github.com/BrAtUkA/pdf-dark-mode-converter", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/p/pdf-dark-mode-converter/cover-960.webp?v=cebf9935"}</script>
+</head>
+<body class="pp">
+<header class="top gut"><div class="wrap"><a class="brand" href="../../">BrAtUkA</a><nav class="nav" aria-label="Site"><a href="../../projects/" aria-current="page">Projects</a><a href="../../renders/">Renders</a><a href="../../gallery/">Gallery</a><a href="../../#about" class="opt">About</a><a href="../../#contact">Contact</a></nav></div></header>
+<main class="p" data-list>
+  <section class="p-hero gut"><div class="wrap">
+    <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span>Web tool · 2026</p>
+    <h1><span>PDF Dark Mode Converter</span></h1>
+    <p class="p-tag">Turns any PDF dark, right in your browser. Nothing is uploaded, photos keep their colours, and the text stays selectable.</p>
+    <div class="p-acts"><a class="link" href="https://bratuka.github.io/pdf-dark-mode-converter/" target="_blank" rel="noopener">Open the tool ↗</a><a class="link" href="https://github.com/BrAtUkA/pdf-dark-mode-converter" target="_blank" rel="noopener">Source ↗</a><a class="p-star" href="https://github.com/BrAtUkA/pdf-dark-mode-converter" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>35<span class="vh"> stars on GitHub</span></a></div>
+  </div></section>
+  <div class="p-cover gut"><div class="wrap"><a class="m" href="../../a/p/pdf-dark-mode-converter/cover-1940.webp?v=ed04865a" style="--ar:2.1064;width:min(100%, 1940px)" data-full="../../a/p/pdf-dark-mode-converter/cover" data-ws="480,960,1440,1920,1940" data-w="1940" data-h="921" data-cap="One page, the original and four of the themes. The photo keeps its colours in every one." data-q="ed04865a"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRuIAAABXRUJQVlA4WAoAAAAQAAAAFwAACgAAQUxQSEMAAAABb6CobSSHP7Jls69e7kIjIgL6Fd+UkAeQ1daLt63AIiyCFhpooIESGjga6KCBo4FK/kf0P++e3SCNdR5fCURpuSo4AFZQOCB4AAAA0AMAnQEqGAALAD7tZKpOKaWkIjAIATAdiUAX5wPR7aQkXTIBdDZAAP7wM/zcX073C5fa9RLVi4i8RtDuZYDcoZgLKtqJIt8LUtXk3fkDdl3poUW7lA46z6t7AdI0rTYHfJ39LRKirDGcPGUVheCNo+B1dVAcQAAA)"></i><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/cover-480.avif?v=ed04865a 480w, ../../a/p/pdf-dark-mode-converter/cover-960.avif?v=ed04865a 960w, ../../a/p/pdf-dark-mode-converter/cover-1440.avif?v=ed04865a 1440w, ../../a/p/pdf-dark-mode-converter/cover-1920.avif?v=ed04865a 1920w, ../../a/p/pdf-dark-mode-converter/cover-1940.avif?v=ed04865a 1940w" sizes="(max-width:760px) 100vw, 1280px"><img src="../../a/p/pdf-dark-mode-converter/cover-960.webp?v=ed04865a" srcset="../../a/p/pdf-dark-mode-converter/cover-480.webp?v=ed04865a 480w, ../../a/p/pdf-dark-mode-converter/cover-960.webp?v=ed04865a 960w, ../../a/p/pdf-dark-mode-converter/cover-1440.webp?v=ed04865a 1440w, ../../a/p/pdf-dark-mode-converter/cover-1920.webp?v=ed04865a 1920w, ../../a/p/pdf-dark-mode-converter/cover-1940.webp?v=ed04865a 1940w" sizes="(max-width:760px) 100vw, 1280px" alt="One PDF page shown five times, the original and four dark themes, fanned out" width="1940" height="921" fetchpriority=high decoding="async"></picture></a></div></div>
+  <div class="p-body gut"><div class="wrap p-grid">
+    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Rewrite and new features</dd></div><div><dt>Based on</dt><dd>A converter by Chizkiyahu</dd></div><div><dt>Runs</dt><dd>In the browser, offline</dd></div><div><dt>Stack</dt><dd>pdf.js · pdf-lib · JavaScript</dd></div><div><dt>License</dt><dd>PolyForm Noncommercial</dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#why-i-built-it">Why I built it</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#themes">Themes</a></li><li><a href="#the-details">The details</a></li></ol></nav></aside>
+    <article class="p-art"><h2 id="why-i-built-it">Why I built it</h2>
+<p>At night, a white PDF page is the brightest thing in the room. Browser dark-mode extensions only change how a PDF looks while it&rsquo;s open in that browser, and most online converters want you to upload your file to their server.</p>
+<p>I found a small open-source converter by Chizkiyahu that did the job in the browser, but it was slow, had one look, and turned every page into a flat picture you couldn&rsquo;t search. I forked it and rewrote most of it. It is now my most-starred project.</p>
+<p>Drag the line to compare. The buttons below switch the theme.</p>
+<figure class="p-cmp"><div class="p-cmp-f" style="--ar:0.7068"><div class="p-cmp-b"><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-claude-480.avif?v=ae57bdcd 480w, ../../a/p/pdf-dark-mode-converter/page-claude-960.avif?v=ae57bdcd 960w, ../../a/p/pdf-dark-mode-converter/page-claude-1191.avif?v=ae57bdcd 1191w" sizes="(max-width:760px) 92vw, 560px"><img class="on" src="../../a/p/pdf-dark-mode-converter/page-claude-960.webp?v=ae57bdcd" srcset="../../a/p/pdf-dark-mode-converter/page-claude-480.webp?v=ae57bdcd 480w, ../../a/p/pdf-dark-mode-converter/page-claude-960.webp?v=ae57bdcd 960w, ../../a/p/pdf-dark-mode-converter/page-claude-1191.webp?v=ae57bdcd 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The same page in the Claude Warm theme" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-dracula-480.avif?v=891da160 480w, ../../a/p/pdf-dark-mode-converter/page-dracula-960.avif?v=891da160 960w, ../../a/p/pdf-dark-mode-converter/page-dracula-1191.avif?v=891da160 1191w" sizes="(max-width:760px) 92vw, 560px"><img src="../../a/p/pdf-dark-mode-converter/page-dracula-960.webp?v=891da160" srcset="../../a/p/pdf-dark-mode-converter/page-dracula-480.webp?v=891da160 480w, ../../a/p/pdf-dark-mode-converter/page-dracula-960.webp?v=891da160 960w, ../../a/p/pdf-dark-mode-converter/page-dracula-1191.webp?v=891da160 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The same page in the Dracula theme" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-nord-480.avif?v=94366f5a 480w, ../../a/p/pdf-dark-mode-converter/page-nord-960.avif?v=94366f5a 960w, ../../a/p/pdf-dark-mode-converter/page-nord-1191.avif?v=94366f5a 1191w" sizes="(max-width:760px) 92vw, 560px"><img src="../../a/p/pdf-dark-mode-converter/page-nord-960.webp?v=94366f5a" srcset="../../a/p/pdf-dark-mode-converter/page-nord-480.webp?v=94366f5a 480w, ../../a/p/pdf-dark-mode-converter/page-nord-960.webp?v=94366f5a 960w, ../../a/p/pdf-dark-mode-converter/page-nord-1191.webp?v=94366f5a 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The same page in the Nord theme" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-tokyonight-480.avif?v=87c33f0f 480w, ../../a/p/pdf-dark-mode-converter/page-tokyonight-960.avif?v=87c33f0f 960w, ../../a/p/pdf-dark-mode-converter/page-tokyonight-1191.avif?v=87c33f0f 1191w" sizes="(max-width:760px) 92vw, 560px"><img src="../../a/p/pdf-dark-mode-converter/page-tokyonight-960.webp?v=87c33f0f" srcset="../../a/p/pdf-dark-mode-converter/page-tokyonight-480.webp?v=87c33f0f 480w, ../../a/p/pdf-dark-mode-converter/page-tokyonight-960.webp?v=87c33f0f 960w, ../../a/p/pdf-dark-mode-converter/page-tokyonight-1191.webp?v=87c33f0f 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The same page in the Tokyo Night theme" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-sepia-480.avif?v=f80b5a9b 480w, ../../a/p/pdf-dark-mode-converter/page-sepia-960.avif?v=f80b5a9b 960w, ../../a/p/pdf-dark-mode-converter/page-sepia-1191.avif?v=f80b5a9b 1191w" sizes="(max-width:760px) 92vw, 560px"><img src="../../a/p/pdf-dark-mode-converter/page-sepia-960.webp?v=f80b5a9b" srcset="../../a/p/pdf-dark-mode-converter/page-sepia-480.webp?v=f80b5a9b 480w, ../../a/p/pdf-dark-mode-converter/page-sepia-960.webp?v=f80b5a9b 960w, ../../a/p/pdf-dark-mode-converter/page-sepia-1191.webp?v=f80b5a9b 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The same page in the Sepia Dark theme" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-solarized-480.avif?v=3d346768 480w, ../../a/p/pdf-dark-mode-converter/page-solarized-960.avif?v=3d346768 960w, ../../a/p/pdf-dark-mode-converter/page-solarized-1191.avif?v=3d346768 1191w" sizes="(max-width:760px) 92vw, 560px"><img src="../../a/p/pdf-dark-mode-converter/page-solarized-960.webp?v=3d346768" srcset="../../a/p/pdf-dark-mode-converter/page-solarized-480.webp?v=3d346768 480w, ../../a/p/pdf-dark-mode-converter/page-solarized-960.webp?v=3d346768 960w, ../../a/p/pdf-dark-mode-converter/page-solarized-1191.webp?v=3d346768 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The same page in the Solarized theme" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-classic-480.avif?v=d337cb78 480w, ../../a/p/pdf-dark-mode-converter/page-classic-960.avif?v=d337cb78 960w, ../../a/p/pdf-dark-mode-converter/page-classic-1191.avif?v=d337cb78 1191w" sizes="(max-width:760px) 92vw, 560px"><img src="../../a/p/pdf-dark-mode-converter/page-classic-960.webp?v=d337cb78" srcset="../../a/p/pdf-dark-mode-converter/page-classic-480.webp?v=d337cb78 480w, ../../a/p/pdf-dark-mode-converter/page-classic-960.webp?v=d337cb78 960w, ../../a/p/pdf-dark-mode-converter/page-classic-1191.webp?v=d337cb78 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The same page in the Classic theme" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture></div><div class="p-cmp-a"><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/page-original-480.avif?v=5fc11b37 480w, ../../a/p/pdf-dark-mode-converter/page-original-960.avif?v=5fc11b37 960w, ../../a/p/pdf-dark-mode-converter/page-original-1191.avif?v=5fc11b37 1191w" sizes="(max-width:760px) 92vw, 560px"><img src="../../a/p/pdf-dark-mode-converter/page-original-960.webp?v=5fc11b37" srcset="../../a/p/pdf-dark-mode-converter/page-original-480.webp?v=5fc11b37 480w, ../../a/p/pdf-dark-mode-converter/page-original-960.webp?v=5fc11b37 960w, ../../a/p/pdf-dark-mode-converter/page-original-1191.webp?v=5fc11b37 1191w" sizes="(max-width:760px) 92vw, 560px" alt="The original page" width="1191" height="1685" loading="lazy" decoding="async" draggable="false"></picture></div><i class="p-cmp-l"></i><span class="p-cmp-t a">Original</span><span class="p-cmp-t b">Claude Warm</span><input type="range" min="0" max="100" value="50" aria-label="Move the divider between the original and the converted page"></div><div class="p-cmp-c" role="group" aria-label="Theme"><button type="button" aria-pressed="true"><i style="--c:#2a2522"></i>Claude Warm</button><button type="button" aria-pressed="false"><i style="--c:#282a36"></i>Dracula</button><button type="button" aria-pressed="false"><i style="--c:#2e3440"></i>Nord</button><button type="button" aria-pressed="false"><i style="--c:#1b1b27"></i>Tokyo Night</button><button type="button" aria-pressed="false"><i style="--c:#272318"></i>Sepia Dark</button><button type="button" aria-pressed="false"><i style="--c:#002a36"></i>Solarized</button><button type="button" aria-pressed="false"><i style="--c:#000000"></i>Classic</button></div><figcaption>A sample page before and after. The chart and text take on the theme; the photo is detected and keeps its original colours.</figcaption></figure>
+<h2 id="how-it-works">How it works</h2>
+<p>Everything happens on your device. The page is drawn, recoloured, and put back together into a new PDF without a server ever seeing it.</p>
+<figure class="p-dg"><div class="dgw"><svg class="dg" viewBox="0 0 960 250" role="img" aria-label="How one page is converted: pdf.js renders it, a colour-matrix filter applies the theme on the GPU, the pixels where photos sit are put back, and the page is saved as a JPEG. pdf-lib builds the new PDF and lays the original text over each page, invisible but selectable.">
+<defs><marker id="pdf-pipeline-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip"/></marker><marker id="pdf-pipeline-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="dg-tip hot"/></marker></defs>
+<rect class="dg-node dg-in" style="--d:0.00s" x="0" y="96" width="130" height="60" rx="10"/>
+<g class="dg-in" style="--d:0.15s"><text class="dg-title" x="65.0" y="123.0" text-anchor="middle">PDF page</text><text class="dg-note" x="65.0" y="141.0" text-anchor="middle">pdf.js render</text></g>
+<path class="dg-link hot dg-in" style="--d:0.20s" d="M130 126 H166" marker-end="url(#pdf-pipeline-h)"/>
+<rect class="dg-node hot dg-in" style="--d:0.30s" x="170" y="96" width="180" height="60" rx="10"/>
+<g class="dg-in" style="--d:0.45s"><text class="dg-title" x="260.0" y="123.0" text-anchor="middle">Theme filter</text><text class="dg-note" x="260.0" y="141.0" text-anchor="middle">feColorMatrix, on GPU</text></g>
+<path class="dg-link hot dg-in" style="--d:0.50s" d="M350 126 H386" marker-end="url(#pdf-pipeline-h)"/>
+<rect class="dg-node dg-in" style="--d:0.60s" x="390" y="96" width="170" height="60" rx="10"/>
+<g class="dg-in" style="--d:0.75s"><text class="dg-title" x="475.0" y="123.0" text-anchor="middle">Photos put back</text><text class="dg-note" x="475.0" y="141.0" text-anchor="middle">original pixels</text></g>
+<path class="dg-link hot dg-in" style="--d:0.80s" d="M560 126 H596" marker-end="url(#pdf-pipeline-h)"/>
+<rect class="dg-node dg-in" style="--d:0.90s" x="600" y="96" width="140" height="60" rx="10"/>
+<g class="dg-in" style="--d:1.05s"><text class="dg-title" x="670.0" y="123.0" text-anchor="middle">JPEG page</text><text class="dg-note" x="670.0" y="141.0" text-anchor="middle">quality 50–100%</text></g>
+<path class="dg-link hot dg-in" style="--d:1.10s" d="M740 126 H776" marker-end="url(#pdf-pipeline-h)"/>
+<rect class="dg-node hot dg-in" style="--d:1.20s" x="780" y="96" width="180" height="60" rx="10"/>
+<g class="dg-in" style="--d:1.35s"><text class="dg-title" x="870.0" y="123.0" text-anchor="middle">New PDF</text><text class="dg-note" x="870.0" y="141.0" text-anchor="middle">pdf-lib</text></g>
+<path class="dg-link dg-in" style="--d:1.30s" d="M65 96 V36 H866 V92" marker-end="url(#pdf-pipeline-a)"/>
+<g class="dg-in" style="--d:1.40s"><text class="dg-note" x="440" y="28" text-anchor="middle">text, laid on top invisibly so it can be selected</text></g>
+<path class="dg-link dg-in" style="--d:1.50s" d="M65 156 V214 H475 V160" marker-end="url(#pdf-pipeline-a)"/>
+<g class="dg-in" style="--d:1.60s"><text class="dg-note" x="270" y="236" text-anchor="middle">where images sit, from the drawing commands</text></g>
+</svg>
+</div><figcaption>What happens to each page. The original text is laid back on top, invisible, so you can still search, select and copy it.</figcaption></figure>
+<ul>
+<li><strong>The colours change on the graphics card.</strong> A theme is a colour matrix (an SVG <code>feColorMatrix</code> filter) applied to the whole page at once. Firefox can&rsquo;t use filters on a canvas, so it gets a slower fallback that does the same maths in JavaScript.</li>
+<li><strong>Photos are left alone.</strong> Before recolouring, the tool reads the page&rsquo;s drawing commands to find where each image sits. It saves those pixels and puts them back afterwards, so photos and diagrams keep their real colours.</li>
+<li><strong>The text stays real.</strong> A converted page is an image, but the original text goes back on top as an invisible layer. Search, select and copy all still work.</li>
+<li><strong>Pages are done in parallel.</strong> It converts as many pages at once as your processor has cores. That, plus the GPU filter, is where most of the speed-up comes from.</li>
+</ul>
+<dl class="p-stats"><div><dt>up to 10×</dt><dd>faster than the original converter</dd></div><div><dt>16+</dt><dd>themes, plus any colour you pick</dd></div><div><dt>0</dt><dd>files uploaded</dd></div><div><dt>0.5–4×</dt><dd>output resolution</dd></div></dl>
+<h2 id="themes">Themes</h2>
+<p>There are sixteen themes, from plain inversion to Dracula, Nord, Solarized and Tokyo Night. You can also pick any colour, and switch from dark to light output if you want to go the other way.</p>
+<div class="p-figs wide"><figure class="p-fi" style="--ar:1.6000"><a class="m" href="../../a/p/pdf-dark-mode-converter/ui-themes-2560.webp?v=810c240e" style="--ar:1.6000;width:min(100%, 2880px)" data-full="../../a/p/pdf-dark-mode-converter/ui-themes" data-ws="480,960,1440,1920,2560" data-w="2880" data-h="1800" data-cap="The theme menu. Each theme shows its own swatch." data-q="810c240e"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAAAQAwCdASoYAA8APu1iqU2ppaOiMAgBMB2JaWllVdaTmgAA/u6zzPdMpYFse9C37UcbffvbvTx1kw62AAA=)"></i><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/ui-themes-480.avif?v=810c240e 480w, ../../a/p/pdf-dark-mode-converter/ui-themes-960.avif?v=810c240e 960w, ../../a/p/pdf-dark-mode-converter/ui-themes-1440.avif?v=810c240e 1440w, ../../a/p/pdf-dark-mode-converter/ui-themes-1920.avif?v=810c240e 1920w, ../../a/p/pdf-dark-mode-converter/ui-themes-2560.avif?v=810c240e 2560w" sizes="(max-width:760px) 100vw, 980px"><img src="../../a/p/pdf-dark-mode-converter/ui-themes-960.webp?v=810c240e" srcset="../../a/p/pdf-dark-mode-converter/ui-themes-480.webp?v=810c240e 480w, ../../a/p/pdf-dark-mode-converter/ui-themes-960.webp?v=810c240e 960w, ../../a/p/pdf-dark-mode-converter/ui-themes-1440.webp?v=810c240e 1440w, ../../a/p/pdf-dark-mode-converter/ui-themes-1920.webp?v=810c240e 1920w, ../../a/p/pdf-dark-mode-converter/ui-themes-2560.webp?v=810c240e 2560w" sizes="(max-width:760px) 100vw, 980px" alt="The theme menu. Each theme shows its own swatch." width="2880" height="1800" loading=lazy decoding="async"></picture></a><figcaption>The theme menu. Each theme shows its own swatch.</figcaption></figure></div>
+<h2 id="the-details">The details</h2>
+<ul>
+<li><strong>Several files at once.</strong> Drop in a stack of PDFs and they come back as one download.</li>
+<li><strong>Your choice of size.</strong> Resolution goes from 0.5× to 4×, and JPEG quality from 50 to 100 percent, so you can trade file size for sharpness.</li>
+<li><strong>A separate invert tool.</strong> For a true colour inversion, for example before printing, there&rsquo;s a <a href="https://bratuka.github.io/pdf-dark-mode-converter/invert-pdf-colors/">second tool</a> next to the main one.</li>
+<li><strong>Guides.</strong> Fourteen short guides cover dark mode for PDFs in Chrome, Firefox, Edge, Windows, iPhone, iPad, Android, Acrobat and Google Drive.</li>
+</ul>
+<aside class="p-note"><p>The sample page on this page was made for the demo; the numbers in its chart are sample data.</p></aside></article>
+  </div></div>
+  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><span></span><a class="p-all link" href="../../projects/">All projects</a><a class="p-nx next" href="../../projects/knoxhybrid-monitor/"><span class="mono">Next project</span><strong>KnoxHybrid Monitor</strong><span class="t">A Windows tray app for Knox solar inverters.</span></a></div></nav>
+</main>
+<footer class="foot gut"><div class="wrap" style="display:contents"><a class="link home" href="../../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>bratuka.dev</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a><span class="mono">© 2026 BrAtUkA</span></div></footer>
+<script src="../../a/media.js?v=345213c5" defer></script>
+<script src="../../a/project.js?v=ed9a40e5" defer></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
+</body>
+</html>

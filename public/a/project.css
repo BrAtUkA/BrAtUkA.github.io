@@ -74,7 +74,36 @@
 .p-figs.pair .p-fi{flex:var(--ar) 1 0}
 .p-figs.pair .m{width:100% !important}
 .p-figs.row{grid-template-columns:repeat(auto-fit, minmax(0, max-content));justify-content:start;gap:clamp(20px, 4vw, 48px)}
+.p-figs.grid{grid-template-columns:repeat(auto-fill, minmax(min(132px, 40%), 1fr));gap:clamp(12px, 1.6vw, 20px)}
+.p-figs.grid .m{width:100% !important}
+.p-figs.grid figcaption{margin-top:8px;font-family:var(--f-mono);font-size:var(--t-xs)}
 .p-fi{min-width:0;margin:0}
+.p-fi .m video{border-radius:inherit}
+
+/* ── before / after: drag the line; the chips swap the theme on the right ── */
+.p-cmp{margin:clamp(30px, 4vw, 48px) 0}
+.p-cmp-f{position:relative;max-width:var(--mw, 560px);margin:0 auto;aspect-ratio:var(--ar);overflow:hidden;border-radius:10px;
+  background:#111;box-shadow:0 30px 60px -30px #000;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:ew-resize}
+.p-cmp-f picture,.p-cmp-f img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.p-cmp-a,.p-cmp-b{position:absolute;inset:0}
+.p-cmp-a{clip-path:inset(0 calc(100% - var(--x, 50%)) 0 0)}
+.p-cmp-b img{opacity:0;transition:opacity .35s}
+.p-cmp-b img.on{opacity:1}
+.p-cmp-l{position:absolute;top:0;bottom:0;left:var(--x, 50%);width:2px;margin-left:-1px;background:var(--bone);box-shadow:0 0 0 1px rgba(0, 0, 0, .25);pointer-events:none}
+.p-cmp-l::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+  background:var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23060405' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 7-5 5 5 5M15 7l5 5-5 5'/%3E%3C/svg%3E") center/18px no-repeat;
+  box-shadow:0 6px 18px rgba(0, 0, 0, .45)}
+.p-cmp-t{position:absolute;top:12px;padding:3px 8px;border-radius:6px;background:rgba(6, 4, 5, .72);font-family:var(--f-mono);font-size:var(--t-xs);color:var(--bone);pointer-events:none}
+.p-cmp-t.a{left:12px}
+.p-cmp-t.b{right:12px}
+.p-cmp input[type=range]{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize}
+.p-cmp-c{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:18px auto 0;max-width:640px}
+.p-cmp-c button{display:inline-flex;align-items:center;gap:7px;padding:6px 11px 6px 7px;border:1px solid var(--hair);border-radius:999px;background:transparent;
+  font:inherit;font-family:var(--f-mono);font-size:var(--t-xs);color:var(--ash);cursor:pointer;transition:color .2s, border-color .2s}
+.p-cmp-c button i{width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255, 255, 255, .18)}
+.p-cmp-c button:hover{color:var(--bone)}
+.p-cmp-c button[aria-pressed=true]{color:var(--bone);border-color:#4a3c41}
+.p-cmp figcaption{max-width:68ch;margin:14px auto 0;text-align:center;font-size:var(--t-s);line-height:1.55;color:var(--ash)}
 .p-fi figcaption,.p-dg figcaption{max-width:68ch;margin-top:12px;font-size:var(--t-s);line-height:1.55;color:var(--ash)}
 .p-figs.row figcaption{font-family:var(--f-mono);font-size:var(--t-xs)}
 
@@ -99,6 +128,17 @@
 .dg-link{fill:none;stroke:#5b5054;stroke-width:1.25}
 .dg-link.hot{stroke:var(--signal)}
 .dg .dg-title{font-family:var(--f-sans);font-size:14px;fill:var(--bone)}
+.dg-tip{fill:#5b5054}
+.dg-tip.hot{fill:var(--signal)}
+.dg-world{fill:rgba(255, 255, 255, .012);stroke:#2a2023;stroke-dasharray:4 5}
+.dg-floor{stroke:var(--signal);stroke-dasharray:4 4;opacity:.8}
+.dg-s1{fill:var(--bone)}
+.dg-s2{fill:#9a8f93}
+.dg-s3{fill:#5b5054}
+.dg-bonus{fill:var(--signal)}
+.dg-pen{fill:rgba(255, 58, 78, .14);stroke:var(--signal);stroke-dasharray:3 3}
+.dg .dg-verdict{font-size:12px;fill:#a2979b}
+.dg .dg-verdict.ok{fill:var(--bone)}
 .js .dg .dg-in{opacity:0;transition:opacity .6s ease var(--d, 0s), transform .9s cubic-bezier(.2, .7, .2, 1) var(--d, 0s)}
 .js .dg rect.dg-in{transform:scaleX(.15);transform-box:fill-box;transform-origin:0 50%}
 .js .dg.on .dg-in{opacity:1;transform:none}
@@ -111,6 +151,14 @@
 kbd{padding:3px 7px;border:1px solid #3a2f33;border-bottom-width:2px;border-radius:6px;background:#120d0f;font-family:var(--f-mono);font-size:var(--t-xs);color:var(--bone)}
 .p-note{margin:30px 0;padding:4px 0 4px 18px;border-left:2px solid var(--signal)}
 .p-note p{margin:0;font-size:var(--t-m);color:var(--ash)}
+
+/* ── /projects/: case studies (styles shared with the home page) and the archive ── */
+.pi .p-hero{padding-bottom:clamp(20px, 3vw, 40px)}
+.pi-arch{margin-top:clamp(64px, 8vw, 128px)}
+.pi-arch h2{margin:0;font-size:var(--t-xl);font-weight:500;letter-spacing:-.025em}
+.pi-sub{margin:10px 0 clamp(20px, 2.6vw, 32px);color:var(--ash);font-size:var(--t-s)}
+.cs-rest.ext svg{transform:rotate(-45deg)}
+@media (hover:hover) and (pointer:fine){ .cs-rest.ext a:hover svg{transform:rotate(-45deg) translateX(3px)} }
 
 /* ── more projects ── */
 .p-more{margin-top:clamp(72px, 9vw, 132px);border-top:1px solid var(--hair)}
