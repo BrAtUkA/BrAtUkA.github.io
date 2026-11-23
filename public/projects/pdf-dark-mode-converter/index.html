@@ -76,31 +76,32 @@ a{color:inherit;text-decoration:none}
 .cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
 .cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
 .cs.flip figure{order:2}
-.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
-.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04);transition:box-shadow .35s}
+.cs img{display:block;width:100%;height:100%;object-fit:cover}
 .cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
 .cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
 .cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
 .cs-t .st{text-transform:none;letter-spacing:.03em}
-.cs-t .star{display:inline-flex;align-items:center;gap:4px}
-.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
 .go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
 .go svg{width:18px;height:18px;transition:transform .3s}
-.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
-.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
-.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest{display:grid;grid-template-columns:max-content minmax(0, 1fr) auto 20px;column-gap:28px;list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest li{display:contents}
+.cs-rest a{grid-column:1 / -1;display:grid;grid-template-columns:subgrid;row-gap:12px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}   /* subgrid: every title column is as wide as the longest title */
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;white-space:nowrap;transition:color .2s}
 .cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
 .cs-rest .y{white-space:nowrap}
 .cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
 @media (hover:hover) and (pointer:fine){
-  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs:hover figure{box-shadow:0 0 0 1px rgba(255,255,255,.1)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
   .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
 }
 .cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
 @media (max-width:860px){
   .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
   .cs.flip figure{order:0}
+  .cs-rest{display:block}
   .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest strong{white-space:normal}
   .cs-rest .d{grid-column:1;grid-row:2}
   .cs-rest .y{display:none}
   .cs-rest svg{grid-column:2;grid-row:1 / span 2}
@@ -113,7 +114,7 @@ a{color:inherit;text-decoration:none}
 .foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
 </style>
 <link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
-<link rel="stylesheet" href="../../a/project.css?v=bb4d7bc1">
+<link rel="stylesheet" href="../../a/project.css?v=e64410d8">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "PDF Dark Mode Converter", "description": "A browser tool that converts PDFs to dark mode in 16 themes. It runs entirely on your device, keeps photos in their original colours and keeps the text selectable.", "url": "https://bratuka.dev/projects/pdf-dark-mode-converter/", "codeRepository": "https://github.com/BrAtUkA/pdf-dark-mode-converter", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/p/pdf-dark-mode-converter/cover-960.webp?v=cebf9935"}</script>
 </head>
 <body class="pp">
@@ -123,11 +124,11 @@ a{color:inherit;text-decoration:none}
     <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span>Web tool · 2026</p>
     <h1><span>PDF Dark Mode Converter</span></h1>
     <p class="p-tag">Turns any PDF dark, right in your browser. Nothing is uploaded, photos keep their colours, and the text stays selectable.</p>
-    <div class="p-acts"><a class="link" href="https://bratuka.github.io/pdf-dark-mode-converter/" target="_blank" rel="noopener">Open the tool ↗</a><a class="link" href="https://github.com/BrAtUkA/pdf-dark-mode-converter" target="_blank" rel="noopener">Source ↗</a><a class="p-star" href="https://github.com/BrAtUkA/pdf-dark-mode-converter" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>35<span class="vh"> stars on GitHub</span></a></div>
+    <div class="p-acts"><a class="link" href="https://bratuka.github.io/pdf-dark-mode-converter/" target="_blank" rel="noopener">Open the tool ↗</a><a class="link" href="https://github.com/BrAtUkA/pdf-dark-mode-converter" target="_blank" rel="noopener">Source ↗</a></div>
   </div></section>
   <div class="p-cover gut"><div class="wrap"><a class="m" href="../../a/p/pdf-dark-mode-converter/cover-1940.webp?v=ed04865a" style="--ar:2.1064;width:min(100%, 1940px)" data-full="../../a/p/pdf-dark-mode-converter/cover" data-ws="480,960,1440,1920,1940" data-w="1940" data-h="921" data-cap="One page, the original and four of the themes. The photo keeps its colours in every one." data-q="ed04865a"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRuIAAABXRUJQVlA4WAoAAAAQAAAAFwAACgAAQUxQSEMAAAABb6CobSSHP7Jls69e7kIjIgL6Fd+UkAeQ1daLt63AIiyCFhpooIESGjga6KCBo4FK/kf0P++e3SCNdR5fCURpuSo4AFZQOCB4AAAA0AMAnQEqGAALAD7tZKpOKaWkIjAIATAdiUAX5wPR7aQkXTIBdDZAAP7wM/zcX073C5fa9RLVi4i8RtDuZYDcoZgLKtqJIt8LUtXk3fkDdl3poUW7lA46z6t7AdI0rTYHfJ39LRKirDGcPGUVheCNo+B1dVAcQAAA)"></i><picture><source type="image/avif" srcset="../../a/p/pdf-dark-mode-converter/cover-480.avif?v=ed04865a 480w, ../../a/p/pdf-dark-mode-converter/cover-960.avif?v=ed04865a 960w, ../../a/p/pdf-dark-mode-converter/cover-1440.avif?v=ed04865a 1440w, ../../a/p/pdf-dark-mode-converter/cover-1920.avif?v=ed04865a 1920w, ../../a/p/pdf-dark-mode-converter/cover-1940.avif?v=ed04865a 1940w" sizes="(max-width:760px) 100vw, 1280px"><img src="../../a/p/pdf-dark-mode-converter/cover-960.webp?v=ed04865a" srcset="../../a/p/pdf-dark-mode-converter/cover-480.webp?v=ed04865a 480w, ../../a/p/pdf-dark-mode-converter/cover-960.webp?v=ed04865a 960w, ../../a/p/pdf-dark-mode-converter/cover-1440.webp?v=ed04865a 1440w, ../../a/p/pdf-dark-mode-converter/cover-1920.webp?v=ed04865a 1920w, ../../a/p/pdf-dark-mode-converter/cover-1940.webp?v=ed04865a 1940w" sizes="(max-width:760px) 100vw, 1280px" alt="One PDF page shown five times, the original and four dark themes, fanned out" width="1940" height="921" fetchpriority=high decoding="async"></picture></a></div></div>
   <div class="p-body gut"><div class="wrap p-grid">
-    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Rewrite and new features</dd></div><div><dt>Based on</dt><dd>A converter by Chizkiyahu</dd></div><div><dt>Runs</dt><dd>In the browser, offline</dd></div><div><dt>Stack</dt><dd>pdf.js · pdf-lib · JavaScript</dd></div><div><dt>License</dt><dd>PolyForm Noncommercial</dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#why-i-built-it">Why I built it</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#themes">Themes</a></li><li><a href="#the-details">The details</a></li></ol></nav></aside>
+    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Rewrite and new features</dd></div><div><dt>Based on</dt><dd>A converter by Chizkiyahu</dd></div><div><dt>Runs</dt><dd>In the browser, offline</dd></div><div><dt>Stack</dt><dd>pdf.js · pdf-lib · JavaScript</dd></div><div><dt>License</dt><dd>PolyForm Noncommercial</dd></div><div><dt>GitHub</dt><dd><a href="https://github.com/BrAtUkA/pdf-dark-mode-converter" target="_blank" rel="noopener">35 stars</a></dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#why-i-built-it">Why I built it</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#themes">Themes</a></li><li><a href="#the-details">The details</a></li></ol></nav></aside>
     <article class="p-art"><h2 id="why-i-built-it">Why I built it</h2>
 <p>At night, a white PDF page is the brightest thing in the room. Browser dark-mode extensions only change how a PDF looks while it&rsquo;s open in that browser, and most online converters want you to upload your file to their server.</p>
 <p>I found a small open-source converter by Chizkiyahu that did the job in the browser, but it was slow, had one look, and turned every page into a flat picture you couldn&rsquo;t search. I forked it and rewrote most of it. It is now my most-starred project.</p>

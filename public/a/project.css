@@ -17,10 +17,6 @@
 .p-icon{width:clamp(42px, 5vw, 68px);height:auto;flex:none;border-radius:22%;box-shadow:0 10px 30px -12px #000}
 .p-tag{margin:clamp(14px, 1.8vw, 22px) 0 0;max-width:42rem;font-size:var(--t-l);line-height:1.35;color:var(--ash);text-wrap:pretty}
 .p-acts{display:flex;flex-wrap:wrap;align-items:center;gap:12px 26px;margin-top:clamp(20px, 2.6vw, 30px);font-size:var(--t-s)}
-.p-star{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border:1px solid var(--hair);border-radius:999px;
-  font-family:var(--f-mono);font-size:var(--t-xs);color:var(--ash);transition:color .2s, border-color .2s}
-.p-star svg{width:12px;height:12px;color:var(--signal)}
-.p-star:hover{color:var(--bone);border-color:#3d3236}
 
 /* ── screenshots: their own windows, no tile chrome ── */
 .p .m{background:transparent;overflow:visible}
@@ -38,6 +34,8 @@
 .p-facts div{padding-top:10px;border-top:1px solid var(--hair)}
 .p-facts dt{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--ash)}
 .p-facts dd{margin:4px 0 0;line-height:1.45}
+.p-facts dd a{color:var(--bone);background-image:linear-gradient(var(--hair), var(--hair));background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;transition:color .2s, background-image .2s}
+.p-facts dd a:hover{color:var(--signal)}
 .p-toc{margin-top:36px}
 .p-toc > p{margin:0;text-transform:uppercase;letter-spacing:.08em}
 .p-toc ol{display:grid;gap:1px;margin:10px 0 0;padding:0;list-style:none}

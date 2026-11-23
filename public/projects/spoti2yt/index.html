@@ -76,31 +76,32 @@ a{color:inherit;text-decoration:none}
 .cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
 .cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
 .cs.flip figure{order:2}
-.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04)}
-.cs img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04);transition:box-shadow .35s}
+.cs img{display:block;width:100%;height:100%;object-fit:cover}
 .cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
 .cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
 .cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
 .cs-t .st{text-transform:none;letter-spacing:.03em}
-.cs-t .star{display:inline-flex;align-items:center;gap:4px}
-.cs-t .star svg{width:11px;height:11px;color:var(--signal)}
 .go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
 .go svg{width:18px;height:18px;transition:transform .3s}
-.cs-rest{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
-.cs-rest a{display:grid;grid-template-columns:minmax(0, 15rem) minmax(0, 1fr) auto 20px;gap:12px 28px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}
-.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;transition:color .2s}
+.cs-rest{display:grid;grid-template-columns:max-content minmax(0, 1fr) auto 20px;column-gap:28px;list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cs-rest li{display:contents}
+.cs-rest a{grid-column:1 / -1;display:grid;grid-template-columns:subgrid;row-gap:12px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}   /* subgrid: every title column is as wide as the longest title */
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;white-space:nowrap;transition:color .2s}
 .cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
 .cs-rest .y{white-space:nowrap}
 .cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
 @media (hover:hover) and (pointer:fine){
-  .cs:hover img{transform:scale(1.025)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
+  .cs:hover figure{box-shadow:0 0 0 1px rgba(255,255,255,.1)} .cs:hover h3{color:var(--signal)} .cs:hover .go svg{transform:translateX(4px)}
   .cs-rest a:hover strong{color:var(--signal)} .cs-rest a:hover svg{color:var(--bone);transform:translateX(3px)}
 }
 .cs:focus-visible h3,.cs-rest a:focus-visible strong{color:var(--signal)}
 @media (max-width:860px){
   .cs,.cs.flip{grid-template-columns:minmax(0, 1fr);gap:18px}
   .cs.flip figure{order:0}
+  .cs-rest{display:block}
   .cs-rest a{grid-template-columns:minmax(0, 1fr) 20px;gap:6px 16px}
+  .cs-rest strong{white-space:normal}
   .cs-rest .d{grid-column:1;grid-row:2}
   .cs-rest .y{display:none}
   .cs-rest svg{grid-column:2;grid-row:1 / span 2}
@@ -113,7 +114,7 @@ a{color:inherit;text-decoration:none}
 .foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
 </style>
 <link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
-<link rel="stylesheet" href="../../a/project.css?v=bb4d7bc1">
+<link rel="stylesheet" href="../../a/project.css?v=e64410d8">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "spoti2yt", "description": "A Windows tray app that converts tracks and whole playlists between Spotify and YouTube, in both directions, from a global hotkey, with a matcher that handles lyric videos, live versions and fan uploads.", "url": "https://bratuka.dev/projects/spoti2yt/", "codeRepository": "https://github.com/BrAtUkA/spoti2yt", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/p/spoti2yt/convert-done-960.webp?v=c1cdc852"}</script>
 </head>
 <body class="pp">
@@ -123,11 +124,11 @@ a{color:inherit;text-decoration:none}
     <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span>Windows tray app · 2026</p>
     <h1><img class="p-icon" src="../../a/p/spoti2yt/icon-256.webp?v=a94b54ea" alt="" width="256" height="256"><span>spoti2yt</span></h1>
     <p class="p-tag">Copy a song link from Spotify or YouTube, press a hotkey, and the link for the other one is on your clipboard.</p>
-    <div class="p-acts"><a class="link" href="https://github.com/BrAtUkA/spoti2yt/releases" target="_blank" rel="noopener">Download ↗</a><a class="link" href="https://github.com/BrAtUkA/spoti2yt" target="_blank" rel="noopener">Source ↗</a><a class="p-star" href="https://github.com/BrAtUkA/spoti2yt" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>2<span class="vh"> stars on GitHub</span></a></div>
+    <div class="p-acts"><a class="link" href="https://github.com/BrAtUkA/spoti2yt/releases" target="_blank" rel="noopener">Download ↗</a><a class="link" href="https://github.com/BrAtUkA/spoti2yt" target="_blank" rel="noopener">Source ↗</a></div>
   </div></section>
   <div class="p-cover gut"><div class="wrap"><a class="m" href="../../a/p/spoti2yt/convert-done-1920.webp?v=0376f199" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/convert-done" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="A playlist converted to YouTube, with a match score for every track. Sample data." data-q="0376f199"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAABwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JZwDKAC0HpuZzmUAA/vB02Umt9LZQNm7iXRGmEwTb4fWnvNg1kxscupEIi4VFhxx8gKiDYRrjx18hz4j0Q7EAAAA=)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/convert-done-480.avif?v=0376f199 480w, ../../a/p/spoti2yt/convert-done-960.avif?v=0376f199 960w, ../../a/p/spoti2yt/convert-done-1440.avif?v=0376f199 1440w, ../../a/p/spoti2yt/convert-done-1920.avif?v=0376f199 1920w" sizes="(max-width:760px) 100vw, 1280px"><img src="../../a/p/spoti2yt/convert-done-960.webp?v=0376f199" srcset="../../a/p/spoti2yt/convert-done-480.webp?v=0376f199 480w, ../../a/p/spoti2yt/convert-done-960.webp?v=0376f199 960w, ../../a/p/spoti2yt/convert-done-1440.webp?v=0376f199 1440w, ../../a/p/spoti2yt/convert-done-1920.webp?v=0376f199 1920w" sizes="(max-width:760px) 100vw, 1280px" alt="spoti2yt converting a 14-track playlist to YouTube, with a match score on every row" width="1920" height="1320" fetchpriority=high decoding="async"></picture></a></div></div>
   <div class="p-body gut"><div class="wrap p-grid">
-    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Design and code, solo</dd></div><div><dt>Platform</dt><dd>Windows 10 and 11</dd></div><div><dt>Stack</dt><dd>Rust · Tauri v2 · Svelte 5 · SQLite</dd></div><div><dt>Installer</dt><dd>About 24 MB, all included</dd></div><div><dt>License</dt><dd>PolyForm Noncommercial</dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#why-i-built-it">Why I built it</a></li><li><a href="#the-matcher">The matcher</a></li><li><a href="#playlists">Playlists</a></li><li><a href="#around-the-edges">Around the edges</a></li></ol></nav></aside>
+    <aside class="p-rail"><dl class="p-facts"><div><dt>Role</dt><dd>Design and code, solo</dd></div><div><dt>Platform</dt><dd>Windows 10 and 11</dd></div><div><dt>Stack</dt><dd>Rust · Tauri v2 · Svelte 5 · SQLite</dd></div><div><dt>Installer</dt><dd>About 24 MB, all included</dd></div><div><dt>License</dt><dd>PolyForm Noncommercial</dd></div><div><dt>GitHub</dt><dd><a href="https://github.com/BrAtUkA/spoti2yt" target="_blank" rel="noopener">2 stars</a></dd></div></dl><nav class="p-toc" aria-label="On this page"><p class="mono">On this page</p><ol><li><a href="#why-i-built-it">Why I built it</a></li><li><a href="#the-matcher">The matcher</a></li><li><a href="#playlists">Playlists</a></li><li><a href="#around-the-edges">Around the edges</a></li></ol></nav></aside>
     <article class="p-art"><h2 id="why-i-built-it">Why I built it</h2>
 <p>Music gets shared as YouTube links and as Spotify links, and they rarely match the app you use. Finding the same song on the other platform is a small, annoying job that keeps coming up.</p>
 <p>spoti2yt does it with one keypress. Copy a link from either platform, press the hotkey, and the matching link replaces it on your clipboard, with a sound and a small notification. It started as a Python script and was rewritten in Rust so the matching is more reliable, it uses no CPU while waiting, and it has a real window.</p>
