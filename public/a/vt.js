@@ -71,6 +71,7 @@
   };
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const seen = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && r.width > 0 && r.height > 0; };
+  const near = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.bottom > -innerHeight * .5 && r.top < innerHeight * 1.5; };
   const tileKey = (t) => 't-' + (t.dataset.full || '').split('/').pop().replace(/[^a-z0-9-]/gi, '-');
   const slugOf = (a) => ((a.getAttribute('href') || '').match(/projects\/([^/]+)\/$/) || [])[1];
   const isText = (k) => /^(h-|ttl-|kick-|tag-)/.test(k);
@@ -138,9 +139,52 @@
   };
   const imgOf = (el) => (el.tagName === 'IMG' ? el : el.querySelector('img'));
 
+  // Loops carried to the other page: the frame on screen is shown there while it moves, and the loop resumes from it.
+  // On press the loops are paused and their frames encoded off the main thread, ready before the click lands;
+  // without a press (Back, keyboard) one small frame is taken at the swap, the cheapest that still matches.
+  const pre = new Map();
+  const crop = (v, t, max) => {
+    const r = t.getBoundingClientRect(), cw = Math.max(16, Math.min(max, Math.round(r.width * Math.min(devicePixelRatio || 1, 1.5)))), ch = Math.max(16, Math.round(cw * r.height / r.width));
+    const vw = v.videoWidth, vh = v.videoHeight, sc = Math.max(cw / vw, ch / vh), sw = cw / sc, sh = ch / sc;
+    return { sx: (vw - sw) / 2, sy: (vh - sh) / 2, sw, sh, cw, ch };
+  };
+  const live = (t) => { const v = t.querySelector('video'); return v && v.classList.contains('on') && v.readyState >= 2 && v.videoWidth && seen(t) ? v : null; };
+  function grab(t) {
+    const v = live(t); if (!v || pre.has(t) || !window.createImageBitmap || !window.OffscreenCanvas) return;
+    v.pause(); const c = crop(v, t, 1200), at = v.currentTime; pre.set(t, null);
+    createImageBitmap(v, c.sx, c.sy, c.sw, c.sh, { resizeWidth: c.cw, resizeHeight: c.ch, resizeQuality: 'medium' })
+      .then((bm) => { const oc = new OffscreenCanvas(c.cw, c.ch); oc.getContext('2d').drawImage(bm, 0, 0); bm.close(); return oc.convertToBlob({ type: 'image/jpeg', quality: .86 }); })
+      .then((b) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(b); }))
+      .then((src) => { if (pre.has(t)) pre.set(t, { src, vt: at }); }).catch(() => pre.set(t, null));
+  }
+  function still(t, info) {
+    const p = pre.get(t); if (p) { info.src = p.src; info.vt = p.vt; return true; }
+    const v = live(t); if (!v) return false;
+    try {
+      const c = crop(v, t, 640), cv = document.createElement('canvas'); cv.width = c.cw; cv.height = c.ch;
+      cv.getContext('2d').drawImage(v, c.sx, c.sy, c.sw, c.sh, 0, 0, c.cw, c.ch);
+      info.src = cv.toDataURL('image/jpeg', .82); info.vt = v.currentTime; return true;
+    } catch (e) { return false; }
+  }
+  // pressing a link to a page that takes tiles: hold the loops that would be carried
+  addEventListener('pointerdown', (e) => {
+    const a = e.target && e.target.closest && e.target.closest('a[href]'); if (!a || e.button) return;
+    const here = page(location.href), there = page(a.href);
+    const tiles = here.k === 'home' && (there.k === 'renders' || there.k === 'gallery') ? $$((there.k === 'renders' ? '#art' : '#gallery') + ' .m')
+      : (here.k === 'renders' || here.k === 'gallery') && there.k === 'home' ? $$('main .wall .m') : [];
+    const held = tiles.filter((t) => live(t)).slice(0, 3); if (!held.length) return;
+    held.forEach(grab);
+    // no navigation after all (dragged off, cancelled): play on
+    setTimeout(() => {
+      if (document.visibilityState !== 'visible' || html.classList.contains('vt')) return;
+      held.forEach((t) => { const v = t.querySelector('video'); if (v && v.paused) v.play().catch(() => {}); });
+      pre.clear();
+    }, 1600);
+  }, { passive: true, capture: true });
   function leave(here, there) {
-    const glass = $('#glass'); if (glass && !seen(glass)) { glass.style.viewTransitionName = 'none'; named.push(glass); }
-    const rec = { from: here, keys: {}, preview: null };
+    const glass = $('#glass'), gs = !!glass && seen(glass); if (glass && !gs) { glass.style.viewTransitionName = 'none'; named.push(glass); }
+    const rec = { from: here, keys: {}, preview: null, head: null, glass: gs };
+    let frames = 0;
     for (const [k, el] of slots(here)) {
       if (!relevant(k, here, there) || !seen(el) || named.length > 40) continue;
       if (k.startsWith('t-') && here.k === 'home' && !el.closest(there.k === 'renders' ? '#art' : '#gallery')) continue;
@@ -148,11 +192,13 @@
       if (k.startsWith('t-')) info.r = [r.left, r.top, r.width, r.height];
       if (isText(k)) { info.text = norm(el.textContent); info.lines = lines(el); }
       const im = imgOf(el); if (im && im.currentSrc) info.src = im.currentSrc;
-      if (k.startsWith('t-')) { const e = edgeOf(el); if (e) info.edge = e; }
+      if (k.startsWith('t-')) { const e = edgeOf(el); if (e) info.edge = e; if (pre.get(el) || frames < 1) { if (still(el, info) && !pre.get(el)) frames++; } }
       name(el, k, null); rec.keys[k] = info;
     }
     if (here.k === 'home' && (there.k === 'renders' || there.k === 'gallery')) {
-      const g = $((there.k === 'renders' ? '#art' : '#gallery') + ' .preview .grid'); if (g) rec.preview = g.getBoundingClientRect().top;
+      const sec = there.k === 'renders' ? '#art' : '#gallery', g = $(sec + ' .preview .grid'), h = $(sec + ' .h-t');
+      if (g) rec.preview = g.getBoundingClientRect().top;
+      if (h && seen(h) && h.getBoundingClientRect().top > 40) rec.head = h.getBoundingClientRect().top;
     }
     try { sessionStorage.setItem(ST, JSON.stringify(rec)); } catch (e) { /* no pairing: a plain transition */ }
   }
@@ -160,16 +206,25 @@
   function arrive(here, there, traverse) {
     let rec = null; try { rec = JSON.parse(sessionStorage.getItem(ST) || 'null'); sessionStorage.removeItem(ST); } catch (e) { /* none */ }
     if (!rec || rec.from.k !== there.k) rec = { keys: {} };
-    // "See all": the wall lands exactly where the preview was
-    if (!traverse && rec.preview != null && (here.k === 'renders' || here.k === 'gallery')) {
-      const w = $('main .wall');
-      if (w) scrollTo(0, Math.max(0, w.getBoundingClientRect().top + scrollY - rec.preview));
+    // "See all": the page's title lands where the section heading was (so the title, its line and the wall are all on
+    // screen and the preview only moves down a little as it grows); if the heading was out of view, the wall lands
+    // exactly where the preview was
+    if (!traverse && (here.k === 'renders' || here.k === 'gallery')) {
+      const h = $('.hero .intro h1 .vt-t'), w = $('main .wall');
+      const y = rec.head != null && h ? h.getBoundingClientRect().top + scrollY - rec.head : rec.preview != null && w ? w.getBoundingClientRect().top + scrollY - rec.preview : null;
+      if (y != null) scrollTo(0, Math.max(0, y));
     }
-    const glass = $('#glass'); if (glass && !seen(glass)) { glass.style.viewTransitionName = 'none'; named.push(glass); }
+    // the glass is carried only when both pages show it; otherwise it is part of the page (under its own words)
+    const glass = $('#glass'); if (glass && (!seen(glass) || rec.glass === false)) { glass.style.viewTransitionName = 'none'; named.push(glass); }
+    // the full pages' line and filter rise in as the page arrives (above the glass, never hidden under it)
+    if (here.k === 'renders' || here.k === 'gallery') {
+      [['vt-lede', $('.hero.sub .intro p')], ['vt-games', $('.hero.sub > .games')]].forEach(([n, el]) => {
+        if (!el || !seen(el)) return; el.style.viewTransitionName = n; el.style.viewTransitionClass = 'vt-enter'; named.push(el); });
+    }
     const mine = slots(here), matched = new Set();
     for (const [k, info] of Object.entries(rec.keys)) {
       const el = mine.get(k);
-      if (!el || !seen(el) || named.length > 40) continue;
+      if (!el || !(k.startsWith("t-") ? near(el) : seen(el)) || named.length > 40) continue;   // a tile may land just off screen (it slides out of view)
       if (isText(k) && (norm(el.textContent) !== info.text || lines(el) !== info.lines)) continue;   // would not match: leaves with the page
       const r = el.getBoundingClientRect();
       if (info.ar && Math.abs(r.width / r.height / info.ar - 1) > .03) continue;                       // not the same shape: it would stretch
@@ -177,6 +232,13 @@
       const edge = k.startsWith('t-') ? (here.k === 'home' ? edgeOf(el) : info.edge) : null;
       const im = imgOf(el);
       if (im && info.src) handoff(im, info.src);
+      if (info.vt != null) {
+        const v = el.querySelector && el.querySelector('video');
+        if (v && v.dataset.ok) {        // a page back from the cache, its loop already loaded: hidden, moved to the frame shown, back once playing
+          v.classList.remove('on'); v.pause(); try { v.currentTime = info.vt % (v.duration || 1e9); } catch (e) {}
+          v.addEventListener('playing', () => v.classList.add('on'), { once: true });
+        } else el.dataset.resume = info.vt.toFixed(3);   // a/media.js starts the loop from the frame shown
+      }
       name(el, k, edge); matched.add(k);
     }
     // slots that found no partner leave with the page (their old capture fades out where it was), except wall tiles
@@ -214,10 +276,11 @@
     const saved = { ss: im.getAttribute('srcset'), srcs: srcs.map((s) => s.getAttribute('srcset')) };
     srcs.forEach((s) => s.removeAttribute('srcset')); im.removeAttribute('srcset');
     im.loading = 'eager'; im.decoding = 'sync'; im.src = src; im.classList.add('ld');
-    window.__vtDone.then(() => setTimeout(() => {
-      srcs.forEach((s, i) => saved.srcs[i] && s.setAttribute('srcset', saved.srcs[i]));
-      if (saved.ss) im.setAttribute('srcset', saved.ss); im.decoding = 'async';
-    }, 400));
+    const back = () => { srcs.forEach((s, i) => saved.srcs[i] && s.setAttribute('srcset', saved.srcs[i])); if (saved.ss) im.setAttribute('srcset', saved.ss); im.decoding = 'async'; };
+    // a loop's frame stays until the loop itself is playing over it (else the poster would flash in between)
+    const v = src.startsWith('data:') && im.closest('.m') && im.closest('.m').querySelector('video');
+    if (v) v.addEventListener('playing', () => setTimeout(back, 800), { once: true });
+    else window.__vtDone.then(() => setTimeout(back, 400));
   }
 
   const ORDER = ['home', 'projects', 'proj', 'renders', 'gallery'];

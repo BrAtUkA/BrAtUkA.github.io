@@ -104,6 +104,10 @@
   };
 
   if (flags.get('gl') === 'off') { fallback('turned off with ?gl=off'); return; }   // testing: the picture fallback
+  // Arriving through a page transition (and not already prerendered): creating the GPU context is kept off the new
+  // page's first frame, so it never holds the page (and the transition) back. Otherwise it is set up straight away.
+  let fadeIn = false;
+  const boot = () => {
   let gl = null;
   try { gl = cv.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: POSTER }); } catch (e) { gl = null; }
   if (!gl) {
@@ -342,7 +346,7 @@ void main() {
   }
   let drew = false;
   function draw(s) {
-    if (!drew) { drew = true; requestAnimationFrame(() => dispatchEvent(new Event('glass:ready'))); }   // a/vt.js holds the old glass until now
+    if (!drew) { drew = true; if (fadeIn) cv.classList.add('fade-in'); requestAnimationFrame(() => dispatchEvent(new Event('glass:ready'))); }   // a/vt.js holds the old glass until now
     if (DEBUG) { window.__frame = s.frame; window.__turn = { n: TURN.n, ready: TURN.ready, use: TURN.use, gyro: gyroOn, seen, tx }; }   // tests read the turn
     gl.uniform1i(U.uPlate, 0); gl.uniform1i(U.uRefr, 1);
     gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform1f(U.uDpr, dpr);
@@ -489,4 +493,17 @@ void main() {
     if (POSTER || STILL) { t0 -= 10000; st.gate = 0; lastAct = performance.now(); const s0 = state(performance.now(), 0); s0.gx += +(flags.get('gx') || 0); draw(s0); if (POSTER) window.__posterReady = true; return; }
     start();
   }).catch((e) => fallback('the hero images did not load: ' + (e && e.type || e)));
+  };
+  const arriving = !document.prerendering && 'onpagereveal' in window && !reduce && (() => {
+    try { const f = navigation.activation && navigation.activation.from; return !!f && new URL(f.url).origin === location.origin; } catch (e) { return false; } })();
+  if (!arriving) { boot(); return; }
+  let booted = false; const go = () => { if (!booted) { booted = true; boot(); } };
+  addEventListener('pagereveal', (e) => {
+    if (!e.viewTransition) { go(); return; }
+    // not carried from the old page: set up once the transition is over (nothing blocks it midway) and faded in;
+    // carried: set up right after the first frame (the old glass is held until this one draws)
+    if (cv.style.viewTransitionName === 'none') { fadeIn = true; e.viewTransition.finished.then(go, go); }
+    else e.viewTransition.ready.then(() => requestAnimationFrame(() => setTimeout(go, 0)), go);
+  }, { once: true });
+  setTimeout(go, 2500 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vtk')) || 1));
 })();

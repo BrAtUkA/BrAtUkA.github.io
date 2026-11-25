@@ -46,6 +46,8 @@
     const tiers = t.dataset.t.split(',').map(Number), tier = tiers.find(x => x >= need * .9) || tiers[tiers.length - 1];
     const b = t.dataset.v + '-g' + tier;
     v.innerHTML = SRC(b, t);
+    // carried in from the other page mid-loop (a/vt.js): carry on from the frame the tile is showing
+    if (t.dataset.resume) { const at = +t.dataset.resume; delete t.dataset.resume; v.addEventListener('loadedmetadata', () => { try { v.currentTime = at % (v.duration || 1e9); } catch (e) {} }, {once: true}); }
     v.addEventListener('playing', () => v.classList.add('on'), {once: true});
     v.load(); return v;
   }
@@ -69,7 +71,7 @@
   }
 
   // ── wall: the organic bento from the home page, repeating down the page. Each visible tile gets its place in the
-  // 15-tile pattern (data-p; data-q for the 5-tile phone pattern), so filtering re-flows it without holes ──
+  // 15-tile pattern (data-p; data-k for the 5-tile phone pattern; data-q is the file version), so filtering re-flows it without holes ──
   const walls = [...document.querySelectorAll('.wall')];
   for (const wall of walls) {
     const items = [...wall.querySelectorAll(':scope > a.m')];
@@ -77,8 +79,8 @@
     wall.__layout = () => {
       let k = 0;
       for (const t of items) {
-        if (t.hidden) { delete t.dataset.p; delete t.dataset.q; continue; }
-        t.dataset.p = k % 15 + 1; t.dataset.q = k % 5 + 1; k++;
+        if (t.hidden) { delete t.dataset.p; delete t.dataset.k; continue; }
+        t.dataset.p = k % 15 + 1; t.dataset.k = k % 5 + 1; k++;
       }
       wall.classList.add('ready'); schedule();
     };
@@ -93,7 +95,9 @@
     const apply = (f, animate) => {
       const b = btns.find(x => x.dataset.f === f) || btns[0];
       btns.forEach(x => x.setAttribute('aria-selected', x === b)); mark(b);
-      b.scrollIntoView({block: 'nearest', inline: 'nearest', behavior: animate ? 'smooth' : 'auto'});
+      // only the tab row scrolls (sideways, to show the chosen tab): never the page
+      const tl = Math.max(0, Math.min(tabs.scrollWidth - tabs.clientWidth, b.offsetLeft - (tabs.clientWidth - b.offsetWidth) / 2));
+      if (Math.abs(tabs.scrollLeft - tl) > 1) tabs.scrollTo({left: tl, behavior: animate ? 'smooth' : 'auto'});
       const first = new Map();
       if (animate) for (const t of items) { if (t.hidden) continue; const r = t.getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) first.set(t, r); }
       for (const t of items) t.hidden = f !== 'all' && t.dataset.set !== f;

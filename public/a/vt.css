@@ -40,6 +40,11 @@ html:active-view-transition-type(expand)::view-transition-new(root){animation:no
 ::view-transition-image-pair(*.vt-c){isolation:auto}
 ::view-transition-group(*.vt-tile){z-index:2}
 
+/* pieces that only the new page has, rising in on their own layer (vt.js: the full pages' line and filter) */
+::view-transition-group(*.vt-enter){z-index:3;animation:none}
+::view-transition-old(*.vt-enter){display:none}
+::view-transition-new(*.vt-enter){animation:calc(.46s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc(.2s * var(--vtk)) both vt-rise}
+
 /* the preview's soft bottom edge, worn by the tiles it covered and lifted (or put back) as they move (vt.js sets
    --a0/--a1, the edge's strength at a tile's top and bottom) */
 @property --vk{syntax:'<number>';inherits:false;initial-value:1}
@@ -57,8 +62,8 @@ html:active-view-transition-type(collapse)::view-transition-new(*.vt-fade){anima
 @keyframes vt-deal{from{opacity:0;transform:translate(var(--fx, 0px), var(--fy, 0px)) scale(.86)}40%{opacity:1}}
 /* the home page around the preview is pushed down and away by the unfolding wall instead of blinking out; it is
    gone before the dealt tiles are, so the two never read as one picture */
-html:active-view-transition-type(expand)::view-transition-old(root){animation:calc(.26s * var(--vtk)) cubic-bezier(.4, 0, .7, .4) both vt-away;z-index:1}   /* above the new page, which is already there underneath */
-@keyframes vt-away{55%{opacity:.25}to{opacity:0;transform:translateY(56px) scale(.99)}}
+html:active-view-transition-type(expand)::view-transition-old(root){animation:calc(.22s * var(--vtk)) cubic-bezier(.2, .6, .35, 1) both vt-away;z-index:1}   /* above the new page, which is already there underneath */
+@keyframes vt-away{to{opacity:0;transform:translateY(32px) scale(.99)}}
 /* Back: the wall's other tiles gather under the preview first; the home page comes in as they go */
 html:active-view-transition-type(collapse)::view-transition-new(root){animation:calc(.34s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc(.22s * var(--vtk)) both vt-in}
 

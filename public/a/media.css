@@ -49,10 +49,12 @@
 @media (max-width:760px){
   .wall{--g:.8cqw;--c:calc((100cqw - var(--g)) / 2);padding:0;grid-template-columns:repeat(2, minmax(0, 1fr));grid-auto-rows:calc(var(--c) * .48)}
   .wall .m,.wall .m[data-p]{grid-column:span 1;grid-row:span 2}
-  .wall .m[data-q="1"]{grid-column:span 2;grid-row:span 3}
+  .wall .m[data-k="1"]{grid-column:span 2;grid-row:span 3}
   .wall .m.tall{grid-row:span 4}
-  /* the last two sit side by side: if either is tall, both are, so the grid ends flush (no hole under the shorter one) */
-  .wall .m:nth-last-child(2):not([data-q="1"]):has(+ .m.tall), .wall .m.tall:nth-last-child(2):not([data-q="1"]) + .m{grid-row:span 4}
+  /* the wall's last two sit side by side: if either is tall, both are, so it ends flush (no hole under the shorter one).
+     Not in the home previews: their end is faded out anyway, and their tiles must keep the wall's shapes (a "See all"
+     carries each preview tile to the same tile on the wall) */
+  .wallwrap .wall .m:nth-last-child(2):not([data-k="1"]):has(+ .m.tall), .wallwrap .wall .m.tall:nth-last-child(2):not([data-k="1"]) + .m{grid-row:span 4}
   .preview{--fade:150px}
 }
 /* game filter: quiet text tabs, one at a time; a thin red line slides under the active one */
