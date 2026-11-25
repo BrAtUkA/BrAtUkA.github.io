@@ -254,13 +254,14 @@ void main() {
   let tier = FORCED >= 0 ? FORCED : (POSTER || STILL ? 0 : 1), ceiling = 0;
 
   const PLATE = { k: +hero.dataset.k || 1.0105, dx: +(hero.dataset.dx || .0011), dy: +(hero.dataset.dy || .0004) };                  // plate box vs the B inside it (from turn2/encode.py)
-  let W = 1, H = 1, dpr = 1, w = 30, Hb = 400, aspect = 1, B0 = { x: 0, y: 0 }, VIS = [-.45, .45];
+  let W = 1, H = 1, dpr = 1, w = 30, Hb = 400, aspect = 1, B0 = { x: 0, y: 0 }, VIS = [-.45, .45], WIDE = true;
   function layout() {
     const r = hero.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
     dpr = Math.min(window.devicePixelRatio || 1, TIERS[tier].dpr);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); gl.viewport(0, 0, cv.width, cv.height);
     w = Math.max(22, Math.min(40, W / 40));
     const P = placeB(W, H, aspect, VIS), wide = P.wide;   // per-page placement (data-x, data-size, ... on the hero)
+    WIDE = wide;
     Hb = P.Hb * PLATE.k;                                  // the plate box includes room for the B to turn
     B0 = { x: P.x, y: P.y };
     if (POSTER) window.__geo = { W, H, Hb, x: B0.x, y: B0.y, w, aspect, k: PLATE.k, wide, vis: VIS };   // for the still pictures (render_still.js)
@@ -268,10 +269,21 @@ void main() {
 
   const st = { scroll: 0, sv: 0, mx: -1, my: .5, vx: 0, vy: 0, sx: -1, gate: 1, phase: 0 };
   const COARSE = matchMedia('(pointer:coarse)').matches || innerWidth < 760 || (navigator.deviceMemory || 8) <= 4;
-  // turntable: FN frames FD degrees apart, rest pose at frame FR (home B: 17 x 2.25 deg, rest 8); FA scales the swing.
+  // turntable: FN frames FD degrees apart, rest pose at frame FR (data-tn, -td, -tr); FA (data-ta) scales the swing.
   // Phones load every other frame.
   const FN = +hero.dataset.tn || 17, FR = +hero.dataset.tr || 8, FD = +hero.dataset.td || 2.25, FA = +hero.dataset.ta || 1;
-  const TURN = { step: COARSE ? 2 : 1, n: COARSE ? Math.ceil(FN / 2) : FN, rest: COARSE ? FR / 2 : FR, ready: false, aspect: 1, mix: 0 };
+  // Each layout uses its own slice of the frames, in degrees around rest: data-use="-24,6" beside the words (the B on
+  // the right, more room to its left), data-use-n="-15,15" when it is centred above them. Only that slice is loaded.
+  const range = (v) => { const a = String(v || '').split(',').map(Number); return a.length === 2 && a.every(Number.isFinite) ? a : null; };
+  const AVAIL = [-FR * FD, (FN - 1 - FR) * FD];
+  const TURN = { step: COARSE ? 2 : 1, n: 0, i0: 0, use: AVAIL, ready: false, aspect: 1, mix: 0 };
+  const pickRange = (wide) => {
+    const u = range(wide ? hero.dataset.use : hero.dataset.useN) || AVAIL;
+    TURN.use = [Math.max(AVAIL[0], Math.min(0, u[0])), Math.min(AVAIL[1], Math.max(0, u[1]))];
+    TURN.i0 = Math.max(0, Math.floor(FR + TURN.use[0] / FD));
+    const i1 = Math.min(FN - 1, Math.ceil(FR + TURN.use[1] / FD));
+    TURN.n = Math.floor((i1 - TURN.i0) / TURN.step) + 1;
+  };
   let tx = .5, ty = .5, lastAct = -1e9, t0 = 0, last = 0, ready = false;
   const clamp01 = (x) => Math.min(1, Math.max(0, x));
   const outCubic = (x) => 1 - Math.pow(1 - clamp01(x), 3), outQuart = (x) => 1 - Math.pow(1 - clamp01(x), 4);
@@ -306,7 +318,8 @@ void main() {
     const n = (st.mx * W - B0.x) / Math.max(1, B0.x);
     const u = .5 * Math.max(-1, Math.min(1, n)), v = st.my - .5, sc = Math.min(1, st.scroll / H);
     // in frames: the pointer's share of the frames left of rest (data-ta scales it), minus the scroll turning it away
-    const turnF = n * TURN.rest * FA - 18 * sc / (FD * TURN.step);
+    const deg = Math.max(TURN.use[0], Math.min(TURN.use[1], n * -TURN.use[0] * FA)) - 18 * sc;    // one rate: the left edge is the left end
+    const layer = (FR + deg / FD - TURN.i0) / TURN.step;                  // which loaded frame
     if (TURN.ready) TURN.mix = Math.min(1, TURN.mix + dt / .6);              // ease from the still plate to the frames
     return {
       gx: 3 * w * (1 - outQuart((t - .05) / 2.0)) - st.scroll * .45,   // the glass only moves with the intro and scroll: no idle crawl
@@ -316,7 +329,7 @@ void main() {
       // one light sweep across the glass on load, then the light pool follows the pointer; at idle the light drifts
       pool: (() => { const k = outCubic((t - .4) / 2.4); const px = bN + .04 + (st.sx - bN) * .36 + .07 * Math.sin(st.phase);
         return [-.25 + (px + .25) * k, .24 + v * .14 + .035 * Math.sin(st.phase * .63)]; })(),
-      frame: Math.max(0, Math.min(TURN.n - 1, TURN.rest + turnF)),
+      frame: Math.max(0, Math.min(TURN.n - 1, layer)),
       fade: outCubic((t - .1) / 1.2) * (1 - .35 * sc),
     };
   }
@@ -406,7 +419,8 @@ void main() {
       TURN.aspect = w0 / h0; TURN.ready = true;
   }
   function loadTurn() {                                   // turntable frames load after the hero is up, into one texture array
-    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${i * TURN.step}.webp${hero.dataset.tv ? '?v=' + hero.dataset.tv : ''}`)))
+    pickRange(WIDE);
+    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${TURN.i0 + i * TURN.step}.webp${hero.dataset.tv ? '?v=' + hero.dataset.tv : ''}`)))
       .then((ims) => { TURN.ims = ims; uploadTurn(ims); }).catch((e) => console.warn('turn frames unavailable', e));
   }
   Promise.all([load(PLATE_SRC), load(BASE + 'a/glass-refraction.png')]).then(([plateImg, refrImg]) => {
