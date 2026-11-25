@@ -62,7 +62,7 @@
     if (wide) {
       Hb = Math.min(H * (+o.size || .66), W * (+o.wcap || .4)); x = W * (+o.x || .68); y = H * (+o.y || .5);
       if (o.avoid !== 'off') {
-        const g = Math.min(104, Math.max(16, W * .045)), tr = textRight() + W * .035, span = vis[1] - vis[0];
+        const g = Math.min(92, Math.max(16, W * .04)), tr = textRight() + W * .035, span = vis[1] - vis[0];
         Hb = Math.min(Hb, (W - g - tr) / span);
         x = Math.min(Math.max(x, tr - vis[0] * Hb), W - g - vis[1] * Hb);
         if (Hb < H * .42) wide = false;
@@ -299,13 +299,13 @@ void main() {
     st.sx = damp(st.sx, tx, .8);
     st.gate = damp(st.gate, now - lastAct > 2500 ? 1 : 0, 1);
     st.phase += dt * (2 * Math.PI / 16) * st.gate;
-    // the turn is measured from the B, not the middle of the screen: full swing at either edge wherever the B sits
-    // the turn follows the pointer's distance from the B, at the same rate on both sides: a full turn at the nearer
-    // screen edge (and on the far side at the same distance)
-    const D = Math.max(1, Math.min(B0.x, W - B0.x));
-    const u = .5 * Math.max(-1, Math.min(1, (st.mx * W - B0.x) / D)), v = st.my - .5, sc = Math.min(1, st.scroll / H);
-    // turn: the pointer turns the B up to +-12 degrees, scrolling turns it away by 18 (continuous, crossfaded frames)
-    const deg = 12 * soft(u * 2) - 18 * sc;
+    // The B turns towards the pointer at one rate everywhere: the whole width between the left edge and the B spans
+    // the frames on the left of the rest pose, and the right side turns at the same rate for as far as it reaches
+    // (frames rendered with more room on the left match it exactly). n: -1 at the left edge, 0 at the B.
+    const n = (st.mx * W - B0.x) / Math.max(1, B0.x);
+    const u = .5 * Math.max(-1, Math.min(1, n)), v = st.my - .5, sc = Math.min(1, st.scroll / H);
+    // in frames: the pointer's share of the frames left of rest (data-ta scales it), minus the scroll turning it away
+    const turnF = n * TURN.rest * FA - 18 * sc / (FD * TURN.step);
     if (TURN.ready) TURN.mix = Math.min(1, TURN.mix + dt / .6);              // ease from the still plate to the frames
     return {
       gx: 3 * w * (1 - outQuart((t - .05) / 2.0)) - st.scroll * .45,   // the glass only moves with the intro and scroll: no idle crawl
@@ -315,11 +315,12 @@ void main() {
       // one light sweep across the glass on load, then the light pool follows the pointer; at idle the light drifts
       pool: (() => { const k = outCubic((t - .4) / 2.4); const px = .72 + (st.sx - .5) * .36 + .07 * Math.sin(st.phase);
         return [-.25 + (px + .25) * k, .24 + v * .14 + .035 * Math.sin(st.phase * .63)]; })(),
-      frame: Math.max(0, Math.min(TURN.n - 1, TURN.rest + deg * FA / (FD * TURN.step))),
+      frame: Math.max(0, Math.min(TURN.n - 1, TURN.rest + turnF)),
       fade: outCubic((t - .1) / 1.2) * (1 - .35 * sc),
     };
   }
   function draw(s) {
+    if (DEBUG) window.__frame = s.frame;                   // tests read the turn
     gl.uniform1i(U.uPlate, 0); gl.uniform1i(U.uRefr, 1);
     gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform1f(U.uDpr, dpr);
     const turning = LOOK.turn > .5 && TURN.ready;   // the plate and the frames share one box, so the size never changes
