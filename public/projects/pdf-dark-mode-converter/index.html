@@ -85,10 +85,11 @@ a{color:inherit;text-decoration:none}
 .cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
 .cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
 .cs.flip figure{order:2}
-.cs figure{margin:0;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04);transition:box-shadow .35s}
+.cs figure{margin:0;position:relative;container-type:inline-size;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04);transition:box-shadow .35s}
 .cs figure picture{display:contents}
-/* the cover itself, contained in the 16:10 frame: 86% of its width, or 82% of its height (51.25% of its width) for tall pictures */
-.cs img.cv{display:block;aspect-ratio:var(--ar);width:min(86%, calc(51.25% * var(--ar)));height:auto}   /* the cover itself, framed: its box is exactly the picture */
+/* the cover itself, contained and centred in the 16:10 frame: 86% of its width, or 82% of its height (51.25% of its width)
+   for tall pictures; sized from the frame's width (container units), so nothing depends on the image file's own size */
+.cs img.cv{position:absolute;left:50%;top:50%;display:block;width:min(86cqw, calc(51.25cqw * var(--ar)));height:min(calc(86cqw / var(--ar)), 51.25cqw);translate:-50% -50%}   /* the cover itself, framed: its box is exactly the picture */
 .cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.12em}
 .cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.04em;line-height:.95;transition:color .25s}
 .cs-t p:not(.mono){margin:0 0 16px;color:var(--ash);font-size:var(--t-m);line-height:1.42;text-wrap:pretty}
