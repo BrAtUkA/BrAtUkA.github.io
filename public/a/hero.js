@@ -290,7 +290,8 @@ void main() {
   // the glass follows the pointer anywhere on the page while the hero is on screen (positions past its edges clamp)
   // with no pointer on the page the B rests in its own pose: the pointer counts as over the B, not the hero's middle
   let seen = false;
-  addEventListener('pointermove', (e) => { const r = hero.getBoundingClientRect(); if (r.bottom < 0) return;
+  const TOUCH_ONLY = !matchMedia('(any-pointer:fine)').matches;       // phones: a stray emulated mouse move must not steer the B
+  addEventListener('pointermove', (e) => { if (TOUCH_ONLY && e.pointerType === 'mouse') return; const r = hero.getBoundingClientRect(); if (r.bottom < 0) return;
     seen = true; tx = clamp01((e.clientX - r.left) / r.width); ty = clamp01((e.clientY - r.top) / r.height); lastAct = performance.now(); }, { passive: true });
   document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) { seen = false; ty = .5; } });
   addEventListener('scroll', () => { lastAct = performance.now(); }, { passive: true });
@@ -334,7 +335,7 @@ void main() {
     };
   }
   function draw(s) {
-    if (DEBUG) window.__frame = s.frame;                   // tests read the turn
+    if (DEBUG) { window.__frame = s.frame; window.__turn = { n: TURN.n, ready: TURN.ready, use: TURN.use, gyro: gyroOn, seen, tx }; }   // tests read the turn
     gl.uniform1i(U.uPlate, 0); gl.uniform1i(U.uRefr, 1);
     gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform1f(U.uDpr, dpr);
     const turning = LOOK.turn > .5 && TURN.ready;   // the plate and the frames share one box, so the size never changes
@@ -371,7 +372,29 @@ void main() {
   let lost = false;
   const start = () => { if (lost || POSTER || STILL || running || !visible || document.hidden || !ready || document.documentElement.classList.contains('lb-on')) return; running = true; last = 0; winStart = performance.now(); raf = requestAnimationFrame(frame); };
   const stop = () => { running = false; cancelAnimationFrame(raf); };
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? start() : stop(); }, { threshold: 0 }).observe(hero);
+  // Gyro (Android and other browsers that need no permission; iPhones would show a prompt, so they keep touch only):
+  // tilting the phone moves the same pointer target as the cursor. The way the phone is held when the page opens is
+  // neutral, and that slowly re-centres (about 4 s) so a new grip doesn't stick. About 12 degrees of tilt is a full swing.
+  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  const GYRO = !POSTER && !STILL && !reduce && !IOS && matchMedia('(pointer:coarse)').matches && 'DeviceOrientationEvent' in window;
+  let gyroOn = false, gBase = null, gLast = 0, gPrev = [0, 0];
+  const onTilt = (e) => {
+    if (e.beta == null || e.gamma == null) return;
+    const ang = (screen.orientation && screen.orientation.angle) || 0;            // landscape swaps the axes
+    const gx = ang === 90 ? e.beta : ang === 270 ? -e.beta : e.gamma, gy = ang === 90 ? -e.gamma : ang === 270 ? e.gamma : e.beta;
+    const now = performance.now(), dt = gLast ? Math.min(.25, (now - gLast) / 1000) : 0; gLast = now;
+    if (!gBase) gBase = [gx, gy];
+    gBase[0] += (gx - gBase[0]) * dt / 4; gBase[1] += (gy - gBase[1]) * dt / 4;
+    const d = Math.max(-1, Math.min(1, (gx - gBase[0]) / 12)), dy = Math.max(-1, Math.min(1, (gy - gBase[1]) / 12));
+    const bN = B0.x / Math.max(1, W);
+    seen = true; tx = clamp01(bN + d * (d < 0 ? bN : 1 - bN)); ty = clamp01(.5 + dy * .5);
+    if (Math.abs(gx - gPrev[0]) + Math.abs(gy - gPrev[1]) > .4) { lastAct = now; gPrev = [gx, gy]; }   // hand tremor alone doesn't count as activity
+  };
+  const gyro = (on) => {
+    if (!GYRO || on === gyroOn) return; gyroOn = on;
+    if (on) { gBase = null; gLast = 0; addEventListener('deviceorientation', onTilt); } else removeEventListener('deviceorientation', onTilt);
+  };
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; gyro(visible); visible ? start() : stop(); }, { threshold: 0 }).observe(hero);
   document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
   document.addEventListener('viewer:open', stop); document.addEventListener('viewer:close', start);   // the full-screen viewer covers the hero: no need to draw it
   addEventListener('resize', () => { layout(); if (!running && ready) draw(state(performance.now(), 0)); }, { passive: true });
