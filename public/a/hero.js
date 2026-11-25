@@ -41,6 +41,42 @@
   if (STILL) diag.mode = 'still (one frame, not animated)';
   // Without WebGL the still is put together from two pictures, the empty glass (tiled at the live reed width) and the
   // shape with the glass over it, placed by the same rules as the live hero (layout() below), so it fits any screen.
+  // Where the B goes. Beside the words on wide screens: its left edge stays clear of the text (measured, not
+  // guessed), its right edge inside the page gutter, and it shrinks to fit; with too little room it moves above the
+  // words, as on phones. vis = the visible B's left and right edge around the plate centre, in plate heights.
+  const textRight = () => {
+    const hr = hero.getBoundingClientRect(); let r = 0;
+    for (const el of hero.querySelectorAll('.intro h1, .intro p, .intro .acts, .intro .tabs')) {
+      const rg = document.createRange(); rg.selectNodeContents(el); const b = rg.getBoundingClientRect();
+      if (b.width) r = Math.max(r, b.right - hr.left);
+    }
+    return r;
+  };
+  const textTop = () => {
+    const hr = hero.getBoundingClientRect(), el = hero.querySelector('.intro h1'); if (!el) return 0;
+    const rg = document.createRange(); rg.selectNodeContents(el); const b = rg.getBoundingClientRect();
+    return b.height ? b.top - hr.top : 0;
+  };
+  const placeB = (W, H, asp, vis) => {
+    const o = hero.dataset; let wide = W / H > 1.1, Hb = 0, x = 0, y = 0;
+    if (wide) {
+      Hb = Math.min(H * (+o.size || .66), W * (+o.wcap || .4)); x = W * (+o.x || .68); y = H * (+o.y || .5);
+      if (o.avoid !== 'off') {
+        const g = Math.min(104, Math.max(16, W * .045)), tr = textRight() + W * .035, span = vis[1] - vis[0];
+        Hb = Math.min(Hb, (W - g - tr) / span);
+        x = Math.min(Math.max(x, tr - vis[0] * Hb), W - g - vis[1] * Hb);
+        if (Hb < H * .42) wide = false;
+      }
+    }
+    if (!wide) {
+      Hb = Math.min(H * (+o.sizeN || .38), W * .78 / asp); x = W * .5; y = H * (+o.yN || .32);
+      // above the words: if they start higher than the B ends, fit the B between the nav and the words
+      const tt = textTop(), top = Math.min(H * .14, 96), gap = H * .03;
+      if (tt > 0 && y + .48 * Hb > tt - gap) { Hb = Math.max(H * .16, Math.min(Hb, (tt - gap - top) / .96)); y = Math.max(top + .48 * Hb, tt - gap - .48 * Hb); }
+    }
+    return { wide, Hb, x, y };
+  };
+
   const fallback = (why) => {
     if (why) diag.why.push(String(why && why.message || why));
     diag.mode = 'picture (no live glass)'; diag.fps = ''; report();
@@ -53,17 +89,17 @@
     fetch(BASE + S + '.json' + V).then((r) => r.json()).then((G) => {
       let mode = '';
       const place = () => {
-        const r = hero.getBoundingClientRect(), W = r.width, H = r.height, o = hero.dataset, wide = W / H > 1.1;
+        const r = hero.getBoundingClientRect(), W = r.width, H = r.height, o = hero.dataset;
         const w = Math.max(22, Math.min(40, W / 40));
-        let Hb = wide ? Math.min(H * (+o.size || .66), W * (+o.wcap || .4)) : Math.min(H * (+o.sizeN || .38), W * .78 / G.pa);
-        Hb *= +o.k || 1.0105;
-        const x = wide ? W * (+o.x || .68) : W * .5, y = wide ? H * (+o.y || .5) : H * (+o.yN || .32), md = wide ? 'w' : 'n', c = G[md];
+        const P = placeB(W, H, G.pa, G.vis || [-.45, .45]), wide = P.wide, x = P.x, y = P.y;
+        const Hb = P.Hb * (+o.k || 1.0105), md = wide ? 'w' : 'n', c = G[md];
         if (md !== mode) { mode = md; img.src = `${BASE}${S}-${md}.webp${V}`; box.style.backgroundImage = `url(${BASE}${S}-${md}-glass.webp${V})`; }
         box.style.backgroundSize = `${w}px 100%`;                        // the glass strip is one reed wide
         img.style.width = c.wd * Hb + 'px'; img.style.height = c.ht * Hb + 'px';
         img.style.transform = `translate3d(${x + c.l * Hb}px, ${y + c.t * Hb}px, 0)`;
       };
       place(); addEventListener('resize', place, { passive: true });
+      if (document.fonts) document.fonts.ready.then(place);          // the words' width changes once the font is in
     }).catch(() => box.remove());
   };
 
@@ -218,21 +254,19 @@ void main() {
   let tier = FORCED >= 0 ? FORCED : (POSTER || STILL ? 0 : 1), ceiling = 0;
 
   const PLATE = { k: +hero.dataset.k || 1.0105, dx: +(hero.dataset.dx || .0011), dy: +(hero.dataset.dy || .0004) };                  // plate box vs the B inside it (from turn2/encode.py)
-  let W = 1, H = 1, dpr = 1, w = 30, Hb = 400, aspect = 1, B0 = { x: 0, y: 0 };
+  let W = 1, H = 1, dpr = 1, w = 30, Hb = 400, aspect = 1, B0 = { x: 0, y: 0 }, VIS = [-.45, .45];
   function layout() {
     const r = hero.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
     dpr = Math.min(window.devicePixelRatio || 1, TIERS[tier].dpr);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); gl.viewport(0, 0, cv.width, cv.height);
     w = Math.max(22, Math.min(40, W / 40));
-    const wide = W / H > 1.1;
-    const o = hero.dataset;                               // per-page placement (the home page uses the defaults)
-    Hb = wide ? Math.min(H * (+o.size || .66), W * (+o.wcap || .4)) : Math.min(H * (+o.sizeN || .38), W * .78 / aspect);
-    Hb *= PLATE.k;                                        // the plate box includes room for the B to turn
-    B0 = wide ? { x: W * (+o.x || .68), y: H * (+o.y || .5) } : { x: W * .5, y: H * (+o.yN || .32) };
-    if (POSTER) window.__geo = { W, H, Hb, x: B0.x, y: B0.y, w, aspect, k: PLATE.k, wide };   // for the still pictures (render_still.js)
+    const P = placeB(W, H, aspect, VIS), wide = P.wide;   // per-page placement (data-x, data-size, ... on the hero)
+    Hb = P.Hb * PLATE.k;                                  // the plate box includes room for the B to turn
+    B0 = { x: P.x, y: P.y };
+    if (POSTER) window.__geo = { W, H, Hb, x: B0.x, y: B0.y, w, aspect, k: PLATE.k, wide, vis: VIS };   // for the still pictures (render_still.js)
   }
 
-  const st = { scroll: 0, sv: 0, mx: .5, my: .5, vx: 0, vy: 0, sx: .5, gate: 1, phase: 0 };
+  const st = { scroll: 0, sv: 0, mx: -1, my: .5, vx: 0, vy: 0, sx: .5, gate: 1, phase: 0 };
   const COARSE = matchMedia('(pointer:coarse)').matches || innerWidth < 760 || (navigator.deviceMemory || 8) <= 4;
   // turntable: FN frames FD degrees apart, rest pose at frame FR (home B: 17 x 2.25 deg, rest 8); FA scales the swing.
   // Phones load every other frame.
@@ -242,9 +276,11 @@ void main() {
   const clamp01 = (x) => Math.min(1, Math.max(0, x));
   const outCubic = (x) => 1 - Math.pow(1 - clamp01(x), 3), outQuart = (x) => 1 - Math.pow(1 - clamp01(x), 4);
   // the glass follows the pointer anywhere on the page while the hero is on screen (positions past its edges clamp)
+  // with no pointer on the page the B rests in its own pose: the pointer counts as over the B, not the hero's middle
+  let seen = false;
   addEventListener('pointermove', (e) => { const r = hero.getBoundingClientRect(); if (r.bottom < 0) return;
-    tx = clamp01((e.clientX - r.left) / r.width); ty = clamp01((e.clientY - r.top) / r.height); lastAct = performance.now(); }, { passive: true });
-  document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) { tx = .5; ty = .5; } });
+    seen = true; tx = clamp01((e.clientX - r.left) / r.width); ty = clamp01((e.clientY - r.top) / r.height); lastAct = performance.now(); }, { passive: true });
+  document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) { seen = false; ty = .5; } });
   addEventListener('scroll', () => { lastAct = performance.now(); }, { passive: true });
 
   // critically damped spring: eases in and out, never overshoots, settles in about 4/omega seconds
@@ -252,10 +288,11 @@ void main() {
   const soft = (x) => { x = Math.max(-1, Math.min(1, x)); return x * (1.5 - .5 * x * x); };   // gentle at the edges of the hero
   function state(now, dt) {
     const t = (now - t0) / 1000;
+    if (st.mx < 0) st.mx = B0.x / W;                        // first frame: start at rest
     const damp = (c, g, tau) => g + (c - g) * Math.exp(-dt / tau);
     // fixed small sub-steps keep the springs stable on slow frames
     for (let k = 0, n = Math.max(1, Math.ceil(dt / .008)), h = dt / n; k < n; k++) {
-      [st.mx, st.vx] = spring(st.mx, st.vx, tx, 5.2, h);
+      [st.mx, st.vx] = spring(st.mx, st.vx, seen ? tx : B0.x / W, 5.2, h);
       [st.my, st.vy] = spring(st.my, st.vy, ty, 5.2, h);
       [st.scroll, st.sv] = spring(st.scroll, st.sv, Math.min(H, Math.max(0, window.scrollY)), 9, h);
     }
@@ -263,8 +300,10 @@ void main() {
     st.gate = damp(st.gate, now - lastAct > 2500 ? 1 : 0, 1);
     st.phase += dt * (2 * Math.PI / 16) * st.gate;
     // the turn is measured from the B, not the middle of the screen: full swing at either edge wherever the B sits
-    const bxN = B0.x / W, du = st.mx - bxN;
-    const u = .5 * (du < 0 ? du / Math.max(bxN, .05) : du / Math.max(1 - bxN, .05)), v = st.my - .5, sc = Math.min(1, st.scroll / H);
+    // the turn follows the pointer's distance from the B, at the same rate on both sides: a full turn at the nearer
+    // screen edge (and on the far side at the same distance)
+    const D = Math.max(1, Math.min(B0.x, W - B0.x));
+    const u = .5 * Math.max(-1, Math.min(1, (st.mx * W - B0.x) / D)), v = st.my - .5, sc = Math.min(1, st.scroll / H);
     // turn: the pointer turns the B up to +-12 degrees, scrolling turns it away by 18 (continuous, crossfaded frames)
     const deg = 12 * soft(u * 2) - 18 * sc;
     if (TURN.ready) TURN.mix = Math.min(1, TURN.mix + dt / .6);              // ease from the still plate to the frames
@@ -372,11 +411,19 @@ void main() {
     try {
       IMG.plate = plateImg; IMG.refr = refrImg;
       aspect = plateImg.naturalWidth / plateImg.naturalHeight;
+      try {                                                 // the visible B inside the plate (its alpha), for placeB
+        const c2 = document.createElement('canvas'), sw = 160, sh = Math.max(1, Math.round(160 / aspect));
+        c2.width = sw; c2.height = sh; const x2 = c2.getContext('2d', { willReadFrequently: true }); x2.drawImage(plateImg, 0, 0, sw, sh);
+        const a = x2.getImageData(0, 0, sw, sh).data; let l = sw, r = -1;
+        for (let yy = 0; yy < sh; yy++) for (let xx = 0; xx < sw; xx++) if (a[(yy * sw + xx) * 4 + 3] > 24) { if (xx < l) l = xx; if (xx > r) r = xx; }
+        if (r > l) VIS = [(l / sw - .5) * aspect, ((r + 1) / sw - .5) * aspect];
+      } catch (e) { /* keep the estimate */ }
       upload(0, plateImg, { premult: true });
       upload(1, refrImg, { repeat: true, mips: false });     // shifts must not be averaged across the seam
       layout();
     } catch (err) { console.error(err); fallback('could not set up the textures: ' + err.message); return; }
     ready = true; t0 = performance.now();
+    if (document.fonts) document.fonts.ready.then(() => { layout(); if (!running) draw(state(performance.now(), 0)); });
     if (LOOK.turn > 0 && !POSTER && !STILL && HAS_TURN) loadTurn();
     report();
     // test hook: ?lose loses the context 3 s in (?lose=hold keeps it lost) to check the recovery
