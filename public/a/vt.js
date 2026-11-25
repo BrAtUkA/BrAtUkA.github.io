@@ -16,6 +16,44 @@
 (() => {
   let done; window.__vtDone = new Promise((r) => { done = r; });
   const html = document.documentElement;
+  // Pages are prepared before the click: hovering a link to another page of the site (or pressing on it) has Chrome
+  // prerender it, so a transition starts on a page that is already loaded, laid out and painted. Not with Save-Data.
+  try {
+    if (HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules') && !(navigator.connection && navigator.connection.saveData)) {
+      const sr = document.createElement('script'); sr.type = 'speculationrules';
+      sr.textContent = JSON.stringify({ prerender: [{ where: { and: [{ href_matches: '/*' }, { not: { href_matches: '/a/*' } }, { not: { href_matches: '*.*' } },
+        { not: { selector_matches: '[target=_blank], .m, [download]' } }] }, eagerness: 'moderate' }] });
+      document.head.appendChild(sr);
+    }
+  } catch (e) { /* no prerendering */ }
+  // Where the browser doesn't prerender (other browsers, Chrome's limits, Save-Data aside): on hover or press, the
+  // destination's first pictures are fetched and decoded, so they are in the cache when its page draws and nothing
+  // loads in the middle of the transition.
+  const warmed = new Set();
+  function warm(a) {
+    if (!a || a.target === '_blank' || a.hasAttribute('download') || (navigator.connection && navigator.connection.saveData)) return;
+    let u; try { u = new URL(a.href, location.href); } catch (e) { return; }
+    if (u.origin !== location.origin || /^\/a\//.test(u.pathname) || /\.[a-z0-9]{2,5}$/i.test(u.pathname) || u.pathname === location.pathname || warmed.has(u.pathname)) return;
+    warmed.add(u.pathname);
+    fetch(u.pathname, { credentials: 'same-origin' }).then((r) => (r.ok ? r.text() : '')).then((t) => {
+      if (!t) return;
+      const d = new DOMParser().parseFromString(t, 'text/html'), abs = (v) => v.split(',').map((p) => { const [s, ...w] = p.trim().split(/\s+/); return [new URL(s, u).href, ...w].join(' '); }).join(', ');
+      [...d.querySelectorAll('main img')].filter((im) => im.getAttribute('loading') !== 'lazy').slice(0, 18).forEach((s) => {
+        const im = new Image(), pic = s.parentElement && s.parentElement.tagName === 'PICTURE' ? document.createElement('picture') : null;
+        if (pic) s.parentElement.querySelectorAll('source').forEach((so) => { const n = document.createElement('source');
+          ['type', 'media', 'sizes'].forEach((k) => so.hasAttribute(k) && n.setAttribute(k, so.getAttribute(k))); if (so.getAttribute('srcset')) n.srcset = abs(so.getAttribute('srcset')); pic.appendChild(n); });
+        if (s.getAttribute('sizes')) im.sizes = s.getAttribute('sizes');
+        if (s.getAttribute('srcset')) im.srcset = abs(s.getAttribute('srcset'));
+        if (pic) pic.appendChild(im);
+        im.src = new URL(s.getAttribute('src') || '', u).href; im.decode().catch(() => {});
+      });
+    }).catch(() => {});
+  }
+  let hov = 0;
+  const target = (e) => e.target && e.target.closest && e.target.closest('a[href]');
+  addEventListener('pointerover', (e) => { const a = target(e); clearTimeout(hov); if (a) hov = setTimeout(() => warm(a), 70); }, { passive: true });
+  addEventListener('pointerdown', (e) => warm(target(e)), { passive: true });
+  addEventListener('focusin', (e) => warm(target(e)));
   if (!('onpagereveal' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
   try {
     const q = new URLSearchParams(location.search).get('vtslow');
@@ -96,7 +134,7 @@
   const clear = () => {
     named.splice(0).forEach((el) => { el.style.viewTransitionName = ''; el.style.viewTransitionClass = ''; });
     if (dyn) { dyn.remove(); dyn = null; }
-    $$('.vt-rise-in').forEach((el) => { el.classList.remove('vt-rise-in'); el.style.removeProperty('--d'); });
+    $$('.vt-deal').forEach((el) => { el.classList.remove('vt-deal'); ['--d', '--fx', '--fy'].forEach((v) => el.style.removeProperty(v)); });
   };
   const imgOf = (el) => (el.tagName === 'IMG' ? el : el.querySelector('img'));
 
@@ -107,6 +145,7 @@
       if (!relevant(k, here, there) || !seen(el) || named.length > 40) continue;
       if (k.startsWith('t-') && here.k === 'home' && !el.closest(there.k === 'renders' ? '#art' : '#gallery')) continue;
       const r = el.getBoundingClientRect(), info = { ar: r.width / r.height };
+      if (k.startsWith('t-')) info.r = [r.left, r.top, r.width, r.height];
       if (isText(k)) { info.text = norm(el.textContent); info.lines = lines(el); }
       const im = imgOf(el); if (im && im.currentSrc) info.src = im.currentSrc;
       if (k.startsWith('t-')) { const e = edgeOf(el); if (e) info.edge = e; }
@@ -140,17 +179,35 @@
       if (im && info.src) handoff(im, info.src);
       name(el, k, edge); matched.add(k);
     }
-    // slots that found no partner leave with the page (their old capture fades out where it was)
-    for (const k of Object.keys(rec.keys)) if (!matched.has(k)) css(`::view-transition-old(${k}){display:block !important;animation:calc(.16s * var(--vtk)) cubic-bezier(.4, 0, 1, 1) both vt-out !important}`);
-    // the rest of the wall arrives band by band
-    if (here.k === 'renders' || here.k === 'gallery') {
-      const first = Math.min(...named.filter((el) => el.classList && el.classList.contains('m')).map((el) => el.getBoundingClientRect().top), innerHeight);
-      $$('main .wall .m').filter((t) => !matched.has(tileKey(t)) && seen(t)).forEach((t) => {
-        const d = Math.max(0, Math.min(.3, (t.getBoundingClientRect().top - first) / innerHeight * .35));
-        t.style.setProperty('--d', d.toFixed(3) + 's'); t.classList.add('vt-rise-in');
-      });
+    // slots that found no partner leave with the page (their old capture fades out where it was), except wall tiles
+    // coming home: those gather back under the preview they came out of
+    const pv = here.k === 'home' && there.k !== 'home' ? $((there.k === 'renders' ? '#art' : '#gallery') + ' .preview .grid') : null;
+    const block = pv && seen(pv) ? pv.getBoundingClientRect() : null;
+    for (const [k, info] of Object.entries(rec.keys)) {
+      if (matched.has(k)) continue;
+      if (block && info.r) {
+        const [x, y, w, h] = info.r, [dx, dy] = toward(block, x + w / 2, y + h / 2), n = 'vg-' + k;
+        css(`@keyframes ${n}{70%{opacity:.15}to{transform:translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(.82);opacity:0}}`);
+        css(`::view-transition-old(${k}){display:block !important;animation:calc(.3s * var(--vtk)) cubic-bezier(.5, 0, .75, .3) both ${n} !important}`);
+      } else css(`::view-transition-old(${k}){display:block !important;animation:calc(.2s * var(--vtk)) cubic-bezier(.4, 0, 1, 1) both vt-out !important}`);
+    }
+    // "See all": the rest of the wall is dealt out from under the preview's edges, nearest first
+    if ((here.k === 'renders' || here.k === 'gallery') && !traverse) {
+      const rs = named.filter((el) => el.classList && el.classList.contains('m')).map((el) => el.getBoundingClientRect());
+      if (rs.length) {
+        const B = { left: Math.min(...rs.map((r) => r.left)), top: Math.min(...rs.map((r) => r.top)), right: Math.max(...rs.map((r) => r.right)), bottom: Math.max(...rs.map((r) => r.bottom)) };
+        $$('main .wall .m').filter((t) => !matched.has(tileKey(t)) && seen(t)).forEach((t) => {
+          const r = t.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, [dx, dy] = toward(B, cx, cy);
+          const dist = Math.hypot(dx, dy);
+          t.style.setProperty('--fx', (dx * .9).toFixed(1) + 'px'); t.style.setProperty('--fy', (dy * .9).toFixed(1) + 'px');
+          t.style.setProperty('--d', Math.min(.28, dist / innerHeight * .32).toFixed(3) + 's'); t.classList.add('vt-deal');
+        });
+      }
     }
   }
+  // from a point to the nearest point inside a box (zero if it is inside)
+  function toward(B, x, y) { return [Math.min(Math.max(x, B.left), B.right) - x, Math.min(Math.max(y, B.top), B.bottom) - y]; }
+
   // the moving picture shows the image the old page had already decoded; responsive images come back afterwards
   function handoff(im, src) {
     const pic = im.parentElement, srcs = pic && pic.tagName === 'PICTURE' ? $$('source', pic) : [];

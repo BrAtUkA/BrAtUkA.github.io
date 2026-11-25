@@ -22,7 +22,6 @@ html.vt *{transition:none !important}               /* nothing half-animated in 
 /* "See all": the new page is simply there under the old one (which drops out above it); only the rest of the wall
    moves, rising band by band, so nothing is ever doubled */
 html:active-view-transition-type(expand)::view-transition-new(root){animation:none}
-html:active-view-transition-type(collapse)::view-transition-new(root){animation-name:vt-in}
 
 /* the header never moves */
 ::view-transition-group(top){animation:none;z-index:5}
@@ -52,8 +51,16 @@ html:active-view-transition-type(collapse)::view-transition-new(*.vt-fade){anima
 @keyframes vt-unfade{from{--vk:0}to{--vk:1}}
 @keyframes vt-refade{from{--vk:1}to{--vk:0}}
 
-/* the rest of the wall arrives band by band (vt.js sets --d per tile on the real page) */
-.vt-rise-in{animation:calc(.46s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc((.12s + var(--d, 0s)) * var(--vtk)) both vt-rise}
+/* "See all": the rest of the wall is dealt out from under the preview (vt.js sets --fx/--fy, the way back to the
+   preview's nearest edge, and --d, nearest first); it slides out from beneath the carried tiles */
+.vt-deal{animation:calc(.58s * var(--vtk)) cubic-bezier(.16, .84, .2, 1) calc((.1s + var(--d, 0s)) * var(--vtk)) both vt-deal}
+@keyframes vt-deal{from{opacity:0;transform:translate(var(--fx, 0px), var(--fy, 0px)) scale(.86)}40%{opacity:1}}
+/* the home page around the preview is pushed down and away by the unfolding wall instead of blinking out; it is
+   gone before the dealt tiles are, so the two never read as one picture */
+html:active-view-transition-type(expand)::view-transition-old(root){animation:calc(.26s * var(--vtk)) cubic-bezier(.4, 0, .7, .4) both vt-away;z-index:1}   /* above the new page, which is already there underneath */
+@keyframes vt-away{55%{opacity:.25}to{opacity:0;transform:translateY(56px) scale(.99)}}
+/* Back: the wall's other tiles gather under the preview first; the home page comes in as they go */
+html:active-view-transition-type(collapse)::view-transition-new(root){animation:calc(.34s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc(.22s * var(--vtk)) both vt-in}
 
 @keyframes vt-out{to{opacity:0}}
 @keyframes vt-in{from{opacity:0}}
