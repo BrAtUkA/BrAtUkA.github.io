@@ -20,8 +20,8 @@
 <link rel="apple-touch-icon" href="../../a/apple-touch-icon.png?v=7b0d26e1">
 <link rel="preload" href="../../a/fonts/geist-latin.woff2?v=91da2c05" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js')</script>
-<link rel="stylesheet" href="../../a/vt.css?v=50a8d8d1">
-<script src="../../a/vt.js?v=f1217f27"></script>
+<link rel="stylesheet" href="../../a/vt.css?v=3a9701b2">
+<script src="../../a/vt.js?v=7218da11"></script>
 <style>@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin-ext.woff2?v=c99ca7ca) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist';font-style:normal;font-weight:400 600;font-display:swap;src:url(../../a/fonts/geist-latin.woff2?v=91da2c05) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin-ext.woff2?v=c493e11b) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 500;font-display:swap;src:url(../../a/fonts/geist-mono-latin.woff2?v=d8f727de) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
 <style>
 /* Layout: the page is a dark room. One live object (the B behind reeded glass) opens it; after that the
@@ -85,18 +85,19 @@ a{color:inherit;text-decoration:none}
 .cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
 .cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
 .cs.flip figure{order:2}
-.cs figure{margin:0;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04);transition:box-shadow .35s}
-.cs img{display:block;width:100%;height:100%;object-fit:cover}
-.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.1em}
-.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
-.cs-t p:not(.mono){margin:0 0 16px;max-width:32rem;color:#cfc7c4;font-size:var(--t-m);line-height:1.6;text-wrap:pretty}
+.cs figure{margin:0;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:#0b0809;aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(255,255,255,.04);transition:box-shadow .35s}
+.cs figure picture{display:contents}
+.cs img.cv{display:block;aspect-ratio:var(--ar);width:auto;height:auto;max-width:86%;max-height:82%}   /* the cover itself, framed: its box is exactly the picture */
+.cs-t .mono{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;text-transform:uppercase;letter-spacing:.12em}
+.cs-t h3{margin:14px 0 12px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.04em;line-height:.95;transition:color .25s}
+.cs-t p:not(.mono){margin:0 0 16px;color:var(--ash);font-size:var(--t-m);line-height:1.42;text-wrap:pretty}
 .cs-t .st{text-transform:none;letter-spacing:.03em}
 .go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:var(--t-s);color:var(--bone)}
 .go svg{width:18px;height:18px;transition:transform .3s}
 .cs-rest{display:grid;grid-template-columns:max-content minmax(0, 1fr) auto 20px;column-gap:28px;list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
 .cs-rest li{display:contents}
 .cs-rest a{grid-column:1 / -1;display:grid;grid-template-columns:subgrid;row-gap:12px;align-items:baseline;padding-block:20px;border-bottom:1px solid var(--hair)}   /* subgrid: every title column is as wide as the longest title */
-.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.02em;white-space:nowrap;transition:color .2s}
+.cs-rest strong{font-weight:500;font-size:var(--t-l);letter-spacing:-.04em;line-height:.95;white-space:nowrap;transition:color .2s}
 .cs-rest .d{color:var(--ash);font-size:var(--t-s);line-height:1.5}
 .cs-rest .y{white-space:nowrap}
 .cs-rest svg{width:18px;height:18px;align-self:center;color:var(--ash);transition:color .2s, transform .3s}
@@ -122,17 +123,17 @@ a{color:inherit;text-decoration:none}
 .foot .home{display:inline-flex;align-items:center;gap:10px}
 .foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
 </style>
-<link rel="stylesheet" href="../../a/media.css?v=8f789860">
-<link rel="stylesheet" href="../../a/project.css?v=fa5d8e63">
+<link rel="stylesheet" href="../../a/media.css?v=1ed34ce4">
+<link rel="stylesheet" href="../../a/project.css?v=ad219376">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "spoti2yt", "description": "A Windows tray app that converts tracks and whole playlists between Spotify and YouTube, in both directions, from a global hotkey, with a matcher that handles lyric videos, live versions and fan uploads.", "url": "https://bratuka.dev/projects/spoti2yt/", "codeRepository": "https://github.com/BrAtUkA/spoti2yt", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/p/spoti2yt/convert-done-960.webp?v=c1cdc852"}</script>
 </head>
 <body class="pp">
 <header class="top gut"><div class="wrap"><a class="brand" href="../../">BrAtUkA</a><nav class="nav" aria-label="Site"><a href="../../projects/" aria-current="page">Projects</a><a href="../../renders/">Renders</a><a href="../../gallery/">Gallery</a><a href="../../#about" class="opt">About</a><a href="../../#contact">Contact</a></nav></div></header>
 <main class="p" data-list>
   <section class="p-hero gut"><div class="wrap">
-    <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span>Windows tray app · 2026</p>
-    <h1><img class="p-icon" src="../../a/p/spoti2yt/icon-256.webp?v=a94b54ea" alt="" width="256" height="256"><span>spoti2yt</span></h1>
-    <p class="p-tag">Copy a song link from Spotify or YouTube, press a hotkey, and the link for the other one is on your clipboard.</p>
+    <p class="p-kick mono"><a href="../../projects/">Projects</a><span aria-hidden="true">/</span><span class="vt-t">Windows tray app · 2026</span></p>
+    <h1><img class="p-icon" src="../../a/p/spoti2yt/icon-256.webp?v=a94b54ea" alt="" width="256" height="256"><span class="vt-t">spoti2yt</span></h1>
+    <p class="p-tag"><span class="vt-t">Copy a song link from Spotify or YouTube, press a hotkey, and the link for the other one is on your clipboard.</span></p>
     <div class="p-acts"><a class="link" href="https://github.com/BrAtUkA/spoti2yt/releases" target="_blank" rel="noopener">Download ↗</a><a class="link" href="https://github.com/BrAtUkA/spoti2yt" target="_blank" rel="noopener">Source ↗</a></div>
   </div></section>
   <div class="p-cover gut"><div class="wrap"><a class="m" href="../../a/p/spoti2yt/convert-done-1920.webp?v=0376f199" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/convert-done" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="A playlist converted to YouTube, with a match score for every track. Sample data." data-q="0376f199"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAABwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JZwDKAC0HpuZzmUAA/vB02Umt9LZQNm7iXRGmEwTb4fWnvNg1kxscupEIi4VFhxx8gKiDYRrjx18hz4j0Q7EAAAA=)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/convert-done-480.avif?v=0376f199 480w, ../../a/p/spoti2yt/convert-done-960.avif?v=0376f199 960w, ../../a/p/spoti2yt/convert-done-1440.avif?v=0376f199 1440w, ../../a/p/spoti2yt/convert-done-1920.avif?v=0376f199 1920w" sizes="(max-width:760px) 100vw, 1280px"><img src="../../a/p/spoti2yt/convert-done-960.webp?v=0376f199" srcset="../../a/p/spoti2yt/convert-done-480.webp?v=0376f199 480w, ../../a/p/spoti2yt/convert-done-960.webp?v=0376f199 960w, ../../a/p/spoti2yt/convert-done-1440.webp?v=0376f199 1440w, ../../a/p/spoti2yt/convert-done-1920.webp?v=0376f199 1920w" sizes="(max-width:760px) 100vw, 1280px" alt="spoti2yt converting a 14-track playlist to YouTube, with a match score on every row" width="1920" height="1320" fetchpriority=high decoding="async"></picture></a></div></div>
@@ -198,7 +199,7 @@ a{color:inherit;text-decoration:none}
 </ul>
 <div class="p-figs pair" style="max-width:3868px"><figure class="p-fi" style="--ar:1.4545"><a class="m" href="../../a/p/spoti2yt/settings-1920.webp?v=09b85b1b" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/settings" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="Settings: account, hotkeys and match behaviour." data-q="09b85b1b"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAAAwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JaWZAADc1VZGgAP7wokTWnC7Y0fHYXMNh+9HMPnn9dooAPibeBAAA)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/settings-480.avif?v=09b85b1b 480w, ../../a/p/spoti2yt/settings-960.avif?v=09b85b1b 960w, ../../a/p/spoti2yt/settings-1440.avif?v=09b85b1b 1440w, ../../a/p/spoti2yt/settings-1920.avif?v=09b85b1b 1920w" sizes="(max-width:760px) 100vw, 490px"><img src="../../a/p/spoti2yt/settings-960.webp?v=09b85b1b" srcset="../../a/p/spoti2yt/settings-480.webp?v=09b85b1b 480w, ../../a/p/spoti2yt/settings-960.webp?v=09b85b1b 960w, ../../a/p/spoti2yt/settings-1440.webp?v=09b85b1b 1440w, ../../a/p/spoti2yt/settings-1920.webp?v=09b85b1b 1920w" sizes="(max-width:760px) 100vw, 490px" alt="Settings: account, hotkeys and match behaviour." width="1920" height="1320" loading=lazy decoding="async"></picture></a><figcaption>Settings: account, hotkeys and match behaviour.</figcaption></figure><figure class="p-fi" style="--ar:1.4545"><a class="m" href="../../a/p/spoti2yt/history-1920.webp?v=5fa60158" style="--ar:1.4545;width:min(100%, 1920px)" data-full="../../a/p/spoti2yt/history" data-ws="480,960,1440,1920" data-w="1920" data-h="1320" data-cap="History, with each conversion&#x27;s score. A lightning bolt means it came from the cache." data-q="5fa60158"><i class="lq" style="background-image:url(data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAAAQAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JaQAAetCnSxgA/vCM5VxJoQ5UInI17kV7dXFOOY6yM1VXVZmHMQgA)"></i><picture><source type="image/avif" srcset="../../a/p/spoti2yt/history-480.avif?v=5fa60158 480w, ../../a/p/spoti2yt/history-960.avif?v=5fa60158 960w, ../../a/p/spoti2yt/history-1440.avif?v=5fa60158 1440w, ../../a/p/spoti2yt/history-1920.avif?v=5fa60158 1920w" sizes="(max-width:760px) 100vw, 490px"><img src="../../a/p/spoti2yt/history-960.webp?v=5fa60158" srcset="../../a/p/spoti2yt/history-480.webp?v=5fa60158 480w, ../../a/p/spoti2yt/history-960.webp?v=5fa60158 960w, ../../a/p/spoti2yt/history-1440.webp?v=5fa60158 1440w, ../../a/p/spoti2yt/history-1920.webp?v=5fa60158 1920w" sizes="(max-width:760px) 100vw, 490px" alt="History, with each conversion&#x27;s score. A lightning bolt means it came from the cache." width="1920" height="1320" loading=lazy decoding="async"></picture></a><figcaption>History, with each conversion's score. A lightning bolt means it came from the cache.</figcaption></figure></div></article>
   </div></div>
-  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><a class="p-nx prev" href="../../projects/comick-revive/"><span class="mono"><span aria-hidden="true">←</span> Previous</span><strong>ComicK Revive</strong><span class="t">A manga reader in your browser, with 70+ sources.</span></a><a class="p-all link" href="../../projects/">All projects</a><a class="p-nx next" href="../../projects/computer-use-agent/"><span class="mono">Next <span aria-hidden="true">→</span></span><strong>Computer-Use Agent</strong><span class="t">A local AI agent that uses your desktop for you.</span></a></div></nav>
+  <nav class="p-more gut" aria-label="More projects"><div class="wrap"><a class="p-nx prev" href="../../projects/comick-revive/"><span class="mono"><span aria-hidden="true">←</span> Previous</span><strong class="vt-t">ComicK Revive</strong><span class="t">A manga reader in your browser, with 70+ sources.</span></a><a class="p-all link" href="../../projects/">All projects</a><a class="p-nx next" href="../../projects/computer-use-agent/"><span class="mono">Next <span aria-hidden="true">→</span></span><strong class="vt-t">Computer-Use Agent</strong><span class="t">A local AI agent that uses your desktop for you.</span></a></div></nav>
 </main>
 <footer class="foot gut"><div class="wrap" style="display:contents"><a class="link home" href="../../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>bratuka.dev</a><a class="link" href="https://github.com/BrAtUkA" target="_blank" rel="noopener">GitHub ↗</a><span class="mono">© 2026 BrAtUkA</span></div></footer>
 <script src="../../a/media.js?v=d96e8177" defer></script>

@@ -1,47 +1,60 @@
 /* Page transitions (cross-document View Transitions: Chrome/Edge 126+, Safari 18.2+; other browsers navigate as
    usual; off with reduced motion). a/vt.js names the shared pieces for each navigation and adds its types.
+   Shared pieces are CARRIED, never crossfaded: both pages show the same pixels in the same proportions, only the
+   destination is captured, and it is moved and scaled from where the piece was. Everything else leaves first and
+   arrives after, so two layouts are never on screen together.
    --vtk scales every duration (?vtslow=5 for review). */
 @media (prefers-reduced-motion:no-preference){ @view-transition{navigation:auto} }
 :root{--vtk:1}
 html.vt *{transition:none !important}               /* nothing half-animated in the snapshots (hover styles are gated too) */
 
+/* paired texts: tight boxes, measures in em, so a scaled copy breaks its lines in the same places */
+.vt-t{display:inline-block;max-width:100%}
+.tg .vt-t,.p-tag .vt-t{max-width:24em}
+
 .top{view-transition-name:top}
 #glass{view-transition-name:glass}
 
-/* the page: the old one recedes, the new one rises */
-::view-transition-group(root){animation-duration:calc(.5s * var(--vtk))}
-::view-transition-old(root){animation:calc(.22s * var(--vtk)) cubic-bezier(.4, 0, 1, 1) both vt-out}
-::view-transition-new(root){animation:calc(.46s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc(.08s * var(--vtk)) both vt-rise}
+/* the page: the old one is gone before the new one comes in */
+::view-transition-group(root){animation-duration:calc(.62s * var(--vtk))}
+::view-transition-old(root){animation:calc(.16s * var(--vtk)) cubic-bezier(.4, 0, 1, 1) both vt-out}
+::view-transition-new(root){animation:calc(.42s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc(.16s * var(--vtk)) both vt-rise}
+/* "See all": the new page is simply there under the old one (which drops out above it); only the rest of the wall
+   moves, rising band by band, so nothing is ever doubled */
+html:active-view-transition-type(expand)::view-transition-new(root){animation:none}
+html:active-view-transition-type(collapse)::view-transition-new(root){animation-name:vt-in}
 
 /* the header never moves */
-::view-transition-group(top){animation:none;z-index:4}
+::view-transition-group(top){animation:none;z-index:5}
 ::view-transition-old(top){animation:none;opacity:0}
 ::view-transition-new(top){animation:none}
 
-/* the glass stays; the old frame is held until the new page's glass has drawn (vt.js), then dissolves */
-::view-transition-group(glass){animation-duration:calc(.5s * var(--vtk));z-index:1}
-::view-transition-old(glass){animation:calc(.32s * var(--vtk)) linear both vt-out}
+/* the glass stays; the old frame is held until the new page's glass has drawn (vt.js), then gives way */
+::view-transition-group(glass){animation-duration:calc(.62s * var(--vtk));z-index:1}
+::view-transition-old(glass){animation:calc(.24s * var(--vtk)) linear both vt-out}
 ::view-transition-new(glass){animation:none}
 
-/* shared pieces: one easing, above the glass */
-::view-transition-group(ttl),::view-transition-group(cov),::view-transition-group(*.vt-tile){
-  z-index:2;animation-duration:calc(.62s * var(--vtk));animation-timing-function:cubic-bezier(.22, .8, .16, 1)}
-::view-transition-group(*.vt-tile){animation-duration:calc(.66s * var(--vtk))}
+/* carried pieces (class vt-c): the old capture is not drawn; the new one fills the moving box */
+::view-transition-group(*.vt-c){z-index:3;animation-duration:calc(.64s * var(--vtk));animation-timing-function:cubic-bezier(.22, .8, .16, 1)}
+::view-transition-old(*.vt-c){display:none}
+::view-transition-new(*.vt-c){width:100%;height:100%;animation:none;mix-blend-mode:normal}
+::view-transition-image-pair(*.vt-c){isolation:auto}
+::view-transition-group(*.vt-tile){z-index:2}
 
-/* text: both captures fill the moving box, kept to their own shape and anchored left, so they stay on top of each
-   other at every size; the old fades out early, the new (captured at its final size, so it ends sharp) fades in */
-::view-transition-old(ttl),::view-transition-new(ttl){width:100%;height:100%;object-fit:contain;object-position:0 50%;mix-blend-mode:normal}
-::view-transition-old(ttl){animation:calc(.2s * var(--vtk)) cubic-bezier(.4, 0, 1, 1) both vt-out}
-::view-transition-new(ttl){animation:calc(.32s * var(--vtk)) ease-out calc(.1s * var(--vtk)) both vt-in}
+/* the preview's soft bottom edge, worn by the tiles it covered and lifted (or put back) as they move (vt.js sets
+   --a0/--a1, the edge's strength at a tile's top and bottom) */
+@property --vk{syntax:'<number>';inherits:false;initial-value:1}
+::view-transition-new(*.vt-fade){
+  -webkit-mask-image:linear-gradient(180deg, rgb(0 0 0 / calc(var(--a0, 1) + (1 - var(--a0, 1)) * var(--vk))), rgb(0 0 0 / calc(var(--a1, 1) + (1 - var(--a1, 1)) * var(--vk))));
+  mask-image:linear-gradient(180deg, rgb(0 0 0 / calc(var(--a0, 1) + (1 - var(--a0, 1)) * var(--vk))), rgb(0 0 0 / calc(var(--a1, 1) + (1 - var(--a1, 1)) * var(--vk))));
+  animation:calc(.5s * var(--vtk)) cubic-bezier(.3, .6, .2, 1) calc(.08s * var(--vtk)) both vt-unfade}
+html:active-view-transition-type(collapse)::view-transition-new(*.vt-fade){animation-name:vt-refade}
+@keyframes vt-unfade{from{--vk:0}to{--vk:1}}
+@keyframes vt-refade{from{--vk:1}to{--vk:0}}
 
-/* pictures: both fill the moving box (no stretching), the old dissolves into the new */
-::view-transition-image-pair(cov){overflow:hidden;border-radius:12px}
-::view-transition-old(cov),::view-transition-new(cov),::view-transition-old(*.vt-tile),::view-transition-new(*.vt-tile){width:100%;height:100%;object-fit:cover;mix-blend-mode:normal}
-::view-transition-new(cov){object-fit:contain}
-::view-transition-old(cov),::view-transition-old(*.vt-tile){z-index:1}   /* the old picture on top, dissolving onto the new one */
-::view-transition-old(cov),::view-transition-old(*.vt-tile){animation:calc(.36s * var(--vtk)) linear calc(.12s * var(--vtk)) both vt-out}
-::view-transition-new(cov),::view-transition-new(*.vt-tile){animation:none}
+/* the rest of the wall arrives band by band (vt.js sets --d per tile on the real page) */
+.vt-rise-in{animation:calc(.46s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc((.12s + var(--d, 0s)) * var(--vtk)) both vt-rise}
 
 @keyframes vt-out{to{opacity:0}}
 @keyframes vt-in{from{opacity:0}}
-@keyframes vt-rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes vt-rise{from{opacity:0;transform:translateY(16px)}}
