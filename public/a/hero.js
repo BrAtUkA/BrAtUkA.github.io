@@ -55,7 +55,7 @@
       const place = () => {
         const r = hero.getBoundingClientRect(), W = r.width, H = r.height, o = hero.dataset, wide = W / H > 1.1;
         const w = Math.max(22, Math.min(40, W / 40));
-        let Hb = wide ? Math.min(H * (+o.size || .66), W * .4) : Math.min(H * (+o.sizeN || .38), W * .78 / G.pa);
+        let Hb = wide ? Math.min(H * (+o.size || .66), W * (+o.wcap || .4)) : Math.min(H * (+o.sizeN || .38), W * .78 / G.pa);
         Hb *= +o.k || 1.0105;
         const x = wide ? W * (+o.x || .68) : W * .5, y = wide ? H * (+o.y || .5) : H * (+o.yN || .32), md = wide ? 'w' : 'n', c = G[md];
         if (md !== mode) { mode = md; img.src = `${BASE}${S}-${md}.webp${V}`; box.style.backgroundImage = `url(${BASE}${S}-${md}-glass.webp${V})`; }
@@ -226,7 +226,7 @@ void main() {
     w = Math.max(22, Math.min(40, W / 40));
     const wide = W / H > 1.1;
     const o = hero.dataset;                               // per-page placement (the home page uses the defaults)
-    Hb = wide ? Math.min(H * (+o.size || .66), W * .4) : Math.min(H * (+o.sizeN || .38), W * .78 / aspect);
+    Hb = wide ? Math.min(H * (+o.size || .66), W * (+o.wcap || .4)) : Math.min(H * (+o.sizeN || .38), W * .78 / aspect);
     Hb *= PLATE.k;                                        // the plate box includes room for the B to turn
     B0 = wide ? { x: W * (+o.x || .68), y: H * (+o.y || .5) } : { x: W * .5, y: H * (+o.yN || .32) };
     if (POSTER) window.__geo = { W, H, Hb, x: B0.x, y: B0.y, w, aspect, k: PLATE.k, wide };   // for the still pictures (render_still.js)

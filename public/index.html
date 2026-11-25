@@ -81,6 +81,26 @@ a{color:inherit;text-decoration:none}
 .acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
 @media (max-width:760px){ .nav a.opt{display:none} }
 
+/* ── hero layout lab (?hl=a|b|c, preview only): removed once one is picked ── */
+html[data-hl] .hero{height:max(560px, 100svh)}
+html[data-hl] .hero .wrap{max-width:none}
+html[data-hl] .hero .gut{padding-left:max(clamp(20px, 5.5vw, 120px), env(safe-area-inset-left, 0px));padding-right:max(clamp(20px, 5.5vw, 120px), env(safe-area-inset-right, 0px))}
+html[data-hl] .intro{bottom:clamp(44px, 11vh, 160px)}
+html[data-hl] .intro p{font-size:clamp(1rem, .86rem + .42vw, 1.4rem);max-width:min(36rem, 34ch + 6vw)}
+html[data-hl] .acts{font-size:clamp(.9375rem, .84rem + .25vw, 1.15rem)}
+/* A: edge to edge */
+html[data-hl=a] .intro h1{font-size:clamp(2.6rem, .9rem + 5.6vw, 8.6rem);max-width:10ch}
+/* B: the B large, the headline over its lower left */
+html[data-hl=b] .intro h1{font-size:clamp(2.8rem, .9rem + 6.6vw, 10rem);max-width:10ch;text-shadow:0 2px 40px rgba(6,4,5,.65)}
+html[data-hl=b] .intro p{text-shadow:0 1px 18px rgba(6,4,5,.9)}
+/* C: centred, the B above the words */
+@media (min-aspect-ratio:11/10){
+  html[data-hl=c] .intro .wrap{justify-items:center;text-align:center}
+  html[data-hl=c] .intro h1{font-size:clamp(2.6rem, .9rem + 4.8vw, 7.6rem);max-width:none}
+  html[data-hl=c] .intro p{margin-inline:auto}
+  html[data-hl=c] .intro{bottom:clamp(40px, 8vh, 110px)}
+}
+
 /* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
 .cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
 .cs.flip{grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr)}
@@ -313,7 +333,11 @@ document.getElementById('copy').addEventListener('click', async (e) => {
 });
 
 </script>
-<script src="a/hero.js?v=51802b90"></script>
+<script>/* hero layout lab (?hl=a|b|c, preview only): the placement each variant gives hero.js */
+(() => { const v = new URLSearchParams(location.search).get('hl'), h = document.querySelector('.hero');
+  const P = { a: { size: .8, x: .67, y: .47, wcap: .42 }, b: { size: .93, x: .63, y: .53, wcap: .54 }, c: { size: .56, x: .5, y: .37, wcap: .5 } };
+  if (!h || !P[v]) return; document.documentElement.dataset.hl = v; Object.assign(h.dataset, P[v]); })();</script>
+<script src="a/hero.js?v=54c0f917"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
 </body>
 </html>
