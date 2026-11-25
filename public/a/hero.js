@@ -16,12 +16,34 @@
   if (POSTER) document.documentElement.classList.add('poster-capture');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saveData = !!(navigator.connection && navigator.connection.saveData);
+  // why the hero is in the mode it is in: shown by ?debug (with a copy button), so a visitor can send it
+  const diag = { mode: 'live', why: [], renderer: '?', fps: '' };
+  if (reduce) diag.why.push('reduced motion (OS setting: on Windows, Settings > Accessibility > Visual effects > Animation effects)');
+  if (saveData) diag.why.push('Save-Data is on');
+  let dbg = null;
+  const report = () => {
+    if (!DEBUG) return;
+    if (!dbg) {
+      dbg = document.body.appendChild(document.createElement('div'));
+      dbg.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;max-width:min(560px, calc(100vw - 16px));font:12px/1.45 monospace;color:#ece6e3;background:#000c;padding:8px 10px;border-radius:6px;white-space:pre-wrap';
+      const b = dbg.appendChild(document.createElement('button')); b.textContent = 'copy';
+      b.style.cssText = 'float:right;margin:0 0 4px 10px;font:inherit;color:#060405;background:#ece6e3;border:0;border-radius:4px;padding:2px 8px;cursor:pointer';
+      b.onclick = () => navigator.clipboard && navigator.clipboard.writeText(dbg.dataset.t).then(() => { b.textContent = 'copied'; });
+      dbg.appendChild(document.createElement('span'));
+    }
+    const t = [`hero: ${diag.mode}${diag.why.length ? ' because ' + diag.why.join('; ') : ''}`, `renderer: ${diag.renderer}`,
+      `browser: ${navigator.userAgent}`, `screen: ${innerWidth}x${innerHeight} @${devicePixelRatio}x`, diag.fps].filter(Boolean).join('\n');
+    dbg.dataset.t = t; dbg.lastChild.textContent = t;
+  };
   // Reduced motion, Save-Data or software-only graphics: the real glass, drawn once at the real size (and again on
   // resize), never animated. Only without WebGL at all does a still picture stand in (see fallback).
   let STILL = !POSTER && (reduce || saveData);
+  if (STILL) diag.mode = 'still (one frame, not animated)';
   // Without WebGL the still is put together from two pictures, the empty glass (tiled at the live reed width) and the
   // shape with the glass over it, placed by the same rules as the live hero (layout() below), so it fits any screen.
-  const fallback = () => {
+  const fallback = (why) => {
+    if (why) diag.why.push(String(why && why.message || why));
+    diag.mode = 'picture (no live glass)'; diag.fps = ''; report();
     if (cv.parentNode) cv.remove();
     const S = hero.dataset.still; if (!S || hero.querySelector('.still')) return;
     const box = document.createElement('div'); box.className = 'still'; box.setAttribute('aria-hidden', 'true');
@@ -45,15 +67,22 @@
     }).catch(() => box.remove());
   };
 
+  if (flags.get('gl') === 'off') { fallback('turned off with ?gl=off'); return; }   // testing: the picture fallback
   let gl = null;
   try { gl = cv.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: POSTER }); } catch (e) { gl = null; }
-  if (!gl) { fallback(); return; }
+  if (!gl) {
+    const v1 = (() => { try { return !!document.createElement('canvas').getContext('webgl'); } catch (e) { return false; } })();
+    fallback(v1 ? 'WebGL 2 is not available (WebGL 1 is)' : 'WebGL is not available (graphics acceleration off or blocked)'); return;
+  }
   // no hardware graphics (software rasterisers such as SwiftShader or llvmpipe): the live glass would run on the CPU
   // and block the page, so show the still poster instead (?gl=force keeps it for testing)
   try {
     const dbgInfo = gl.getExtension('WEBGL_debug_renderer_info');
     const renderer = String(gl.getParameter(dbgInfo ? dbgInfo.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
-    if (!POSTER && flags.get('gl') !== 'force' && /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) STILL = true;   // one frame is fine on the CPU; animating is not
+    diag.renderer = renderer;
+    if (!POSTER && flags.get('gl') !== 'force' && /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) {   // one frame is fine on the CPU; animating is not
+      STILL = true; diag.mode = 'still (one frame, not animated)'; diag.why.push('software graphics: ' + renderer);
+    }
   } catch (e) { /* if the renderer can't be read, keep the live hero */ }
 
   const FS = `#version 300 es
@@ -166,15 +195,17 @@ void main() {
   const compile = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
     if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
   let pr, U = {};
-  try {
+  // program and geometry; run again after a lost context comes back
+  function setup() {
     pr = gl.createProgram(); gl.attachShader(pr, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, compile(gl.FRAGMENT_SHADER, FS));
     gl.bindAttribLocation(pr, 0, 'p'); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
-  } catch (e) { console.error(e); fallback(); return; }
-  gl.useProgram(pr);
-  ['uPlate','uRefr','uRes','uDpr','uBc','uBsz','uGx','uW','uBias','uFade','uPool','uRefrK','uShade','uBack','uLz','uLh','uLw','uRough','uSpecI','uEnvI','uLoff','uFil','uPipe','uPipeBase','uSig','uTurn','uTurnOn','uFrame','uFrames','uStripX','uStripW','uDark','uSide'].forEach(n => U[n] = gl.getUniformLocation(pr, n));
+    gl.useProgram(pr); U = {};
+    ['uPlate','uRefr','uRes','uDpr','uBc','uBsz','uGx','uW','uBias','uFade','uPool','uRefrK','uShade','uBack','uLz','uLh','uLw','uRough','uSpecI','uEnvI','uLoff','uFil','uPipe','uPipeBase','uSig','uTurn','uTurnOn','uFrame','uFrames','uStripX','uStripW','uDark','uSide'].forEach(n => U[n] = gl.getUniformLocation(pr, n));
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  }
+  try { setup(); } catch (e) { console.error(e); fallback('shader error: ' + e.message); return; }
 
   /* look */
   const LOOK = { bias: 0, refrK: .5, shade: .35, lz: .25, lh: .14, lw: .04, rough: .05, specI: .17, envI: 1.1, stripX: .93, stripW: .05, dark: .18, loff: .45, fil: .6, pipe: .65, pipeBase: .12, sig: .7, turn: 1, back: [6 / 255, 4 / 255, 5 / 255] };
@@ -263,7 +294,6 @@ void main() {
   }
 
   let running = false, visible = true, raf = 0, win = 0, winN = 0, winStart = 0, goodSince = 0, lastChange = 0;
-  const dbg = DEBUG ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:8px;bottom:8px;z-index:99;font:12px/1.4 monospace;color:#ece6e3;background:#000a;padding:6px 8px' }) : null;
   function setTier(n, now) { tier = n; lastChange = now; goodSince = 0; layout(); }
   function frame(now) {
     if (!running) return;
@@ -277,18 +307,39 @@ void main() {
         else if (avg < 17.6) { goodSince = goodSince || now; if (tier - 1 >= ceiling && now - goodSince > 3000 && now - lastChange > 3000) setTier(tier - 1, now); }
         else goodSince = 0;
       }
-      if (dbg) dbg.textContent = `${Math.round(1000 / avg)} fps · tier ${tier} · dpr ${dpr} · ${cv.width}×${cv.height} · flute ${w.toFixed(1)}px`;
+      if (DEBUG) { diag.fps = `${Math.round(1000 / avg)} fps · tier ${tier} · dpr ${dpr} · ${cv.width}×${cv.height} · flute ${w.toFixed(1)}px`; report(); }
       win = 0; winN = 0; winStart = now;
     }
     raf = requestAnimationFrame(frame);
   }
-  const start = () => { if (POSTER || STILL || running || !visible || document.hidden || !ready || document.documentElement.classList.contains('lb-on')) return; running = true; last = 0; winStart = performance.now(); raf = requestAnimationFrame(frame); };
+  let lost = false;
+  const start = () => { if (lost || POSTER || STILL || running || !visible || document.hidden || !ready || document.documentElement.classList.contains('lb-on')) return; running = true; last = 0; winStart = performance.now(); raf = requestAnimationFrame(frame); };
   const stop = () => { running = false; cancelAnimationFrame(raf); };
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? start() : stop(); }, { threshold: 0 }).observe(hero);
   document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
   document.addEventListener('viewer:open', stop); document.addEventListener('viewer:close', start);   // the full-screen viewer covers the hero: no need to draw it
   addEventListener('resize', () => { layout(); if (!running && ready) draw(state(performance.now(), 0)); }, { passive: true });
-  cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); fallback(); });
+  // A lost context (driver reset, a laptop switching graphics chips, too many tabs) usually comes back: wait for it and
+  // rebuild. Only if it stays lost, or is lost again, does the still picture stand in.
+  let losses = 0, lostTimer = 0;
+  cv.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault(); stop(); losses++; lost = true; diag.mode = 'paused (graphics context lost)';
+    diag.why.push(`graphics context lost (${losses}x)`); report();
+    clearTimeout(lostTimer);
+    lostTimer = setTimeout(() => fallback('the lost context did not come back'), losses > 1 ? 0 : 2500);
+  });
+  cv.addEventListener('webglcontextrestored', () => {
+    if (losses > 1 || !cv.parentNode) return;
+    clearTimeout(lostTimer); lost = false; diag.mode = 'live';
+    try {
+      setup();
+      if (IMG.plate) { upload(0, IMG.plate, { premult: true }); upload(1, IMG.refr, { repeat: true, mips: false }); }
+      if (TURN.ims) uploadTurn(TURN.ims);
+      layout();
+    } catch (err) { console.error(err); fallback('could not rebuild after a lost context: ' + err.message); return; }
+    diag.why.push('context restored'); report();
+    if (POSTER || STILL) draw(state(performance.now(), 0)); else start();
+  });
 
   const load = (src) => new Promise((res, rej) => { const im = new Image(); im.decoding = 'async'; im.onload = () => res(im); im.onerror = rej; im.src = src; });
   const upload = (unit, im, { premult = false, repeat = false, mips = true } = {}) => {
@@ -299,8 +350,8 @@ void main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   };
-  function loadTurn() {                                   // turntable frames load after the hero is up, into one texture array
-    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${i * TURN.step}.webp${hero.dataset.tv ? '?v=' + hero.dataset.tv : ''}`))).then((ims) => {
+  const IMG = {};
+  function uploadTurn(ims) {
       const w0 = ims[0].naturalWidth, h0 = ims[0].naturalHeight, lv = 1 + Math.floor(Math.log2(Math.max(w0, h0)));
       const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
@@ -310,18 +361,25 @@ void main() {
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       TURN.aspect = w0 / h0; TURN.ready = true;
-    }).catch((e) => console.warn('turn frames unavailable', e));
+  }
+  function loadTurn() {                                   // turntable frames load after the hero is up, into one texture array
+    Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${i * TURN.step}.webp${hero.dataset.tv ? '?v=' + hero.dataset.tv : ''}`)))
+      .then((ims) => { TURN.ims = ims; uploadTurn(ims); }).catch((e) => console.warn('turn frames unavailable', e));
   }
   Promise.all([load(PLATE_SRC), load(BASE + 'a/glass-refraction.png')]).then(([plateImg, refrImg]) => {
     try {
+      IMG.plate = plateImg; IMG.refr = refrImg;
       aspect = plateImg.naturalWidth / plateImg.naturalHeight;
       upload(0, plateImg, { premult: true });
       upload(1, refrImg, { repeat: true, mips: false });     // shifts must not be averaged across the seam
       layout();
-    } catch (err) { console.error(err); fallback(); return; }
+    } catch (err) { console.error(err); fallback('could not set up the textures: ' + err.message); return; }
     ready = true; t0 = performance.now();
     if (LOOK.turn > 0 && !POSTER && !STILL && HAS_TURN) loadTurn();
+    report();
+    // test hook: ?lose loses the context 3 s in (?lose=hold keeps it lost) to check the recovery
+    if (flags.has('lose')) { const ext = gl.getExtension('WEBGL_lose_context'); setTimeout(() => { ext.loseContext(); if (flags.get('lose') !== 'hold') setTimeout(() => ext.restoreContext(), 800); }, 3000); }
     if (POSTER || STILL) { t0 -= 10000; st.gate = 0; lastAct = performance.now(); const s0 = state(performance.now(), 0); s0.gx += +(flags.get('gx') || 0); draw(s0); if (POSTER) window.__posterReady = true; return; }
     start();
-  }).catch(fallback);
+  }).catch((e) => fallback('the hero images did not load: ' + (e && e.type || e)));
 })();
