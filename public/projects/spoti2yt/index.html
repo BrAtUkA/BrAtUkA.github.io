@@ -34,15 +34,17 @@
   --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
   --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
-  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
-  --max:1280px;
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.6rem, .9rem + 5.6vw, 8.6rem);
+  --max:110rem;   /* with the page gutter below: the content reaches the page edges, centred only past ~1980px */
 }
 *{box-sizing:border-box}
 html,body{background:var(--void);color:var(--bone)}
 body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 a{color:inherit;text-decoration:none}
 :focus-visible{outline:2px solid var(--signal);outline-offset:4px}
-.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.gut{padding-left:max(clamp(16px, 5.5vw, 120px), env(safe-area-inset-left, 0px));padding-right:max(clamp(16px, 5.5vw, 120px), env(safe-area-inset-right, 0px))}
+/* past 1920px the whole site grows with the window (a 4K screen at 150% is a 2560px window): sizes in rem follow */
+@media (min-width:1921px){ html{font-size:min(calc(100vw / 120), 30px)} }
 .wrap{max-width:var(--max);margin:0 auto}
 .mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
 .link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
@@ -50,7 +52,7 @@ a{color:inherit;text-decoration:none}
 ::selection{background:var(--signal);color:var(--void)}
 
 /* ── hero ── */
-.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+.hero{position:relative;z-index:1;height:max(560px, 100svh);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
 #glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
 .still{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#000;background-repeat:repeat-x;background-position:0 0}   /* no WebGL: glass + shape, placed like the live hero */
 .still img{position:absolute;left:0;top:0;display:block;max-width:none;
@@ -64,13 +66,21 @@ a{color:inherit;text-decoration:none}
 .brand img{width:22px;height:auto;display:block}
 .nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
 .nav a:hover{color:var(--bone)}
-.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(44px, 11vh, 10rem)}
 .intro .wrap{display:grid;gap:22px}
-.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
-.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:10ch;text-wrap:balance}
+.intro p{margin:0;max-width:36rem;color:var(--ash);font-size:clamp(1rem, .86rem + .42vw, 1.4rem)}
 .intro p strong{color:var(--bone);font-weight:500}
-.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:clamp(.9375rem, .84rem + .25vw, 1.15rem)}
 @media (max-width:760px){ .nav a.opt{display:none} }
+
+/* ── hero layout C (?hl=c, preview only, to compare with A): centred, the B above the words ── */
+@media (min-aspect-ratio:11/10){
+  html[data-hl=c] .intro .wrap{justify-items:center;text-align:center}
+  html[data-hl=c] .intro h1{font-size:clamp(2.6rem, .9rem + 4.8vw, 7.6rem);max-width:none}
+  html[data-hl=c] .intro p{margin-inline:auto}
+  html[data-hl=c] .intro{bottom:clamp(40px, 8vh, 7rem)}
+}
 
 /* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
 .cs{display:grid;grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr);gap:clamp(24px, 4.4vw, 72px);align-items:center;padding-block:clamp(26px, 3.6vw, 48px);border-top:1px solid var(--hair)}
@@ -114,7 +124,7 @@ a{color:inherit;text-decoration:none}
 .foot .home svg{width:18px;height:18px;transform:scaleX(-1)}
 </style>
 <link rel="stylesheet" href="../../a/media.css?v=95f4ac7f">
-<link rel="stylesheet" href="../../a/project.css?v=0e81f031">
+<link rel="stylesheet" href="../../a/project.css?v=ce41a66f">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "spoti2yt", "description": "A Windows tray app that converts tracks and whole playlists between Spotify and YouTube, in both directions, from a global hotkey, with a matcher that handles lyric videos, live versions and fan uploads.", "url": "https://bratuka.dev/projects/spoti2yt/", "codeRepository": "https://github.com/BrAtUkA/spoti2yt", "author": {"@type": "Person", "name": "BrAtUkA", "url": "https://bratuka.dev/"}, "dateCreated": "2026", "image": "https://bratuka.dev/a/p/spoti2yt/convert-done-960.webp?v=c1cdc852"}</script>
 </head>
 <body class="pp">

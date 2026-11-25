@@ -28,7 +28,7 @@
 
 /* ── body: facts beside the writing ── */
 .p-body{padding-top:clamp(44px, 6vw, 92px)}
-.p-grid{display:grid;grid-template-columns:minmax(0, 210px) minmax(0, 1fr);gap:clamp(36px, 6vw, 100px);align-items:start}
+.p-grid{display:grid;grid-template-columns:minmax(0, 13rem) minmax(0, 1fr);gap:clamp(36px, 6vw, 100px);align-items:start}
 .p-rail{position:sticky;top:28px;font-size:var(--t-s)}
 .p-facts{display:grid;gap:14px;margin:0}
 .p-facts div{padding-top:10px;border-top:1px solid var(--hair)}
@@ -44,7 +44,7 @@
 .p-toc a.on{border-left-color:var(--signal)}
 
 /* ── the writing ── */
-.p-art{min-width:0;max-width:980px}
+.p-art{min-width:0;max-width:61rem}
 .p-art > :is(p, ul, ol, h2, h3, blockquote, pre, .p-note, .p-keys){max-width:68ch}
 .p-art p,.p-art li{font-size:clamp(1.0625rem, 1rem + .2vw, 1.1875rem);line-height:1.72;color:#cfc7c4;text-wrap:pretty}
 .p-art p{margin:0 0 1.15em}

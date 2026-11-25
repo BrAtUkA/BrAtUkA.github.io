@@ -43,15 +43,17 @@
   --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
   --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
-  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.4rem, 1.4rem + 4.6vw, 5.2rem);
-  --max:1280px;
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem); --t-hero:clamp(2.6rem, .9rem + 5.6vw, 8.6rem);
+  --max:110rem;   /* with the page gutter below: the content reaches the page edges, centred only past ~1980px */
 }
 *{box-sizing:border-box}
 html,body{background:var(--void);color:var(--bone)}
 body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 a{color:inherit;text-decoration:none}
 :focus-visible{outline:2px solid var(--signal);outline-offset:4px}
-.gut{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.gut{padding-left:max(clamp(16px, 5.5vw, 120px), env(safe-area-inset-left, 0px));padding-right:max(clamp(16px, 5.5vw, 120px), env(safe-area-inset-right, 0px))}
+/* past 1920px the whole site grows with the window (a 4K screen at 150% is a 2560px window): sizes in rem follow */
+@media (min-width:1921px){ html{font-size:min(calc(100vw / 120), 30px)} }
 .wrap{max-width:var(--max);margin:0 auto}
 .mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
 .link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
@@ -59,7 +61,7 @@ a{color:inherit;text-decoration:none}
 ::selection{background:var(--signal);color:var(--void)}
 
 /* ── hero ── */
-.hero{position:relative;z-index:1;height:clamp(560px, 92vh, 940px);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
+.hero{position:relative;z-index:1;height:max(560px, 100svh);overflow:hidden;isolation:isolate}   /* above the page's glass objects: they emerge from under it */
 #glass{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
 .still{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#000;background-repeat:repeat-x;background-position:0 0}   /* no WebGL: glass + shape, placed like the live hero */
 .still img{position:absolute;left:0;top:0;display:block;max-width:none;
@@ -73,32 +75,20 @@ a{color:inherit;text-decoration:none}
 .brand img{width:22px;height:auto;display:block}
 .nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
 .nav a:hover{color:var(--bone)}
-.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(36px, 7vh, 80px)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(44px, 11vh, 10rem)}
 .intro .wrap{display:grid;gap:22px}
-.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:11ch;text-wrap:balance}
-.intro p{margin:0;max-width:34rem;color:var(--ash);font-size:var(--t-m)}
+.intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:10ch;text-wrap:balance}
+.intro p{margin:0;max-width:36rem;color:var(--ash);font-size:clamp(1rem, .86rem + .42vw, 1.4rem)}
 .intro p strong{color:var(--bone);font-weight:500}
-.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:var(--t-s)}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:clamp(.9375rem, .84rem + .25vw, 1.15rem)}
 @media (max-width:760px){ .nav a.opt{display:none} }
 
-/* ── hero layout lab (?hl=a|b|c, preview only): removed once one is picked ── */
-html[data-hl] .hero{height:max(560px, 100svh)}
-html[data-hl] .hero .wrap{max-width:none}
-html[data-hl] .hero .gut{padding-left:max(clamp(20px, 5.5vw, 120px), env(safe-area-inset-left, 0px));padding-right:max(clamp(20px, 5.5vw, 120px), env(safe-area-inset-right, 0px))}
-html[data-hl] .intro{bottom:clamp(44px, 11vh, 160px)}
-html[data-hl] .intro p{font-size:clamp(1rem, .86rem + .42vw, 1.4rem);max-width:min(36rem, 34ch + 6vw)}
-html[data-hl] .acts{font-size:clamp(.9375rem, .84rem + .25vw, 1.15rem)}
-/* A: edge to edge */
-html[data-hl=a] .intro h1{font-size:clamp(2.6rem, .9rem + 5.6vw, 8.6rem);max-width:10ch}
-/* B: the B large, the headline over its lower left */
-html[data-hl=b] .intro h1{font-size:clamp(2.8rem, .9rem + 6.6vw, 10rem);max-width:10ch;text-shadow:0 2px 40px rgba(6,4,5,.65)}
-html[data-hl=b] .intro p{text-shadow:0 1px 18px rgba(6,4,5,.9)}
-/* C: centred, the B above the words */
+/* ── hero layout C (?hl=c, preview only, to compare with A): centred, the B above the words ── */
 @media (min-aspect-ratio:11/10){
   html[data-hl=c] .intro .wrap{justify-items:center;text-align:center}
   html[data-hl=c] .intro h1{font-size:clamp(2.6rem, .9rem + 4.8vw, 7.6rem);max-width:none}
   html[data-hl=c] .intro p{margin-inline:auto}
-  html[data-hl=c] .intro{bottom:clamp(40px, 8vh, 110px)}
+  html[data-hl=c] .intro{bottom:clamp(40px, 8vh, 7rem)}
 }
 
 /* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
@@ -199,7 +189,7 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
 </style>
 </head>
 <body>
-<section class="hero" id="top" aria-label="Introduction" data-still="a/hero-still" data-sv="a025c53c" data-plate="a/hero-home.webp?v=a55af265" data-turn="a/turn-home/b" data-tv="1812c86f" data-k="1" data-dx="0" data-dy="0" data-tn="33" data-tr="16" data-td=".45" data-ta=".4">
+<section class="hero" id="top" aria-label="Introduction" data-still="a/hero-still" data-sv="a025c53c" data-plate="a/hero-home.webp?v=a55af265" data-turn="a/turn-home/b" data-tv="1812c86f" data-k="1" data-dx="0" data-dy="0" data-tn="33" data-tr="16" data-td=".45" data-ta=".4" data-x=".71" data-y=".47" data-size=".8" data-wcap=".42">
   <canvas id="glass" aria-hidden="true"></canvas>
   <header class="top gut">
     <div class="wrap">
@@ -333,11 +323,10 @@ document.getElementById('copy').addEventListener('click', async (e) => {
 });
 
 </script>
-<script>/* hero layout lab (?hl=a|b|c, preview only): the placement each variant gives hero.js */
-(() => { const v = new URLSearchParams(location.search).get('hl'), h = document.querySelector('.hero');
-  const P = { a: { size: .8, x: .67, y: .47, wcap: .42 }, b: { size: .93, x: .63, y: .53, wcap: .54 }, c: { size: .56, x: .5, y: .37, wcap: .5 } };
-  if (!h || !P[v]) return; document.documentElement.dataset.hl = v; Object.assign(h.dataset, P[v]); })();</script>
-<script src="a/hero.js?v=54c0f917"></script>
+<script>/* hero layout C (?hl=c, preview only): the placement it gives hero.js */
+(() => { const h = document.querySelector('.hero');
+  if (h && new URLSearchParams(location.search).get('hl') === 'c') { document.documentElement.dataset.hl = 'c'; Object.assign(h.dataset, { size: .56, x: .5, y: .37, wcap: .5 }); } })();</script>
+<script src="a/hero.js?v=a975307e"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7843eeedb74a474bb600a71c283bb00d"}'></script>
 </body>
 </html>

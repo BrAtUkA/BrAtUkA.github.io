@@ -28,9 +28,7 @@ button[aria-pressed=true]{color:var(--bone);border-color:#5a4a50;background:#161
 <div class="bar">
   <h1>Hero layout</h1>
   <div class="grp" id="v"><span>Layout</span>
-    <button data-v="" aria-pressed="false">Now</button>
-    <button data-v="a" aria-pressed="true">A · Edge to edge</button>
-    <button data-v="b" aria-pressed="false">B · Big B</button>
+    <button data-v="" aria-pressed="true">A · Edge to edge (now live)</button>
     <button data-v="c" aria-pressed="false">C · Centred</button>
   </div>
   <div class="grp" id="s"><span>Screen</span>
@@ -38,6 +36,7 @@ button[aria-pressed=true]{color:var(--bone);border-color:#5a4a50;background:#161
     <button data-s="1920x1080" aria-pressed="true">1920×1080</button>
     <button data-s="2560x1440">2560×1440</button>
     <button data-s="3440x1440">3440×1440</button>
+    <button data-s="3840x2160">3840×2160</button>
     <button data-s="390x844">Phone</button>
   </div>
   <a class="b" id="open" href="../../?hl=a" target="_blank" rel="noopener">Open full size ↗</a>
@@ -46,12 +45,10 @@ button[aria-pressed=true]{color:var(--bone);border-color:#5a4a50;background:#161
 <div class="stage" id="stage"><span class="dim" id="dim"></span><iframe class="screen" id="f" title="Home page preview"></iframe></div>
 <script>
 const NOTES = {
-  '': '<b>Now:</b> the current hero. Everything sits in a 1280px column, the hero stops at 940px tall and the headline stops growing, so big screens feel condensed.',
-  a: '<b>A · Edge to edge:</b> the hero fills the screen height, the words sit on the page edge instead of the middle column, and the headline and the B keep growing on big screens.',
-  b: '<b>B · Big B:</b> the B is much larger and slightly to the left, so the headline sits over its lower-left part. Most dramatic; the words stay readable over the glass.',
-  c: '<b>C · Centred:</b> the B centred above the words, the words centred under it. Calm and symmetric; on phones it is the same as now.',
+  '': '<b>A · Edge to edge</b> (now the real hero): the words on the page edge, the B to the right. The whole site now grows past 1920px wide, so a 4K screen looks like a bigger 1080p.',
+  c: '<b>C · Centred:</b> the B centred above the words, the words centred under it. Calm and symmetric; on phones it is the same as A.',
 };
-let v = 'a', s = '1920x1080';
+let v = '', s = '1920x1080';
 const f = document.getElementById('f'), stage = document.getElementById('stage');
 function fit() {
   const [w, h] = s.split('x').map(Number), r = stage.getBoundingClientRect();

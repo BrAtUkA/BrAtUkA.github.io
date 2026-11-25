@@ -262,7 +262,9 @@ void main() {
     st.sx = damp(st.sx, tx, .8);
     st.gate = damp(st.gate, now - lastAct > 2500 ? 1 : 0, 1);
     st.phase += dt * (2 * Math.PI / 16) * st.gate;
-    const u = st.mx - .5, v = st.my - .5, sc = Math.min(1, st.scroll / H);
+    // the turn is measured from the B, not the middle of the screen: full swing at either edge wherever the B sits
+    const bxN = B0.x / W, du = st.mx - bxN;
+    const u = .5 * (du < 0 ? du / Math.max(bxN, .05) : du / Math.max(1 - bxN, .05)), v = st.my - .5, sc = Math.min(1, st.scroll / H);
     // turn: the pointer turns the B up to +-12 degrees, scrolling turns it away by 18 (continuous, crossfaded frames)
     const deg = 12 * soft(u * 2) - 18 * sc;
     if (TURN.ready) TURN.mix = Math.min(1, TURN.mix + dt / .6);              // ease from the still plate to the frames
