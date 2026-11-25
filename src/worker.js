@@ -81,11 +81,19 @@ export default {
     }
 
     if (path.startsWith('/a/m/')) return media(request, env, decodeURIComponent(path.slice(5)));
+    const review = url.hostname.endsWith('.workers.dev') || url.hostname === 'preview.bratuka.dev';
+    // the design labs are for review only: on the real site they don't exist (the 404 page, as for any missing path)
+    if (!review && (path === '/lab' || path.startsWith('/lab/'))) {
+      const nf = await env.ASSETS.fetch(new Request(new URL('/404.html', url), request));
+      const out = new Response(nf.body, { status: 404, headers: nf.headers });
+      for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
+      out.headers.set('x-robots-tag', 'noindex'); out.headers.set('cache-control', 'public, max-age=0, must-revalidate');
+      return out;
+    }
     let res = await env.ASSETS.fetch(request);
     if (res.status === 200 && /\.(mp4|webm)$/.test(path)) res = await ranged(request, res);   // Safari plays video only with 206 replies
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
-    const review = url.hostname.endsWith('.workers.dev') || url.hostname === 'preview.bratuka.dev';
     if (review) out.headers.set('x-robots-tag', 'noindex, nofollow');   // review previews stay out of search
     const type = out.headers.get('content-type') || '';
     if (path.startsWith('/a/')) out.headers.set('cache-control', 'public, max-age=604800, stale-while-revalidate=86400');   // renders: a week
