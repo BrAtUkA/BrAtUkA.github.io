@@ -55,12 +55,6 @@
   .wall .m:nth-last-child(2):not([data-q="1"]):has(+ .m.tall), .wall .m.tall:nth-last-child(2):not([data-q="1"]) + .m{grid-row:span 4}
   .preview{--fade:150px}
 }
-/* the full pages: a slim header above the wall, the counterpart of the home page's section heading */
-.wall-head{display:flex;align-items:baseline;gap:14px;padding-block:clamp(22px, 3vw, 40px) clamp(12px, 1.4vw, 18px)}
-.wall-head h2{margin:0;font-size:var(--t-xl);font-weight:500;letter-spacing:-.04em;line-height:.95}
-.wall-head h2 span{display:inline-block}
-.wall-head .mono{color:var(--ash)}
-
 /* game filter: quiet text tabs, one at a time; a thin red line slides under the active one */
 .tabs{position:relative;display:flex;gap:clamp(18px, 3vw, 32px);margin-top:clamp(14px, 2.4vw, 22px);max-width:100%;overflow-x:auto;scrollbar-width:none;
   padding-bottom:10px;-webkit-overflow-scrolling:touch}

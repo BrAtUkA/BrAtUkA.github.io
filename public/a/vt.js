@@ -48,7 +48,7 @@
       $$('#art .m, #gallery .m').forEach((t) => add(tileKey(t), t));
     }
     if (here.k === 'renders' || here.k === 'gallery') {
-      add('h-' + here.k, $('.wall-head h2 span'));
+      add('h-' + here.k, $('.hero .intro h1 .vt-t'));
       $$('main .wall .m').forEach((t) => add(tileKey(t), t));
     }
     if (here.k === 'projects') add('h-projects', $('.p-hero h1 .vt-t'));
