@@ -228,20 +228,26 @@ void main() {
   fragColor = vec4(min(col, 1.) + (ign - .5) / 255., 1.);
 }`;
   const VS = '#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }';
-  const compile = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
-  let pr, U = {};
+  // The shaders compile in the background (KHR_parallel_shader_compile where the driver has it): nothing asks for the
+  // result until the images are in, so the compile never blocks the page (or a page transition) on its own.
+  gl.getExtension('KHR_parallel_shader_compile');
+  let pr, U = {}, SH = [];
+  const compile = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); SH.push(s); return s; };
   // program and geometry; run again after a lost context comes back
-  function setup() {
-    pr = gl.createProgram(); gl.attachShader(pr, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, compile(gl.FRAGMENT_SHADER, FS));
-    gl.bindAttribLocation(pr, 0, 'p'); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+  function setupStart() {
+    SH = []; pr = gl.createProgram(); gl.attachShader(pr, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, compile(gl.FRAGMENT_SHADER, FS));
+    gl.bindAttribLocation(pr, 0, 'p'); gl.linkProgram(pr);
+  }
+  function setupFinish() {
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(SH.map((x) => gl.getShaderInfoLog(x)).join(' ') || gl.getProgramInfoLog(pr));
     gl.useProgram(pr); U = {};
     ['uPlate','uRefr','uRes','uDpr','uBc','uBsz','uGx','uW','uBias','uFade','uPool','uRefrK','uShade','uBack','uLz','uLh','uLw','uRough','uSpecI','uEnvI','uLoff','uFil','uPipe','uPipeBase','uSig','uTurn','uTurnOn','uFrame','uFrames','uStripX','uStripW','uDark','uSide'].forEach(n => U[n] = gl.getUniformLocation(pr, n));
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
   }
-  try { setup(); } catch (e) { console.error(e); fallback('shader error: ' + e.message); return; }
+  const setup = () => { setupStart(); setupFinish(); };
+  try { setupStart(); } catch (e) { console.error(e); fallback('shader error: ' + e.message); return; }
 
   /* look */
   const LOOK = { bias: 0, refrK: .5, shade: .35, lz: .25, lh: .14, lw: .04, rough: .05, specI: .17, envI: 1.1, stripX: .93, stripW: .05, dark: .18, loff: .45, fil: .6, pipe: .65, pipeBase: .12, sig: .7, turn: 1, back: [6 / 255, 4 / 255, 5 / 255] };
@@ -334,7 +340,9 @@ void main() {
       fade: outCubic((t - .1) / 1.2) * (1 - .35 * sc),
     };
   }
+  let drew = false;
   function draw(s) {
+    if (!drew) { drew = true; requestAnimationFrame(() => dispatchEvent(new Event('glass:ready'))); }   // a/vt.js holds the old glass until now
     if (DEBUG) { window.__frame = s.frame; window.__turn = { n: TURN.n, ready: TURN.ready, use: TURN.use, gyro: gyroOn, seen, tx }; }   // tests read the turn
     gl.uniform1i(U.uPlate, 0); gl.uniform1i(U.uRefr, 1);
     gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform1f(U.uDpr, dpr);
@@ -421,6 +429,10 @@ void main() {
   });
 
   const load = (src) => new Promise((res, rej) => { const im = new Image(); im.decoding = 'async'; im.onload = () => res(im); im.onerror = rej; im.src = src; });
+  // decoded (and premultiplied) off the main thread, so the upload is a plain copy
+  const bitmap = (im, premult) => window.createImageBitmap
+    ? createImageBitmap(im, { premultiplyAlpha: premult ? 'premultiply' : 'none', colorSpaceConversion: 'none' }).catch(() => im) : Promise.resolve(im);
+  const dims = (im) => [im.naturalWidth || im.width, im.naturalHeight || im.height];
   const upload = (unit, im, { premult = false, repeat = false, mips = true } = {}) => {
     const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premult); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
@@ -431,7 +443,7 @@ void main() {
   };
   const IMG = {};
   function uploadTurn(ims) {
-      const w0 = ims[0].naturalWidth, h0 = ims[0].naturalHeight, lv = 1 + Math.floor(Math.log2(Math.max(w0, h0)));
+      const [w0, h0] = dims(ims[0]), lv = 1 + Math.floor(Math.log2(Math.max(w0, h0)));
       const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
       gl.texStorage3D(gl.TEXTURE_2D_ARRAY, lv, gl.RGBA8, w0, h0, TURN.n);
@@ -444,12 +456,13 @@ void main() {
   function loadTurn() {                                   // turntable frames load after the hero is up, into one texture array
     pickRange(WIDE);
     Promise.all(Array.from({ length: TURN.n }, (_, i) => load(`${TURN_SRC}${TURN.i0 + i * TURN.step}.webp${hero.dataset.tv ? '?v=' + hero.dataset.tv : ''}`)))
-      .then((ims) => { TURN.ims = ims; uploadTurn(ims); }).catch((e) => console.warn('turn frames unavailable', e));
+      .then((ims) => Promise.all(ims.map((im) => bitmap(im, true)))).then((ims) => { TURN.ims = ims; uploadTurn(ims); }).catch((e) => console.warn('turn frames unavailable', e));
   }
-  Promise.all([load(PLATE_SRC), load(BASE + 'a/glass-refraction.png')]).then(([plateImg, refrImg]) => {
+  Promise.all([load(PLATE_SRC).then((im) => bitmap(im, true)), load(BASE + 'a/glass-refraction.png').then((im) => bitmap(im, false))]).then(([plateImg, refrImg]) => {
+    try { setupFinish(); } catch (e) { console.error(e); fallback('shader error: ' + e.message); return; }
     try {
       IMG.plate = plateImg; IMG.refr = refrImg;
-      aspect = plateImg.naturalWidth / plateImg.naturalHeight;
+      aspect = dims(plateImg)[0] / dims(plateImg)[1];
       try {                                                 // the visible B inside the plate (its alpha), for placeB
         const c2 = document.createElement('canvas'), sw = 160, sh = Math.max(1, Math.round(160 / aspect));
         c2.width = sw; c2.height = sh; const x2 = c2.getContext('2d', { willReadFrequently: true }); x2.drawImage(plateImg, 0, 0, sw, sh);
@@ -462,8 +475,14 @@ void main() {
       layout();
     } catch (err) { console.error(err); fallback('could not set up the textures: ' + err.message); return; }
     ready = true; t0 = performance.now();
+    // arriving from another page of the site: no intro (no fade-up, slide or light sweep), the glass is simply there
+    try {
+      const from = window.navigation && navigation.activation && navigation.activation.from;
+      const ref = from ? from.url : document.referrer;
+      if (ref && new URL(ref).origin === location.origin && !POSTER) { t0 -= 10000; st.gate = 0; lastAct = performance.now(); }
+    } catch (e) { /* keep the intro */ }
     if (document.fonts) document.fonts.ready.then(() => { layout(); if (!running) draw(state(performance.now(), 0)); });
-    if (LOOK.turn > 0 && !POSTER && !STILL && HAS_TURN) loadTurn();
+    if (LOOK.turn > 0 && !POSTER && !STILL && HAS_TURN) (window.__vtDone || Promise.resolve()).then(() => setTimeout(loadTurn, 60));   // after any page transition: decoding and uploading the frames is heavy
     report();
     // test hook: ?lose loses the context 3 s in (?lose=hold keeps it lost) to check the recovery
     if (flags.has('lose')) { const ext = gl.getExtension('WEBGL_lose_context'); setTimeout(() => { ext.loseContext(); if (flags.get('lose') !== 'hold') setTimeout(() => ext.restoreContext(), 800); }, 3000); }

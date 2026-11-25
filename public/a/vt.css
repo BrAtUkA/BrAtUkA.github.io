@@ -1,0 +1,47 @@
+/* Page transitions (cross-document View Transitions: Chrome/Edge 126+, Safari 18.2+; other browsers navigate as
+   usual; off with reduced motion). a/vt.js names the shared pieces for each navigation and adds its types.
+   --vtk scales every duration (?vtslow=5 for review). */
+@media (prefers-reduced-motion:no-preference){ @view-transition{navigation:auto} }
+:root{--vtk:1}
+html.vt *{transition:none !important}               /* nothing half-animated in the snapshots (hover styles are gated too) */
+
+.top{view-transition-name:top}
+#glass{view-transition-name:glass}
+
+/* the page: the old one recedes, the new one rises */
+::view-transition-group(root){animation-duration:calc(.5s * var(--vtk))}
+::view-transition-old(root){animation:calc(.22s * var(--vtk)) cubic-bezier(.4, 0, 1, 1) both vt-out}
+::view-transition-new(root){animation:calc(.46s * var(--vtk)) cubic-bezier(.2, .7, .2, 1) calc(.08s * var(--vtk)) both vt-rise}
+
+/* the header never moves */
+::view-transition-group(top){animation:none;z-index:4}
+::view-transition-old(top){animation:none;opacity:0}
+::view-transition-new(top){animation:none}
+
+/* the glass stays; the old frame is held until the new page's glass has drawn (vt.js), then dissolves */
+::view-transition-group(glass){animation-duration:calc(.5s * var(--vtk));z-index:1}
+::view-transition-old(glass){animation:calc(.32s * var(--vtk)) linear both vt-out}
+::view-transition-new(glass){animation:none}
+
+/* shared pieces: one easing, above the glass */
+::view-transition-group(ttl),::view-transition-group(cov),::view-transition-group(*.vt-tile){
+  z-index:2;animation-duration:calc(.62s * var(--vtk));animation-timing-function:cubic-bezier(.22, .8, .16, 1)}
+::view-transition-group(*.vt-tile){animation-duration:calc(.66s * var(--vtk))}
+
+/* text: both captures fill the moving box, kept to their own shape and anchored left, so they stay on top of each
+   other at every size; the old fades out early, the new (captured at its final size, so it ends sharp) fades in */
+::view-transition-old(ttl),::view-transition-new(ttl){width:100%;height:100%;object-fit:contain;object-position:0 50%;mix-blend-mode:normal}
+::view-transition-old(ttl){animation:calc(.2s * var(--vtk)) cubic-bezier(.4, 0, 1, 1) both vt-out}
+::view-transition-new(ttl){animation:calc(.32s * var(--vtk)) ease-out calc(.1s * var(--vtk)) both vt-in}
+
+/* pictures: both fill the moving box (no stretching), the old dissolves into the new */
+::view-transition-image-pair(cov){overflow:hidden;border-radius:12px}
+::view-transition-old(cov),::view-transition-new(cov),::view-transition-old(*.vt-tile),::view-transition-new(*.vt-tile){width:100%;height:100%;object-fit:cover;mix-blend-mode:normal}
+::view-transition-new(cov){object-fit:contain}
+::view-transition-old(cov),::view-transition-old(*.vt-tile){z-index:1}   /* the old picture on top, dissolving onto the new one */
+::view-transition-old(cov),::view-transition-old(*.vt-tile){animation:calc(.36s * var(--vtk)) linear calc(.12s * var(--vtk)) both vt-out}
+::view-transition-new(cov),::view-transition-new(*.vt-tile){animation:none}
+
+@keyframes vt-out{to{opacity:0}}
+@keyframes vt-in{from{opacity:0}}
+@keyframes vt-rise{from{opacity:0;transform:translateY(14px)}}

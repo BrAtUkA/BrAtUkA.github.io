@@ -35,7 +35,8 @@
     const mc = navigator.mediaCapabilities, cfg = ct => ({type: 'file', video: {contentType: ct, width: 1920, height: 1080, bitrate: 6e6, framerate: 30}});
     const probe = mc && mc.decodingInfo ? Promise.all([mc.decodingInfo(cfg(AV1)).catch(() => ({})), mc.decodingInfo(cfg(HEVC)).catch(() => ({}))])
       .then(([a, h]) => { PREF = a.supported && a.powerEfficient ? 'av1' : h.supported && h.powerEfficient ? 'hevc' : 'av1'; }) : Promise.resolve();
-    Promise.race([probe, new Promise(r => setTimeout(r, 400))]).then(() => { picked = true; schedule(); });
+    // loops start once any page transition is over (starting videos mid-transition is what made renders/gallery hitch)
+    Promise.all([Promise.race([probe, new Promise(r => setTimeout(r, 400))]), window.__vtDone || 0]).then(() => { picked = true; schedule(); });
   })();
   let viewing = false;                                // the viewer covers the page (not while it closes)
   function attach(t) {

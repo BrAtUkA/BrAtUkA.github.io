@@ -11,7 +11,7 @@
   -webkit-mask-image:linear-gradient(180deg, #000 35%, transparent);mask-image:linear-gradient(180deg, #000 35%, transparent)}   /* the hero's reeds, as a faint echo */
 .p-kick{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 clamp(16px, 2vw, 24px);text-transform:uppercase;letter-spacing:.12em}
 .p-kick a{color:var(--bone);transition:color .2s}
-.p-kick a:hover{color:var(--signal)}
+:where(:root:not(.vt)) .p-kick a:hover{color:var(--signal)}
 .p-kick span{color:#4d4246}
 .p-hero h1{display:flex;align-items:center;gap:clamp(14px, 1.8vw, 24px);margin:0;font-size:var(--t-sec);font-weight:500;letter-spacing:-.04em;line-height:.95}
 .p-icon{width:clamp(42px, 5vw, 68px);height:auto;flex:none;border-radius:22%;box-shadow:0 10px 30px -12px #000}
@@ -35,12 +35,12 @@
 .p-facts dt{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--ash)}
 .p-facts dd{margin:4px 0 0;line-height:1.45}
 .p-facts dd a{color:var(--bone);background-image:linear-gradient(var(--hair), var(--hair));background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;transition:color .2s, background-image .2s}
-.p-facts dd a:hover{color:var(--signal)}
+:where(:root:not(.vt)) .p-facts dd a:hover{color:var(--signal)}
 .p-toc{margin-top:36px}
 .p-toc > p{margin:0;text-transform:uppercase;letter-spacing:.08em}
 .p-toc ol{display:grid;gap:1px;margin:10px 0 0;padding:0;list-style:none}
 .p-toc a{display:block;padding:5px 0 5px 12px;border-left:1px solid var(--hair);color:var(--ash);line-height:1.35;transition:color .2s, border-color .2s}
-.p-toc a:hover,.p-toc a.on{color:var(--bone)}
+:where(:root:not(.vt)) .p-toc a:hover,.p-toc a.on{color:var(--bone)}
 .p-toc a.on{border-left-color:var(--signal)}
 
 /* ── the writing ── */
@@ -51,7 +51,7 @@
 .p-art strong{color:var(--bone);font-weight:600}
 .p-art em{color:var(--bone)}
 .p-art a{color:var(--bone);background-image:linear-gradient(var(--signal), var(--signal));background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;transition:color .2s}
-.p-art a:hover{color:var(--signal)}
+:where(:root:not(.vt)) .p-art a:hover{color:var(--signal)}
 .p-art h2{margin:clamp(60px, 7vw, 100px) 0 22px;font-size:var(--t-xl);font-weight:500;letter-spacing:-.025em;line-height:1.1;scroll-margin-top:24px}
 .p-art > h2:first-child{margin-top:0}
 .p-art ul{margin:0 0 1.4em;padding:0;list-style:none}
@@ -99,7 +99,7 @@
 .p-cmp-c button{display:inline-flex;align-items:center;gap:7px;padding:6px 11px 6px 7px;border:1px solid var(--hair);border-radius:999px;background:transparent;
   font:inherit;font-family:var(--f-mono);font-size:var(--t-xs);color:var(--ash);cursor:pointer;transition:color .2s, border-color .2s}
 .p-cmp-c button i{width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255, 255, 255, .18)}
-.p-cmp-c button:hover{color:var(--bone)}
+:where(:root:not(.vt)) .p-cmp-c button:hover{color:var(--bone)}
 .p-cmp-c button[aria-pressed=true]{color:var(--bone);border-color:#4a3c41}
 .p-cmp figcaption{max-width:68ch;margin:14px auto 0;text-align:center;font-size:var(--t-s);line-height:1.55;color:var(--ash)}
 .p-fi figcaption,.p-dg figcaption{max-width:68ch;margin-top:12px;font-size:var(--t-s);line-height:1.55;color:var(--ash)}
@@ -156,7 +156,7 @@ kbd{padding:3px 7px;border:1px solid #3a2f33;border-bottom-width:2px;border-radi
 .pi-arch h2{margin:0;font-size:var(--t-xl);font-weight:500;letter-spacing:-.025em}
 .pi-sub{margin:10px 0 clamp(20px, 2.6vw, 32px);color:var(--ash);font-size:var(--t-s)}
 .cs-rest.ext svg{transform:rotate(-45deg)}
-@media (hover:hover) and (pointer:fine){ .cs-rest.ext a:hover svg{transform:rotate(-45deg) translateX(3px)} }
+@media (hover:hover) and (pointer:fine){ :where(:root:not(.vt)) .cs-rest.ext a:hover svg{transform:rotate(-45deg) translateX(3px)} }
 
 /* ── more projects ── */
 .p-more{margin-top:clamp(72px, 9vw, 132px);border-top:1px solid var(--hair)}
@@ -164,7 +164,7 @@ kbd{padding:3px 7px;border:1px solid #3a2f33;border-bottom-width:2px;border-radi
 .p-nx{display:grid;gap:6px;max-width:30rem}
 .p-nx.next{justify-self:end;text-align:right}
 .p-nx strong{font-size:var(--t-l);font-weight:500;letter-spacing:-.02em;transition:color .2s}
-.p-nx:hover strong{color:var(--signal)}
+:where(:root:not(.vt)) .p-nx:hover strong{color:var(--signal)}
 .p-nx .t{font-size:var(--t-s);line-height:1.45;color:var(--ash)}
 .p-all{font-size:var(--t-s)}
 

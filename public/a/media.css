@@ -12,7 +12,7 @@
 .m video{opacity:0;transition:opacity .6s ease}
 .m video.on{opacity:1}
 .m::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg, rgba(0,0,0,.28), transparent 38%);opacity:0;transition:opacity .4s}
-@media (hover:hover){ .m:hover img{transform:scale(1.02)} .m:hover::after{opacity:1} }
+@media (hover:hover){ :where(:root:not(.vt)) .m:hover img{transform:scale(1.02)} :where(:root:not(.vt)) .m:hover::after{opacity:1} }
 .m:focus-visible{outline:2px solid var(--signal)}
 
 /* ── home previews: a bento that fades out into the call to action ── */
@@ -52,8 +52,8 @@
   transition:border-color .3s, background-color .3s}
 .cta-btn .n{font-family:var(--f-mono);font-size:var(--t-xs);color:var(--ash);letter-spacing:.04em}
 .cta-btn svg{width:18px;height:18px;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
-.cta-btn:hover{border-color:var(--signal);background:rgba(28,10,13,.8)}
-.cta-btn:hover svg{transform:translateX(4px)}
+:where(:root:not(.vt)) .cta-btn:hover{border-color:var(--signal);background:rgba(28,10,13,.8)}
+:where(:root:not(.vt)) .cta-btn:hover svg{transform:translateX(4px)}
 
 /* ── full pages: the same organic bento as the home previews, edge to edge, repeating every 15 tiles
    (positions come from media.js; without it every tile takes a plain 4 x 3 slot) ── */
@@ -81,7 +81,7 @@
 .tabs::-webkit-scrollbar{display:none}
 .tabs button{flex:0 0 auto;border:0;background:none;padding:6px 0;color:var(--ash);font:500 var(--t-s) var(--f-sans);letter-spacing:.005em;cursor:pointer;
   white-space:nowrap;transition:color .3s;-webkit-tap-highlight-color:transparent}
-.tabs button:hover{color:var(--bone)}
+:where(:root:not(.vt)) .tabs button:hover{color:var(--bone)}
 .tabs button[aria-selected=true]{color:var(--bone)}
 .tabs button:focus-visible{outline:2px solid var(--signal);outline-offset:4px;border-radius:3px}
 .tabs-line{position:absolute;left:0;bottom:4px;height:1.5px;width:0;background:var(--signal);border-radius:1px;
@@ -128,7 +128,7 @@ html{scrollbar-gutter:stable}
 .lb-x{position:absolute;pointer-events:auto;top:max(3px, env(safe-area-inset-top, 0px));right:max(6px, env(safe-area-inset-right, 0px));width:40px;height:40px;
   display:grid;place-items:center;border:0;border-radius:50%;background:rgba(10,8,9,.35);color:var(--bone);cursor:pointer;padding:0;transition:background-color .25s}
 .lb-x svg{width:20px;height:20px}
-.lb-x:hover{background:rgba(40,32,34,.6)}
+:where(:root:not(.vt)) .lb-x:hover{background:rgba(40,32,34,.6)}
 .lb-x:focus-visible,.lb-sr:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .lb-sr{position:absolute;top:50%;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);border:0;padding:0;background:none;color:var(--bone)}
 .lb-sr:focus-visible{width:44px;height:44px;clip-path:none;margin-top:-22px;pointer-events:auto;border-radius:50%;background:rgba(10,8,9,.5);display:grid;place-items:center}
