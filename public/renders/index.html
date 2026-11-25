@@ -35,8 +35,10 @@
   --f-sans:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
   --f-mono:"Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --t-xs:.75rem; --t-s:.875rem; --t-m:1.0625rem; --t-l:clamp(1.25rem, 1rem + .9vw, 1.6rem);
-  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.4rem, 1.3rem + 3.9vw, 4.7rem); --t-hero:clamp(2.2rem, .8rem + 4.3vw, 6.4rem);
-  --max:150rem;   /* with the page gutter below: the content reaches the page edges; centred only on very wide screens */
+  --t-xl:clamp(1.75rem, 1.2rem + 2.2vw, 2.6rem); --t-sec:clamp(2.6rem, 1.4rem + 4.4vw, 5.2rem);
+  --hk:1;   /* the hero keeps the sizes it was tuned at while the rest of the site reads larger (see the media rules below) */
+  --t-hero:clamp(calc(2.2rem * var(--hk)), calc(.8rem * var(--hk) + 4.3vw), calc(6.4rem * var(--hk)));
+  --max:92rem;    /* the page column: the hero and the nav run edge to edge, everything else sits in this column */
 }
 *{box-sizing:border-box}
 html,body{background:var(--void);color:var(--bone)}
@@ -44,9 +46,10 @@ body{font-family:var(--f-sans);font-size:var(--t-m);line-height:1.55;-webkit-fon
 a{color:inherit;text-decoration:none}
 :focus-visible{outline:2px solid var(--signal);outline-offset:4px}
 .gut{padding-left:max(clamp(16px, 4vw, 92px), env(safe-area-inset-left, 0px));padding-right:max(clamp(16px, 4vw, 92px), env(safe-area-inset-right, 0px))}
-/* past 2304px the whole site grows with the window (a 4K screen at 150% is a 2560px window): sizes in rem follow */
-@media (min-width:1024px){ html{font-size:90%} }   /* desktop reads a size down from phones */
-@media (min-width:2304px){ html{font-size:min(calc(100vw / 160), 24px)} }
+/* past 2048px the whole site grows with the window (a 4K screen at 150% is a 2560px window): sizes in rem follow */
+@media (min-width:2049px){ html{font-size:min(calc(100vw / 128), 26px)} }
+@media (min-width:1024px){ :root{--hk:.9} }
+@media (min-width:2304px){ :root{--hk:.8} }
 .wrap{max-width:var(--max);margin:0 auto}
 .mono{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ash)}
 .link{background-image:linear-gradient(currentColor,currentColor);background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;padding-bottom:2px;transition:color .2s}
@@ -63,17 +66,18 @@ a{color:inherit;text-decoration:none}
 .hero::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;z-index:1;pointer-events:none;
   background:linear-gradient(0deg, var(--void) 0%, color-mix(in srgb, var(--void) 60%, transparent) 40%, transparent 100%)}
 .top{position:absolute;z-index:3;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top, 0px) + 22px)}
-.top .wrap{display:flex;align-items:center;gap:24px}
+.top .wrap{display:flex;align-items:center;gap:24px;max-width:none}
+.hero .wrap{max-width:none}
 .brand{display:flex;align-items:center;gap:12px;font-weight:500;letter-spacing:.01em}
 .brand img{width:22px;height:auto;display:block}
 .nav{margin-left:auto;display:flex;gap:clamp(14px, 3vw, 32px);font-size:var(--t-s);color:var(--ash)}
 .nav a:hover{color:var(--bone)}
-.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(44px, 11vh, 10rem)}
+.intro{position:absolute;z-index:2;left:0;right:0;bottom:clamp(44px, 11vh, calc(10rem * var(--hk)))}
 .intro .wrap{display:grid;gap:22px}
 .intro h1{margin:0;font-weight:500;font-size:var(--t-hero);line-height:1;letter-spacing:-.035em;max-width:10ch;text-wrap:balance}
-.intro p{margin:0;max-width:36rem;color:var(--ash);font-size:clamp(1rem, .9rem + .3vw, 1.25rem)}
+.intro p{margin:0;max-width:calc(36rem * var(--hk));color:var(--ash);font-size:clamp(calc(1rem * var(--hk)), calc(.9rem * var(--hk) + .3vw), calc(1.25rem * var(--hk)))}
 .intro p strong{color:var(--bone);font-weight:500}
-.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:clamp(.9375rem, .86rem + .18vw, 1.075rem)}
+.acts{display:flex;flex-wrap:wrap;gap:12px 28px;font-size:clamp(calc(.9375rem * var(--hk)), calc(.86rem * var(--hk) + .18vw), calc(1.075rem * var(--hk)))}
 @media (max-width:760px){ .nav a.opt{display:none} }
 
 /* case studies: home Projects and /projects/ (gen_projects.py writes the markup) */
@@ -133,7 +137,7 @@ a{color:inherit;text-decoration:none}
 <link rel="stylesheet" href="../a/media.css?v=95f4ac7f">
 </head>
 <body>
-<section class="hero sub" id="top" aria-label="Renders" data-base="../" data-still="a/hero-renders-still" data-sv="f1236f78" data-plate="a/hero-renders.webp?v=8f570edb" data-turn="a/turn-renders/b" data-tv="374f7ae8" data-k="1" data-dx="0" data-dy="0" data-x=".72" data-y=".5" data-size=".66" data-y-n=".43" data-size-n=".38" data-tn="33" data-tr="16" data-td=".45" data-ta=".4">
+<section class="hero sub" id="top" aria-label="Renders" data-base="../" data-still="a/hero-renders-still" data-sv="2eff2eca" data-plate="a/hero-renders.webp?v=8f570edb" data-turn="a/turn-renders/b" data-tv="374f7ae8" data-k="1" data-dx="0" data-dy="0" data-x=".72" data-y=".5" data-size=".66" data-y-n=".43" data-size-n=".38" data-tn="33" data-tr="16" data-td=".45" data-ta=".4">
   <canvas id="glass" aria-hidden="true"></canvas>
   <header class="top gut"><div class="wrap"><a class="brand" href="../">BrAtUkA</a><nav class="nav" aria-label="Site"><a href="../#work" class="opt">Projects</a><a href="../renders/" aria-current="page">Renders</a><a href="../gallery/">Gallery</a><a href="../#about" class="opt">About</a><a href="../#contact">Contact</a></nav></div></header>
   <div class="intro gut"><div class="wrap"><h1>Renders</h1><p>Made in Blender.</p></div></div>
