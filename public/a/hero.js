@@ -266,7 +266,7 @@ void main() {
     if (POSTER) window.__geo = { W, H, Hb, x: B0.x, y: B0.y, w, aspect, k: PLATE.k, wide, vis: VIS };   // for the still pictures (render_still.js)
   }
 
-  const st = { scroll: 0, sv: 0, mx: -1, my: .5, vx: 0, vy: 0, sx: .5, gate: 1, phase: 0 };
+  const st = { scroll: 0, sv: 0, mx: -1, my: .5, vx: 0, vy: 0, sx: -1, gate: 1, phase: 0 };
   const COARSE = matchMedia('(pointer:coarse)').matches || innerWidth < 760 || (navigator.deviceMemory || 8) <= 4;
   // turntable: FN frames FD degrees apart, rest pose at frame FR (home B: 17 x 2.25 deg, rest 8); FA scales the swing.
   // Phones load every other frame.
@@ -296,7 +296,8 @@ void main() {
       [st.my, st.vy] = spring(st.my, st.vy, ty, 5.2, h);
       [st.scroll, st.sv] = spring(st.scroll, st.sv, Math.min(H, Math.max(0, window.scrollY)), 9, h);
     }
-    st.sx = damp(st.sx, tx, .8);
+    const bN = B0.x / W;                                  // the B across the hero, 0..1: the light is set around it
+    st.sx = damp(st.sx < 0 ? bN : st.sx, seen ? tx : bN, .8);
     st.gate = damp(st.gate, now - lastAct > 2500 ? 1 : 0, 1);
     st.phase += dt * (2 * Math.PI / 16) * st.gate;
     // The B turns towards the pointer at one rate everywhere: the whole width between the left edge and the B spans
@@ -311,9 +312,9 @@ void main() {
       gx: 3 * w * (1 - outQuart((t - .05) / 2.0)) - st.scroll * .45,   // the glass only moves with the intro and scroll: no idle crawl
       bx: B0.x - PLATE.dx * Hb * aspect - u * 26,
       by: B0.y - PLATE.dy * Hb - v * 14 + st.scroll * .3,
-      side: st.sx,
+      side: .5 + (st.sx - bN),
       // one light sweep across the glass on load, then the light pool follows the pointer; at idle the light drifts
-      pool: (() => { const k = outCubic((t - .4) / 2.4); const px = .72 + (st.sx - .5) * .36 + .07 * Math.sin(st.phase);
+      pool: (() => { const k = outCubic((t - .4) / 2.4); const px = bN + .04 + (st.sx - bN) * .36 + .07 * Math.sin(st.phase);
         return [-.25 + (px + .25) * k, .24 + v * .14 + .035 * Math.sin(st.phase * .63)]; })(),
       frame: Math.max(0, Math.min(TURN.n - 1, TURN.rest + turnF)),
       fade: outCubic((t - .1) / 1.2) * (1 - .35 * sc),
